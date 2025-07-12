@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# App
+/app/google-services.json
+/app/build
