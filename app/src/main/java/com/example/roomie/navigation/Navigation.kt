@@ -5,7 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.roomie.screens.MainContentScreen
-import com.example.roomie.screens.ProfileCreationScreen
+import com.example.roomie.screens.ProfileEditorScreen
 import com.example.roomie.screens.SplashScreen
 
 /**
@@ -14,7 +14,7 @@ import com.example.roomie.screens.SplashScreen
 object Routes {
     const val SPLASH_SCREEN = "splash_screen"
     const val MAIN_CONTENT = "main_content"
-    const val PROFILE_CREATION = "profile_creation"
+    const val PROFILE_EDITOR = "profile_editor"
 }
 
 /**
@@ -33,26 +33,33 @@ fun RoomieNavHost(
         composable(Routes.SPLASH_SCREEN) {
             SplashScreen(
                 onLoginSuccess = {
-                    // Navigate to main content and remove splash screen from back stack
                     navController.navigate(Routes.MAIN_CONTENT) {
                         popUpTo(Routes.SPLASH_SCREEN) { inclusive = true }
                     }
                 },
                 onCreateAccountSuccess = {
-                    // Navigate to profile creation and remove splash screen from back stack
-                    navController.navigate(Routes.PROFILE_CREATION) {
+                    navController.navigate(Routes.PROFILE_EDITOR) {
                         popUpTo(Routes.SPLASH_SCREEN) { inclusive = true }
                     }
                 }
             )
         }
         composable(Routes.MAIN_CONTENT) {
-            MainContentScreen()
-            // Here you might pass a ViewModel or other dependencies to MainContentScreen
+            MainContentScreen(
+                onEditProfile = {
+                    // Navigate to the profile editor screen when the button is clicked
+                    navController.navigate(Routes.PROFILE_EDITOR)
+                }
+            )
         }
-        composable(Routes.PROFILE_CREATION) {
-            ProfileCreationScreen()
-            // Here you might pass a ViewModel or other dependencies to ProfileCreationScreen
+        composable(Routes.PROFILE_EDITOR) {
+            ProfileEditorScreen(
+                onProfileSaved = {
+                    navController.navigate(Routes.MAIN_CONTENT) {
+                        popUpTo(Routes.MAIN_CONTENT) { inclusive = true } // Clear back stack up to main content
+                    }
+                }
+            )
         }
     }
 }

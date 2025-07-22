@@ -152,31 +152,3 @@ fun performCreateAccount(auth: FirebaseAuth, context: Context, email: String, pa
             }
         }
 }
-
-// --- Placeholder Composables for other screens ---
-// In a real app, these would be in their own files, e.g., MainContentScreen.kt, ProfileCreationScreen.kt
-// For now, they're here for simplicity to make the navigation work.
-
-@Composable
-fun MainContentScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Welcome to Roomie! You are logged in.")
-        // You can add a sign out button here later!
-    }
-}
-
-@Composable
-fun ProfileCreationScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Welcome! Time to create your profile!")
-        // Your profile creation UI goes here
-    }
-}
