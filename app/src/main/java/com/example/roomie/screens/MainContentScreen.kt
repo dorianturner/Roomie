@@ -1,5 +1,3 @@
-// screens/MainContentScreen.kt (Updated)
-
 package com.example.roomie.screens
 
 import androidx.compose.foundation.layout.Arrangement
