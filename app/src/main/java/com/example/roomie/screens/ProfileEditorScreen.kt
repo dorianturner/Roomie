@@ -3,7 +3,7 @@ package com.example.roomie.screens
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.* // Using Material 3 components
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,8 +15,8 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import androidx.compose.foundation.rememberScrollState // NEW: For scroll state
-import androidx.compose.foundation.verticalScroll // NEW: For vertical scrolling
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class) // For SegmentedButton and SingleChoiceSegmentedButtonRow
 @Composable
@@ -24,21 +24,18 @@ fun ProfileEditorScreen(
     onProfileSaved: () -> Unit
 ) {
     // --- General Profile Fields ---
-    var displayName by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
 
     // --- Profile Type Selection ---
-    var isLandlord by remember { mutableStateOf(true) } // true: Landlord, false: Student
+    var isLandlord by remember { mutableStateOf(false) } // true: Landlord, false: Student
 
     // --- Landlord Specific Fields ---
-    var landlordName by remember { mutableStateOf("") }
     // Store as String for TextField, convert to Int on save
-    var landlordAgeInput by remember { mutableStateOf("") }
     var landlordCompany by remember { mutableStateOf("") }
 
     // --- Student Specific Fields ---
-    var studentName by remember { mutableStateOf("") }
     // Store as String for TextField, convert to Int on save
     var studentAgeInput by remember { mutableStateOf("") }
     var studentUniversity by remember { mutableStateOf("") }
@@ -57,6 +54,36 @@ fun ProfileEditorScreen(
 
     // --- Scroll State for the Column ---
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(auth.currentUser?.uid) {
+        auth.currentUser?.uid?.let { uid ->
+            db.collection("users").document(uid).get()
+                .addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        name = doc.getString("name").orEmpty()
+                        bio = doc.getString("bio").orEmpty()
+                        phoneNumber = doc.getString("phoneNumber").orEmpty()
+                        isLandlord = doc.getString("profileType") == "landlord"
+
+                        if (isLandlord) {
+                            landlordCompany = doc.getString("landlordCompany").orEmpty()
+                        } else {
+                            studentAgeInput = doc.getLong("studentAge")?.toString().orEmpty()
+                            studentUniversity = doc.getString("studentUniversity").orEmpty()
+                            studentBasicPreferences = doc.getString("studentBasicPreferences").orEmpty()
+                            val group = doc.get("studentDesiredGroupSize") as? List<*>
+                            studentDesiredGroupSizeMinInput = (group?.getOrNull(0) as? Long)?.toString().orEmpty()
+                            studentDesiredGroupSizeMaxInput = (group?.getOrNull(1) as? Long)?.toString().orEmpty()
+                            studentMaxCommuteInput = doc.getLong("studentMaxCommute")?.toString().orEmpty()
+                            studentMaxBudgetInput = doc.getLong("studentMaxBudget")?.toString().orEmpty()
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Failed to load profile: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -78,27 +105,28 @@ fun ProfileEditorScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             SegmentedButton(
-                selected = isLandlord,
-                onClick = { isLandlord = true },
-                shape = SegmentedButtonDefaults.baseShape
-            ) {
-                Text("Landlord")
-            }
-            SegmentedButton(
                 selected = !isLandlord,
                 onClick = { isLandlord = false },
                 shape = SegmentedButtonDefaults.baseShape
             ) {
                 Text("Student")
             }
+
+            SegmentedButton(
+                selected = isLandlord,
+                onClick = { isLandlord = true },
+                shape = SegmentedButtonDefaults.baseShape
+            ) {
+                Text("Landlord")
+            }
         }
         Spacer(modifier = Modifier.height(24.dp))
 
         // --- Common Fields ---
         TextField(
-            value = displayName,
-            onValueChange = { displayName = it },
-            label = { Text("Display Name (Public)") },
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Your Name") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -125,25 +153,6 @@ fun ProfileEditorScreen(
                 Text("Landlord Profile", style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(16.dp))
                 TextField(
-                    value = landlordName,
-                    onValueChange = { landlordName = it },
-                    label = { Text("Your Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                TextField(
-                    value = landlordAgeInput,
-                    onValueChange = { newValue ->
-                        if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                            landlordAgeInput = newValue
-                        }
-                    },
-                    label = { Text("Your Age") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                TextField(
                     value = landlordCompany,
                     onValueChange = { landlordCompany = it },
                     label = { Text("Your Company Name") },
@@ -153,13 +162,6 @@ fun ProfileEditorScreen(
         } else { // Student profile
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text("Student Profile", style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(16.dp))
-                TextField(
-                    value = studentName,
-                    onValueChange = { studentName = it },
-                    label = { Text("Your Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
                 Spacer(modifier = Modifier.height(16.dp))
                 TextField(
                     value = studentAgeInput,
@@ -254,7 +256,7 @@ fun ProfileEditorScreen(
                 if (currentUser != null) {
                     // Create a mutable map for user profile data
                     val userProfileData = mutableMapOf<String, Any>(
-                        "displayName" to displayName,
+                        "name" to name,
                         "bio" to bio,
                         "phoneNumber" to phoneNumber,
                         "profileType" to if (isLandlord) "landlord" else "student",
@@ -264,13 +266,10 @@ fun ProfileEditorScreen(
                     var isMinProfileSet = true // Flag for minimum required profile
 
                     if (isLandlord) {
-                        val age = landlordAgeInput.toIntOrNull()
-                        userProfileData["landlordName"] = landlordName
                         userProfileData["landlordCompany"] = landlordCompany
-                        userProfileData["landlordAge"] = age ?: 0 // Store Int
 
                         // Check landlord minimum fields
-                        if (landlordName.isBlank() || age == null || landlordCompany.isBlank()) {
+                        if (name.isBlank() || landlordCompany.isBlank()) {
                             isMinProfileSet = false
                         }
                     } else { // Student profile
@@ -280,7 +279,6 @@ fun ProfileEditorScreen(
                         val maxCommute = studentMaxCommuteInput.toIntOrNull()
                         val maxBudget = studentMaxBudgetInput.toIntOrNull()
 
-                        userProfileData["studentName"] = studentName
                         userProfileData["studentUniversity"] = studentUniversity
                         userProfileData["studentBasicPreferences"] = studentBasicPreferences
                         userProfileData["studentAge"] = age ?: 0 // Store Int
@@ -290,7 +288,7 @@ fun ProfileEditorScreen(
                         userProfileData["studentMaxBudget"] = maxBudget ?: 0 // Store Int
 
                         // Check student minimum fields
-                        if (studentName.isBlank() || age == null ||
+                        if (name.isBlank() || age == null ||
                             studentUniversity.isBlank() || studentBasicPreferences.isBlank() ||
                             desiredGroupSizeMin == null || desiredGroupSizeMax == null ||
                             maxCommute == null || maxBudget == null
