@@ -138,7 +138,15 @@ fun performCreateAccount(auth: FirebaseAuth, context: Context, email: String, pa
     auth.createUserWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Toast.makeText(context, "Account Created Successfully!", Toast.LENGTH_SHORT).show()
+                val user = auth.currentUser
+                user?.sendEmailVerification()
+                    ?.addOnCompleteListener { verifyTask ->
+                        if (verifyTask.isSuccessful) {
+                            Toast.makeText(context, "Account created. Verification email sent.", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, "Account created, but failed to send verification email: ${verifyTask.exception?.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
                 onComplete(true)
             } else {
                 val errorMessage = when (task.exception) {
