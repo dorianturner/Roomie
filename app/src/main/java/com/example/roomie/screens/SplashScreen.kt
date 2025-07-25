@@ -44,6 +44,7 @@ fun SplashScreen(
     var password by remember { mutableStateOf("") }
     var showLoginFields by remember { mutableStateOf(false) }
     var showCreateAccountFields by remember { mutableStateOf(false) }
+    var showVerificationScreen by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -87,7 +88,10 @@ fun SplashScreen(
             } else if (showCreateAccountFields) {
                 Button(onClick = {
                     performCreateAccount(auth, context, email, password) { success ->
-                        if (success) onCreateAccountSuccess()
+                        if (success) {
+                            showCreateAccountFields = false
+                            showVerificationScreen = true
+                        }
                     }
                 }) {
                     Text("Create Account Now")
@@ -103,6 +107,54 @@ fun SplashScreen(
             }) {
                 Text("Back")
             }
+        }
+    }
+}
+
+@Composable
+fun WaitForEmailVerificationScreen(
+    auth: FirebaseAuth,
+    onVerified: () -> Unit
+) {
+    val context = LocalContext.current
+    var isChecking by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Please verify your email. A verification link was sent to your inbox.")
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            isChecking = true
+            auth.currentUser?.reload()?.addOnCompleteListener { task ->
+                isChecking = false
+                if (task.isSuccessful && auth.currentUser?.isEmailVerified == true) {
+                    Toast.makeText(context, "Email verified!", Toast.LENGTH_SHORT).show()
+                    onVerified()
+                } else {
+                    Toast.makeText(context, "Still not verified. Try again later.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }) {
+            Text("Check Verification Again")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = {
+            auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { resendTask ->
+                if (resendTask.isSuccessful) {
+                    Toast.makeText(context, "Verification email resent.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Failed to resend: ${resendTask.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }) {
+            Text("Resend Email")
         }
     }
 }
