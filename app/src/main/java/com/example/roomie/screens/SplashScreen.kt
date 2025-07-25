@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+
 
 /**
  * This Composable represents the initial splash/authentication screen where users can log in or create an account.
@@ -51,7 +53,13 @@ fun SplashScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        if (!showLoginFields && !showCreateAccountFields) {
+        if (showVerificationScreen) {
+            WaitForEmailVerificationScreen(auth = auth, onVerified = {
+                // What to do after verification? E.g. navigate or show login
+                onCreateAccountSuccess()
+                showVerificationScreen = false
+            })
+        } else if (!showLoginFields && !showCreateAccountFields) {
             // Initial splash screen buttons
             Button(onClick = { showLoginFields = true }) {
                 Text("Login")
@@ -124,7 +132,10 @@ fun WaitForEmailVerificationScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Please verify your email. A verification link was sent to your inbox.")
+        Text("Please verify your email.\n A verification link was sent to your inbox.",
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -140,7 +151,7 @@ fun WaitForEmailVerificationScreen(
                 }
             }
         }) {
-            Text("Check Verification Again")
+            Text("Click here once verified")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
