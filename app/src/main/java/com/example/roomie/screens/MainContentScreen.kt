@@ -14,7 +14,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun MainContentScreen(
-    onEditProfile: () -> Unit // New callback for editing profile
+    onEditProfile: () -> Unit, // New callback for editing profile
+    onLogout: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -27,5 +28,9 @@ fun MainContentScreen(
             Text("Edit My Profile")
         }
         // You can add a sign out button here later!
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onLogout) {
+            Text("Log Out")
+        }
     }
 }

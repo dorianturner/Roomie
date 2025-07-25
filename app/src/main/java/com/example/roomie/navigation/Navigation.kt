@@ -7,6 +7,8 @@ import androidx.navigation.compose.composable
 import com.example.roomie.screens.MainContentScreen
 import com.example.roomie.screens.ProfileEditorScreen
 import com.example.roomie.screens.SplashScreen
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.ktx.auth
 
 /**
  * Defines the navigation routes for your application.
@@ -49,6 +51,12 @@ fun RoomieNavHost(
                 onEditProfile = {
                     // Navigate to the profile editor screen when the button is clicked
                     navController.navigate(Routes.PROFILE_EDITOR)
+                },
+                onLogout = {
+                    Firebase.auth.signOut()
+                    navController.navigate(Routes.SPLASH_SCREEN) {
+                        popUpTo("mainContent") { inclusive = true }
+                    }
                 }
             )
         }
