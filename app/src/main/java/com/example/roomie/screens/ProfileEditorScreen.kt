@@ -18,6 +18,17 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 
+private fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
+    var isValid = true
+    fields.forEach {
+        val field = it.value
+        val invalid = field.required && field.value.isBlank()
+        it.value = field.copy(isError = invalid)
+        if (invalid) isValid = false
+    }
+    return isValid
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileEditorScreen(
@@ -29,9 +40,9 @@ fun ProfileEditorScreen(
     val scrollState = rememberScrollState()
 
     // Common fields
-    var name by remember { mutableStateOf("") }
-    var bio by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
+    val nameField = remember { mutableStateOf(ProfileTextField("Your Name", "")) }
+    val bioField = remember { mutableStateOf(ProfileTextField("About you", "")) }
+    val phoneNumberField = remember { mutableStateOf(ProfileTextField("Phone Number", "", KeyboardType.Phone, false)) }
     var isLandlord by remember { mutableStateOf(false) }
 
     // Landlord field
@@ -46,14 +57,41 @@ fun ProfileEditorScreen(
     val maxCommuteField = remember { mutableStateOf(ProfileTextField("Max Commute (mins)", "", KeyboardType.Number)) }
     val maxBudgetField = remember { mutableStateOf(ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number)) }
 
+    val allFields = remember {
+        mutableListOf<MutableState<ProfileTextField>>()
+    }
+
     LaunchedEffect(auth.currentUser?.uid) {
+        allFields.clear()
+
+        // add mandatory fields
+        allFields.add(nameField)
+        allFields.add(bioField)
+        allFields.add(phoneNumberField)
+
+        if (isLandlord) {
+            allFields.add(companyField)
+        } else {
+            allFields.addAll(
+                listOf(
+                    ageField,
+                    universityField,
+                    preferencesField,
+                    groupSizeMinField,
+                    groupSizeMaxField,
+                    maxCommuteField,
+                    maxBudgetField,
+                )
+            )
+        }
+
         auth.currentUser?.uid?.let { uid ->
             db.collection("users").document(uid).get()
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
-                        name = doc.getString("name").orEmpty()
-                        bio = doc.getString("bio").orEmpty()
-                        phoneNumber = doc.getString("phoneNumber").orEmpty()
+                        nameField.value = nameField.value.copy(value = doc.getString("name").orEmpty())
+                        bioField.value = bioField.value.copy(value = doc.getString("bio").orEmpty())
+                        phoneNumberField.value = phoneNumberField.value.copy(value = doc.getString("phoneNumber").orEmpty())
                         isLandlord = doc.getString("profileType") == "landlord"
 
                         if (isLandlord) {
@@ -109,18 +147,28 @@ fun ProfileEditorScreen(
 
         // Common fields
         ProfileTextFieldView(
-            field = ProfileTextField("Your Name", name),
-            onValueChange = { name = it }
+            field = nameField.value,
+            onValueChange = {
+                nameField.value = nameField.value.copy(value = it)
+            }
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
         ProfileTextFieldView(
-            field = ProfileTextField("Bio (Tell us about yourself!)", bio),
-            onValueChange = { bio = it }
+            field = bioField.value,
+            onValueChange = {
+                bioField.value = bioField.value.copy(value = it)
+            }
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
         ProfileTextFieldView(
-            field = ProfileTextField("Phone Number (Optional)", phoneNumber, KeyboardType.Phone),
-            onValueChange = { phoneNumber = it }
+            field = phoneNumberField.value,
+            onValueChange = {
+                phoneNumberField.value = phoneNumberField.value.copy(value = it)
+            }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -145,14 +193,22 @@ fun ProfileEditorScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // save profile button
         Button(
             onClick = {
+                val isValid = validateFields(allFields)
+
+                if (!isValid) {
+                    Toast.makeText(context, "Please fill all required fields.", Toast.LENGTH_SHORT).show()
+                    return@Button
+                }
+
                 val currentUser = auth.currentUser
                 if (currentUser != null) {
                     val data = mutableMapOf<String, Any>(
-                        "name" to name,
-                        "bio" to bio,
-                        "phoneNumber" to phoneNumber,
+                        "name" to nameField.value.value,
+                        "bio" to bioField.value.value,
+                        "phoneNumber" to phoneNumberField.value.value,
                         "profileType" to if (isLandlord) "landlord" else "student",
                         "lastUpdated" to System.currentTimeMillis()
                     )
@@ -161,6 +217,7 @@ fun ProfileEditorScreen(
 
                     if (isLandlord) {
                         val company = companyField.value.value
+                        val name = nameField.value.value
                         data["landlordCompany"] = company
                         if (name.isBlank() || company.isBlank()) isMinProfileSet = false
                     } else {
@@ -169,6 +226,7 @@ fun ProfileEditorScreen(
                         val gMax = groupSizeMaxField.value.value.toIntOrNull()
                         val commute = maxCommuteField.value.value.toIntOrNull()
                         val budget = maxBudgetField.value.value.toIntOrNull()
+                        val name = nameField.value.value
 
                         data["studentAge"] = age ?: 0
                         data["studentUniversity"] = universityField.value.value
