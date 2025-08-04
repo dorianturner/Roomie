@@ -18,13 +18,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-private fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
+fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
     var isValid = true
     fields.forEach {
-        val field = it.value
-        val invalid = field.required && field.value.isBlank()
-        it.value = field.copy(isError = invalid)
-        if (invalid) isValid = false
+        if (!it.value.validate()) {
+            isValid = false
+        }
     }
     return isValid
 }
@@ -89,22 +88,22 @@ fun ProfileEditorScreen(
             db.collection("users").document(uid).get()
                 .addOnSuccessListener { doc ->
                     if (doc.exists()) {
-                        nameField.value = nameField.value.copy(value = doc.getString("name").orEmpty())
-                        bioField.value = bioField.value.copy(value = doc.getString("bio").orEmpty())
-                        phoneNumberField.value = phoneNumberField.value.copy(value = doc.getString("phoneNumber").orEmpty())
+                        nameField.value.value = doc.getString("name").orEmpty()
+                        bioField.value.value = doc.getString("bio").orEmpty()
+                        phoneNumberField.value.value = doc.getString("phoneNumber").orEmpty()
                         isLandlord = doc.getString("profileType") == "landlord"
 
                         if (isLandlord) {
-                            companyField.value = companyField.value.copy(value = doc.getString("landlordCompany").orEmpty())
+                            companyField.value.value = doc.getString("landlordCompany").orEmpty()
                         } else {
-                            ageField.value = ageField.value.copy(value = doc.getLong("studentAge")?.toString().orEmpty())
-                            universityField.value = universityField.value.copy(value = doc.getString("studentUniversity").orEmpty())
-                            preferencesField.value = preferencesField.value.copy(value = doc.getString("studentBasicPreferences").orEmpty())
+                            ageField.value.value = doc.getLong("studentAge")?.toString().orEmpty()
+                            universityField.value.value = doc.getString("studentUniversity").orEmpty()
+                            preferencesField.value.value = doc.getString("studentBasicPreferences").orEmpty()
                             val group = doc.get("studentDesiredGroupSize") as? List<*>
-                            groupSizeMinField.value = groupSizeMinField.value.copy(value = (group?.getOrNull(0) as? Long)?.toString().orEmpty())
-                            groupSizeMaxField.value = groupSizeMaxField.value.copy(value = (group?.getOrNull(1) as? Long)?.toString().orEmpty())
-                            maxCommuteField.value = maxCommuteField.value.copy(value = doc.getLong("studentMaxCommute")?.toString().orEmpty())
-                            maxBudgetField.value = maxBudgetField.value.copy(value = doc.getLong("studentMaxBudget")?.toString().orEmpty())
+                            groupSizeMinField.value.value = (group?.getOrNull(0) as? Long)?.toString().orEmpty()
+                            groupSizeMaxField.value.value = (group?.getOrNull(1) as? Long)?.toString().orEmpty()
+                            maxCommuteField.value.value = doc.getLong("studentMaxCommute")?.toString().orEmpty()
+                            maxBudgetField.value.value = doc.getLong("studentMaxBudget")?.toString().orEmpty()
                         }
                     }
                 }
@@ -149,7 +148,7 @@ fun ProfileEditorScreen(
         ProfileTextFieldView(
             field = nameField.value,
             onValueChange = {
-                nameField.value = nameField.value.copy(value = it)
+                nameField.value.value = it
             }
         )
 
@@ -158,7 +157,7 @@ fun ProfileEditorScreen(
         ProfileTextFieldView(
             field = bioField.value,
             onValueChange = {
-                bioField.value = bioField.value.copy(value = it)
+                bioField.value.value = it
             }
         )
 
@@ -167,7 +166,7 @@ fun ProfileEditorScreen(
         ProfileTextFieldView(
             field = phoneNumberField.value,
             onValueChange = {
-                phoneNumberField.value = phoneNumberField.value.copy(value = it)
+                phoneNumberField.value.value = it
             }
         )
 
@@ -177,7 +176,9 @@ fun ProfileEditorScreen(
         if (isLandlord) {
             LandlordProfileSection(
                 companyField = companyField.value,
-                onCompanyChange = { companyField.value = companyField.value.copy(value = it) }
+                onCompanyChange = {
+                    companyField.value.value = it
+                }
             )
         } else {
             StudentProfileSection(

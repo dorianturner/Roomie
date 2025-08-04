@@ -4,14 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.RoomieTheme // Your app's theme
-
+import com.google.firebase.firestore.ktx.firestore
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 class MainActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
@@ -22,22 +26,36 @@ class MainActivity : ComponentActivity() {
         // Initialize Firebase Auth
         auth = Firebase.auth
 
-        // Determine the initial navigation destination based on authentication status
-        val startDestination = if (auth.currentUser != null) {
-            // User is already signed in, go directly to the main content
-            Routes.MAIN_CONTENT
-        } else {
-            // No user signed in, go to the splash/authentication screen
-            Routes.SPLASH_SCREEN
-        }
-
         setContent {
             RoomieTheme {
-                // A surface container using the 'background' color from the theme
                 Surface {
-                    val navController = rememberNavController()
-                    // Set up your navigation host with the determined start destination
-                    RoomieNavHost(navController = navController, startDestination = startDestination)
+                    var startDestination by remember { mutableStateOf<String?>(null) }
+
+                    LaunchedEffect(Unit) {
+                        val user = auth.currentUser
+                        if (user == null) { // if user is not already logged in
+                            startDestination = Routes.SPLASH_SCREEN // go to login screen
+                        } else { // if user is logged in
+                            // check if user's profile is completed
+                            Firebase.firestore.collection("users").document(user.uid).get()
+                                .addOnSuccessListener { doc ->
+                                    startDestination = if (doc.getBoolean("minimumRequiredProfileSet") == true) {
+                                        Routes.MAIN_CONTENT // take to main page if it is
+                                    } else {
+                                        Routes.ONBOARDING_FLOW // otherwise go finish setup
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    startDestination = Routes.SPLASH_SCREEN // fallback
+                                }
+                        }
+                    }
+
+                    if (startDestination != null) { // should never be null
+                        RoomieNavHost(
+                            startDestination = startDestination!!
+                        )
+                    }
                 }
             }
         }

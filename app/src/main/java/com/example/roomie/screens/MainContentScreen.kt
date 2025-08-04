@@ -23,11 +23,11 @@ fun MainContentScreen(
     val iconColor = MaterialTheme.colorScheme.primary
 
     Scaffold(
-        topBar = @androidx.compose.runtime.Composable {
+        topBar = @Composable {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp)
+                    .systemBarsPadding()
             ) {
                 Box(modifier = Modifier.fillMaxWidth()) {
                     // Centered title

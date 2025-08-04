@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 
@@ -37,7 +38,7 @@ import com.google.firebase.ktx.Firebase
 @Composable
 fun SplashScreen(
     onLoginSuccess: () -> Unit,
-    onCreateAccountSuccess: () -> Unit
+    onCreateAccountSuccess: () -> Unit,
 ) {
     val auth: FirebaseAuth = Firebase.auth
     val context = LocalContext.current
@@ -88,7 +89,24 @@ fun SplashScreen(
             if (showLoginFields) {
                 Button(onClick = {
                     performLogin(auth, context, email, password) { success ->
-                        if (success) onLoginSuccess()
+                        if (!success) return@performLogin
+
+                        // only proceed to login if the account is fully set up
+                        // otherwise jump to account setup
+
+                        val user = auth.currentUser
+                        if (user == null) return@performLogin // should never trigger
+                        Firebase.firestore.collection("users").document(user.uid).get()
+                            .addOnSuccessListener { doc ->
+                                if (doc.getBoolean("minimumRequiredProfileSet") == true) {
+                                    onLoginSuccess()
+                                } else {
+                                    onCreateAccountSuccess()
+                                }
+                            }
+                            .addOnFailureListener {
+                                onCreateAccountSuccess() // fallback
+                            }
                     }
                 }) {
                     Text("Perform Login")
