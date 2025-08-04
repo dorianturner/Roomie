@@ -13,7 +13,9 @@ import androidx.compose.runtime.MutableState
 data class ProfileTextField(
     val label: String,
     var value: String,
-    val keyboardType: KeyboardType = KeyboardType.Text
+    val keyboardType: KeyboardType = KeyboardType.Text,
+    val required: Boolean = true,
+    val isError: Boolean = false
 )
 
 // --- Generic TextField Renderer ---
@@ -26,9 +28,19 @@ fun ProfileTextFieldView(
     TextField(
         value = field.value,
         onValueChange = onValueChange,
-        label = { Text(field.label) },
+        label = {
+            Text(
+                if (!field.required) "${field.label} (optional)" else field.label
+            )
+        },
         modifier = modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(keyboardType = field.keyboardType)
+        keyboardOptions = KeyboardOptions(keyboardType = field.keyboardType),
+        isError = field.isError,
+        supportingText = {
+            if (field.isError) {
+                Text(text = "This field is required", color = MaterialTheme.colorScheme.error)
+            }
+        }
     )
 }
 
