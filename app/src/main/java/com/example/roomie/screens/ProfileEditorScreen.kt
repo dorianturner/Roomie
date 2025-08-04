@@ -133,14 +133,13 @@ fun ProfileEditorScreen(
             )
         } else {
             StudentProfileSection(
-                ageField = ageField.value,
-                universityField = universityField.value,
-                preferencesField = preferencesField.value,
-                groupSizeMinField = groupSizeMinField.value,
-                groupSizeMaxField = groupSizeMaxField.value,
-                maxCommuteField = maxCommuteField.value,
-                maxBudgetField = maxBudgetField.value,
-                onFieldChange = { field, newValue -> field.value = newValue }
+                ageField = ageField,
+                universityField = universityField,
+                preferencesField = preferencesField,
+                groupSizeMinField = groupSizeMinField,
+                groupSizeMaxField = groupSizeMaxField,
+                maxCommuteField = maxCommuteField,
+                maxBudgetField = maxBudgetField,
             )
         }
 

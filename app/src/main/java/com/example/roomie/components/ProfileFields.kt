@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.MutableState
 
 // Simple reusable field model
 data class ProfileTextField(
@@ -48,37 +49,42 @@ fun LandlordProfileSection(
 // --- Student Profile Section ---
 @Composable
 fun StudentProfileSection(
-    ageField: ProfileTextField,
-    universityField: ProfileTextField,
-    preferencesField: ProfileTextField,
-    groupSizeMinField: ProfileTextField,
-    groupSizeMaxField: ProfileTextField,
-    maxCommuteField: ProfileTextField,
-    maxBudgetField: ProfileTextField,
-    onFieldChange: (ProfileTextField, String) -> Unit
+    ageField: MutableState<ProfileTextField>,
+    universityField: MutableState<ProfileTextField>,
+    preferencesField: MutableState<ProfileTextField>,
+    groupSizeMinField: MutableState<ProfileTextField>,
+    groupSizeMaxField: MutableState<ProfileTextField>,
+    maxCommuteField: MutableState<ProfileTextField>,
+    maxBudgetField: MutableState<ProfileTextField>
 ) {
     Column {
         Text("Student Profile", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
 
         ProfileTextFieldView(
-            field = ageField,
+            field = ageField.value,
             onValueChange = { newValue ->
                 if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    onFieldChange(ageField, newValue)
+                    ageField.value = ageField.value.copy(value = newValue)
                 }
             }
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(field = universityField, onValueChange = {
-            onFieldChange(universityField, it)
-        })
+        ProfileTextFieldView(
+            field = universityField.value,
+            onValueChange = {
+                universityField.value = universityField.value.copy(value = it)
+            }
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(field = preferencesField, onValueChange = {
-            onFieldChange(preferencesField, it)
-        })
+        ProfileTextFieldView(
+            field = preferencesField.value,
+            onValueChange = {
+                preferencesField.value = preferencesField.value.copy(value = it)
+            }
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Desired Group Size (Min-Max):", style = MaterialTheme.typography.labelLarge)
@@ -86,20 +92,20 @@ fun StudentProfileSection(
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ProfileTextFieldView(
-                field = groupSizeMinField,
+                field = groupSizeMinField.value,
                 onValueChange = { newValue ->
                     if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                        onFieldChange(groupSizeMinField, newValue)
+                        groupSizeMinField.value = groupSizeMinField.value.copy(value = newValue)
                     }
                 },
                 modifier = Modifier.weight(1f)
             )
             Text("-", modifier = Modifier.alignByBaseline())
             ProfileTextFieldView(
-                field = groupSizeMaxField,
+                field = groupSizeMaxField.value,
                 onValueChange = { newValue ->
                     if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                        onFieldChange(groupSizeMaxField, newValue)
+                        groupSizeMaxField.value = groupSizeMaxField.value.copy(value = newValue)
                     }
                 },
                 modifier = Modifier.weight(1f)
@@ -108,20 +114,20 @@ fun StudentProfileSection(
         Spacer(modifier = Modifier.height(16.dp))
 
         ProfileTextFieldView(
-            field = maxCommuteField,
+            field = maxCommuteField.value,
             onValueChange = { newValue ->
                 if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    onFieldChange(maxCommuteField, newValue)
+                    maxCommuteField.value = maxCommuteField.value.copy(value = newValue)
                 }
             }
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         ProfileTextFieldView(
-            field = maxBudgetField,
+            field = maxBudgetField.value,
             onValueChange = { newValue ->
                 if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    onFieldChange(maxBudgetField, newValue)
+                    maxBudgetField.value = maxBudgetField.value.copy(value = newValue)
                 }
             }
         )
