@@ -5,10 +5,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.roomie.screens.MainContentScreen
+import com.example.roomie.screens.ChatScreen
 import com.example.roomie.screens.ProfileEditorScreen
 import com.example.roomie.screens.SplashScreen
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.auth.ktx.auth
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 /**
  * Defines the navigation routes for your application.
@@ -17,6 +18,7 @@ object Routes {
     const val SPLASH_SCREEN = "splash_screen"
     const val MAIN_CONTENT = "main_content"
     const val PROFILE_EDITOR = "profile_editor"
+    const val CHAT_SCREEN = "chat_screen"
 }
 
 /**
@@ -52,12 +54,17 @@ fun RoomieNavHost(
                     // Navigate to the profile editor screen when the button is clicked
                     navController.navigate(Routes.PROFILE_EDITOR)
                 },
-                onLogout = {
+                onNavigateToChat = {
+                    navController.navigate(Routes.CHAT_SCREEN) {
+                        popUpTo("chatScreen") { inclusive = true }
+                    }
+                },
+                    onLogout = {
                     Firebase.auth.signOut()
                     navController.navigate(Routes.SPLASH_SCREEN) {
                         popUpTo("mainContent") { inclusive = true }
                     }
-                }
+                },
             )
         }
         composable(Routes.PROFILE_EDITOR) {
@@ -68,6 +75,10 @@ fun RoomieNavHost(
                     }
                 }
             )
+        }
+        composable(Routes.CHAT_SCREEN) {
+            // to be updated with further navigation
+            ChatScreen()
         }
     }
 }

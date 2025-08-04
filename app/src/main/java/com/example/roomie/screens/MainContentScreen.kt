@@ -2,6 +2,7 @@ package com.example.roomie.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -10,13 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContentScreen(
     onEditProfile: () -> Unit, // New callback for editing profile
+    onNavigateToChat: ()-> Unit,
     onLogout: () -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -65,6 +68,18 @@ fun MainContentScreen(
                                 contentDescription = "Edit Profile",
                                 tint = iconColor,
                                 modifier = Modifier.size(48.dp)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onNavigateToChat,
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                // will need to dig around for a better icon
+                                imageVector = Icons.Default.Email,
+                                contentDescription = "Chat",
+                                tint = iconColor
                             )
                         }
 

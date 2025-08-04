@@ -6,11 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.RoomieTheme // Your app's theme
+import com.google.firebase.auth.auth
 
 class MainActivity : ComponentActivity() {
 
