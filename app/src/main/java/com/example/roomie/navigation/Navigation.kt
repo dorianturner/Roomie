@@ -78,7 +78,13 @@ fun RoomieNavHost(
         }
         composable(Routes.CHAT_SCREEN) {
             // to be updated with further navigation
-            ChatScreen()
+            ChatScreen(
+                onBack = {
+                    navController.navigate(Routes.MAIN_CONTENT) {
+                        popUpTo(Routes.MAIN_CONTENT) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

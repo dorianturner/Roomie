@@ -8,10 +8,12 @@ import androidx.navigation.NavController
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.ui.Alignment
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
+    onBack: () -> Unit, // callback to return to main content screen
     navController: NavController? = null  // Optional for navigation
 ) {
     Scaffold(
@@ -20,7 +22,7 @@ fun ChatScreen(
                 title = { Text("Messages") },
                 navigationIcon = {
                     // needs to be updated with correct route
-                    IconButton(onClick = { navController?.navigateUp() }) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -33,10 +35,12 @@ fun ChatScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Your chat content here
-            Text("Chat conversations will appear here")
+            // Chat content to be added here
+            Text("Chat conversations to be added")
         }
     }
 }

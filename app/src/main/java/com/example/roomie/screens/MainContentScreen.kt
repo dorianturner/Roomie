@@ -71,18 +71,6 @@ fun MainContentScreen(
                             )
                         }
 
-                        IconButton(
-                            onClick = onNavigateToChat,
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Icon(
-                                // will need to dig around for a better icon
-                                imageVector = Icons.Default.Email,
-                                contentDescription = "Chat",
-                                tint = iconColor
-                            )
-                        }
-
                         // Dropdown menu
                         Box(modifier = Modifier.size(48.dp)) {
                             IconButton(
@@ -114,6 +102,24 @@ fun MainContentScreen(
                         }
                     }
                 }
+
+                // The chat button
+                Box(modifier = Modifier.fillMaxSize()) {
+                    IconButton(
+                        onClick = onNavigateToChat,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(vertical = 20.dp, horizontal = 20.dp),
+                    ) {
+                        Icon(
+                            // will need to dig around for a better icon
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Chat",
+                            tint = iconColor,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
             }
         }
     ) { innerPadding ->
@@ -127,4 +133,5 @@ fun MainContentScreen(
             Text("Welcome to Roomie! You are logged in.")
         }
     }
+
 }
