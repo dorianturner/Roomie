@@ -8,14 +8,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.RoomieTheme // Your app's theme
 import com.google.firebase.auth.auth
 
-import com.google.firebase.firestore.ktx.firestore
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 class MainActivity : ComponentActivity() {
