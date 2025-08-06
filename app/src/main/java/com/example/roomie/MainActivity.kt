@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.RoomieTheme // Your app's theme
@@ -17,12 +16,24 @@ import com.google.firebase.auth.auth
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.google.firebase.firestore.*
+import com.google.firebase.firestore.FirebaseFirestore
+
 class MainActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // enable caching
+        val db = FirebaseFirestore.getInstance()
+
+        val settings = firestoreSettings {
+            setLocalCacheSettings(memoryCacheSettings {}) // Optional: Enable memory cache
+            setLocalCacheSettings(persistentCacheSettings {})
+        }
+        db.firestoreSettings = settings
 
         // Initialize Firebase Auth
         auth = Firebase.auth
