@@ -3,9 +3,12 @@ package com.example.roomie.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.roomie.components.ChatManager
 import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.screens.BasicInfoScreen
 import com.example.roomie.screens.ExtraInfoScreen
@@ -13,6 +16,7 @@ import com.example.roomie.screens.MainContentScreen
 import com.example.roomie.screens.ChatScreen
 import com.example.roomie.screens.ProfileEditorScreen
 import com.example.roomie.screens.ProfileTypeScreen
+import com.example.roomie.screens.SingleChatScreen
 import com.example.roomie.screens.SplashScreen
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -104,11 +108,27 @@ fun RoomieNavHost(
         composable(Routes.CHAT_SCREEN) {
             // to be updated with further navigation
             ChatScreen(
+                navController = navController,
                 onBack = {
                     navController.navigate(Routes.MAIN_CONTENT) {
                         popUpTo(Routes.MAIN_CONTENT) { inclusive = true }
                     }
                 }
+            )
+        }
+        composable(
+            "chat/{chatId}/{chatName}",
+            arguments = listOf(
+                navArgument("chatId") { type = NavType.StringType },
+                navArgument("chatName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString("chatId")!!
+            val chatName = backStackEntry.arguments?.getString("chatName")!!
+            SingleChatScreen(
+                chatRepository = ChatManager(chatId),
+                chatName = chatName,
+                onBack = { navController.popBackStack() }
             )
         }
     }

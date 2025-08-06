@@ -40,7 +40,7 @@ fun ChatItem(
             ) {
                 Text(
                     text = name.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
                 )
             }
 
@@ -49,7 +49,9 @@ fun ChatItem(
             Column {
                 Text(
                     text = name,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = lastMessage,

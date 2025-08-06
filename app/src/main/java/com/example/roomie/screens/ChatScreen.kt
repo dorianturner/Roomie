@@ -16,24 +16,44 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
 
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.example.roomie.components.ChatManager
+import com.example.roomie.components.Conversation
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     onBack: () -> Unit, // callback to return to main content screen
-    navController: NavController? = null  // Optional for navigation
+    navController: NavController
 ) {
 
     // To be updated to reflect the firestore database
-    val chats = remember {
-        listOf(
-            Chat("001", "Leo Matteucci", "Hello", "10:30 AM"),
-            Chat("002", "Lucas Hutton", "Hi", "Yesterday"),
-            Chat("003", "Dorian Turner", "I think we should pick this flat", "Monday")
-        )
+    val conversations = remember { mutableStateListOf<Conversation>() }
+    val db = FirebaseFirestore.getInstance()
+    val currentUserId = Firebase.auth.currentUser?.uid ?: return
+
+    LaunchedEffect(Unit) {
+        db.collection("conversations")
+            .whereArrayContains("participants", currentUserId)
+            .orderBy("lastMessageAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+                conversations.clear()
+                conversations.addAll(snapshot.documents.mapNotNull {
+                    val convo = it.toObject(Conversation::class.java)
+                    convo?.copy(id = it.id)
+                })
+            }
     }
+
+    println(conversations.joinToString { it.participants.firstOrNull().orEmpty() })
+    Log.d("Debug", conversations.joinToString { it.participants.firstOrNull().orEmpty() })
+    Log.d("Debug", currentUserId)
+    Log.d("Debug", conversations.size.toString())
 
     Scaffold(
         topBar = {
@@ -59,24 +79,22 @@ fun ChatScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Chat content to be added here
-            items(chats) { chat ->
+            items(conversations) { convo ->
+                val chatManager = remember { ChatManager(convo.id) }
+
+                val title by produceState(initialValue = "Loading...", convo.participants) {
+                    value = chatManager.getConversationTitle(currentUserId)
+                }
+
                 ChatItem(
-                    name = chat.name,
-                    lastMessage = chat.lastMessage,
-                    time = chat.time,
+                    name = title,
+                    lastMessage = convo.lastMessage.orEmpty(),
+                    time = convo.lastMessageAt?.toString().orEmpty(),
                     onClick = {
-                        // Navigate to specific chat
-                        // navController?.navigate("chat_detail/${chat.id}")
+                        navController.navigate("chat/${convo.id}/$title")
                     }
                 )
             }
         }
     }
 }
-
-data class Chat(
-    val id: String,
-    val name: String,
-    val lastMessage: String,
-    val time: String
-)
