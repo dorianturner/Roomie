@@ -24,16 +24,15 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.roomie.components.ChatManager
 import com.example.roomie.components.Message
@@ -54,14 +53,9 @@ fun SingleChatScreen(
     var pickedImageUri by remember { mutableStateOf<Uri?>(null) }
     var inputText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     val userID: String? = remember { Firebase.auth.currentUser?.uid }
-
-    LaunchedEffect(chatManager) {
-        chatManager.initialize()
-        // initialises name mapping for current chat
-    }
+    val userNameCache = remember { mutableStateMapOf<String, String>() }
 
     // Listen for messages
     DisposableEffect(chatManager) {
@@ -112,7 +106,7 @@ fun SingleChatScreen(
                 items(messagesState.reversed()) { msg ->
                     MessageItem(
                         msg,
-                        chatManager.getUserName(msg.senderId)
+                        userNameCache
                     )
                 }
             }
