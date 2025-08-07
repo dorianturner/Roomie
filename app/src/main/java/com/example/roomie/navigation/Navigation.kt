@@ -73,6 +73,14 @@ fun RoomieNavHost(
 
         composable(Routes.MAIN_CONTENT) {
             MainContentScreen(
+                onChats = {
+                },
+                onBookmarks = {
+                },
+                onPropertySearch = {
+                },
+                onOptions = {
+                },
                 onEditProfile = {
                     // Navigate to the profile editor screen when the button is clicked
                     navController.navigate(Routes.PROFILE_EDITOR)
