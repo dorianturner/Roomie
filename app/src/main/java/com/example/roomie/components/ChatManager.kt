@@ -1,12 +1,22 @@
 package com.example.roomie.components
 
+import android.content.Context
 import android.net.Uri
-import com.google.firebase.Firebase
+import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
-import com.google.firebase.storage.storage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.example.roomie.components.SupabaseClient.supabase
+import io.github.jan.supabase.storage.storage
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+
+object Constants {
+    const val BUCKET_NAME = "chat-media"
+}
 
 class ChatManager(
     conversationID: String? = null
@@ -75,7 +85,50 @@ class ChatManager(
             }
     }
 
+    /**
+     * Upload media to Supabase private bucket and return the relative path.
+     */
+    private suspend fun uploadMediaToSupabase(
+        context: Context,
+        mediaUri: Uri,
+        storagePath: String
+    ): String {
+        return withContext(Dispatchers.IO) {
+            val contentResolver = context.contentResolver
+            val inputStream = contentResolver.openInputStream(mediaUri)
+                ?: throw IllegalArgumentException("Cannot open mediaUri stream")
+
+            val bytes = inputStream.readBytes()
+            inputStream.close()
+
+            try {
+                val response = supabase.storage.from(Constants.BUCKET_NAME).upload(storagePath, bytes)
+                response.path
+            } catch (e: Exception) {
+                Log.e("ChatManager", "Upload error: ${e.message}")
+                throw e
+            }
+        }
+    }
+
+    /**
+     * Generate a signed URL for a media path, expires in 1 hour.
+     */
+    suspend fun getSignedMediaUrl(mediaPath: String, expiresInSeconds: Int = 3600): String? {
+        try {
+            return supabase.storage.from(Constants.BUCKET_NAME)
+                .createSignedUrl(
+                    mediaPath,
+                    expiresInSeconds.toDuration(DurationUnit.SECONDS)
+                )
+        } catch (e: Exception) {
+            Log.e("ChatManager", "Signed URL error: ${e.message}")
+            return null
+        }
+    }
+
     suspend fun sendMessage(
+        context: Context,
         senderId: String,
         text: String? = null,
         type: String = "text",
@@ -93,12 +146,9 @@ class ChatManager(
         var mediaUrl: String? = null
 
         if (type != "text" && mediaUri != null) {
-            val storageRef = Firebase.storage
-                .reference
-                .child("chat_media/$conversationId/${messageRef.id}")
-
-            val uploadTask = storageRef.putFile(mediaUri).await()
-            mediaUrl = storageRef.downloadUrl.await().toString()
+            val path = "$conversationId/${messageRef.id}"
+            mediaUrl = uploadMediaToSupabase(context, mediaUri, path)
+            Log.d("ChatManager", "Uploaded media to Supabase path: $mediaUrl")
         } else {
             assert(type == "text" && mediaUri == null)
             // why would you have one and not the other??
@@ -109,7 +159,7 @@ class ChatManager(
             senderId = senderId,
             text = text,
             type = type,
-            mediaUrl = mediaUrl,
+            mediaUrl = mediaUrl, // actually mediaPath for Supabase
             timestamp = Timestamp.now()
         )
 
