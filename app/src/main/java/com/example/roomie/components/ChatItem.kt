@@ -10,12 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.google.firebase.Timestamp
 
 @Composable
 fun ChatItem(
     name: String,
     lastMessage: String,
-    time: String,
+    time: Timestamp?,
     onClick: () -> Unit
 ) {
     Card(
@@ -64,7 +65,7 @@ fun ChatItem(
             Spacer(modifier = Modifier.weight(1f))
 
             Text(
-                text = time,
+                text = time?.let { formatTimestamp(it) } ?: "",
                 style = MaterialTheme.typography.labelSmall
             )
         }

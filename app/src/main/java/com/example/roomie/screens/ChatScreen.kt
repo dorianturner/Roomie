@@ -89,7 +89,7 @@ fun ChatScreen(
                 ChatItem(
                     name = title,
                     lastMessage = convo.lastMessage.orEmpty(),
-                    time = convo.lastMessageAt?.toString().orEmpty(),
+                    time = convo.lastMessageAt,
                     onClick = {
                         navController.navigate("chat/${convo.id}/$title")
                     }
