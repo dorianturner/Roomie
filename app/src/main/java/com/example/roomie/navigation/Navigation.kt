@@ -126,7 +126,7 @@ fun RoomieNavHost(
             val chatId = backStackEntry.arguments?.getString("chatId")!!
             val chatName = backStackEntry.arguments?.getString("chatName")!!
             SingleChatScreen(
-                chatRepository = ChatManager(chatId),
+                chatManager = ChatManager(chatId),
                 chatName = chatName,
                 onBack = { navController.popBackStack() }
             )

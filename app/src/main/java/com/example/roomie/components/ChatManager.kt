@@ -1,6 +1,7 @@
 package com.example.roomie.components
 
 import android.net.Uri
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,6 +20,41 @@ class ChatManager(
         .let { col ->
             if (conversationId.isNullOrEmpty()) col.document() else col.document(conversationId!!)
         }
+
+    private val userNameMap: MutableMap<String, String> = mutableMapOf()
+
+    suspend fun initialize() {
+        if (!conversationId.isNullOrEmpty()) {
+            populateUserNameMap()
+        }
+    }
+
+    private suspend fun populateUserNameMap() {
+        val snapshot = convoRef.get().await()
+        val participants = snapshot.get("participants") as? List<*> ?: return
+
+        val ids = participants.filterIsInstance<String>()
+
+        ids.forEach { uid ->
+            if (uid !in userNameMap) {
+                try {
+                    val userSnap = db.collection("users").document(uid).get().await()
+                    val name = userSnap.getString("name")
+                    if (!name.isNullOrEmpty()) {
+                        userNameMap[uid] = name
+                    }
+                } catch (_: Exception) {
+                    // Ignore errors silently
+                }
+            }
+        }
+    }
+
+    fun getUserName(userId: String): String {
+        Log.d("Debug map", "All user names: ${userNameMap.entries.joinToString(", ") { "${it.key}: ${it.value}" }}")
+        return userNameMap[userId] ?: "Unknown"
+    }
+
     // creates new conversationID if one wasn't passed in
 
     suspend fun createConversation(
@@ -40,7 +76,9 @@ class ChatManager(
         val batch = db.batch()
         batch.set(convoRef, conversation)
 
-        // Map conversation for each participant
+        // optional last read behaviour- omitted for now
+
+        /*
         participants.forEach { userId ->
             val userConvoRef = db.collection("users")
                 .document(userId)
@@ -48,8 +86,11 @@ class ChatManager(
                 .document(conversationId!!)
             batch.set(userConvoRef, mapOf("conversationId" to conversationId, "lastReadAt" to Timestamp.now()))
         }
+        */
 
         batch.commit().await()
+
+        populateUserNameMap()
     }
 
     fun listenMessages(onMessagesUpdated: (List<Message>) -> Unit): ListenerRegistration {
@@ -134,6 +175,20 @@ class ChatManager(
         */
 
         batch.commit().await()
+
+        newParticipants.forEach { uid ->
+            if (uid !in userNameMap) {
+                try {
+                    val userSnap = db.collection("users").document(uid).get().await()
+                    val name = userSnap.getString("name")
+                    if (!name.isNullOrEmpty()) {
+                        userNameMap[uid] = name
+                    }
+                } catch (_: Exception) {
+                    // Ignore
+                }
+            }
+        }
     }
 
     suspend fun getConversationTitle(currentUserId: String): String {

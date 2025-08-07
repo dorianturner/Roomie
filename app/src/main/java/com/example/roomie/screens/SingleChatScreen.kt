@@ -24,6 +24,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.roomie.components.ChatManager
 import com.example.roomie.components.Message
+import com.example.roomie.components.MessageItem
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
@@ -43,7 +45,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleChatScreen(
-    chatRepository: ChatManager,
+    chatManager: ChatManager,
     chatName: String, // passed to save recomputing
     onBack: () -> Unit,
     modifier: Modifier = Modifier
@@ -56,9 +58,14 @@ fun SingleChatScreen(
 
     val userID: String? = remember { Firebase.auth.currentUser?.uid }
 
+    LaunchedEffect(chatManager) {
+        chatManager.initialize()
+        // initialises name mapping for current chat
+    }
+
     // Listen for messages
-    DisposableEffect(chatRepository) {
-        val registration = chatRepository.listenMessages { messages ->
+    DisposableEffect(chatManager) {
+        val registration = chatManager.listenMessages { messages ->
             messagesState.clear()
             messagesState.addAll(messages)
         }
@@ -103,9 +110,9 @@ fun SingleChatScreen(
                 contentPadding = PaddingValues(8.dp)
             ) {
                 items(messagesState.reversed()) { msg ->
-                    Text(
-                        text = msg.text ?: "[${msg.type}]",
-                        modifier = Modifier.padding(4.dp)
+                    MessageItem(
+                        msg,
+                        chatManager.getUserName(msg.senderId)
                     )
                 }
             }
@@ -130,14 +137,14 @@ fun SingleChatScreen(
                 IconButton(onClick = {
                     coroutineScope.launch {
                         if (pickedImageUri != null) {
-                            chatRepository.sendMessage(
+                            chatManager.sendMessage(
                                 userID!!,
                                 mediaUri = pickedImageUri,
                                 type = "image"
                             )
                             pickedImageUri = null
                         } else if (inputText.isNotBlank()) {
-                            chatRepository.sendMessage(userID!!, inputText)
+                            chatManager.sendMessage(userID!!, inputText)
                         }
                         inputText = ""
                     }

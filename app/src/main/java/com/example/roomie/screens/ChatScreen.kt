@@ -22,7 +22,6 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,11 +48,6 @@ fun ChatScreen(
                 })
             }
     }
-
-    println(conversations.joinToString { it.participants.firstOrNull().orEmpty() })
-    Log.d("Debug", conversations.joinToString { it.participants.firstOrNull().orEmpty() })
-    Log.d("Debug", currentUserId)
-    Log.d("Debug", conversations.size.toString())
 
     Scaffold(
         topBar = {
