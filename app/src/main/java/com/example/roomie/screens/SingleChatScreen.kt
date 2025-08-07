@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import com.example.roomie.components.ChatManager
 import com.example.roomie.components.Message
 import com.example.roomie.components.MessageItem
+import com.example.roomie.components.getMimeType
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.launch
@@ -50,15 +51,15 @@ fun SingleChatScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val messagesState = remember { mutableStateListOf<Message>() }
     var pickedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     var inputText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
     val userID: String? = remember { Firebase.auth.currentUser?.uid }
     val userNameCache = remember { mutableStateMapOf<String, String>() }
-
-    val context = LocalContext.current
 
     // Listen for messages
     DisposableEffect(chatManager) {
@@ -134,11 +135,28 @@ fun SingleChatScreen(
                 IconButton(onClick = {
                     coroutineScope.launch {
                         if (pickedImageUri != null) {
+                            val mimeType = getMimeType(context, pickedImageUri!!)
+                            if (mimeType == null) {
+                                return@launch
+                            }
+                            val type: String
+                            if (mimeType.startsWith("image")) {
+                                type = "image"
+                            } else if (mimeType.startsWith("video")) {
+                                type = "video"
+                            } else if (mimeType.startsWith("audio")) {
+                                type = "audio"
+                            } else if (mimeType == "application/pdf") {
+                                type = "pdf"
+                            } else {
+                                return@launch
+                            }
+
                             chatManager.sendMessage(
                                 context,
                                 userID!!,
                                 mediaUri = pickedImageUri,
-                                type = "image"
+                                type = type
                             )
                             pickedImageUri = null
                         } else if (inputText.isNotBlank()) {

@@ -10,12 +10,17 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.roomie.components.SupabaseClient.supabase
+import io.ktor.http.ContentType
 import io.github.jan.supabase.storage.storage
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 object Constants {
     const val BUCKET_NAME = "chat-media"
+}
+
+fun getMimeType(context: Context, uri: Uri): String? {
+    return context.contentResolver.getType(uri)
 }
 
 class ChatManager(
@@ -101,8 +106,21 @@ class ChatManager(
             val bytes = inputStream.readBytes()
             inputStream.close()
 
+            val mimeType = getMimeType(context, mediaUri)
+            val typeAndSubtype: Pair<String, String>? = mimeType?.split("/")?.let{
+                    when (it.size) {
+                        2 -> it[0] to it[1]
+                        1 -> it[0] to "*"
+                        else -> null
+                    }
+                }
+
             try {
-                val response = supabase.storage.from(Constants.BUCKET_NAME).upload(storagePath, bytes)
+                val response = supabase.storage.from(Constants.BUCKET_NAME).upload(
+                    storagePath,
+                    bytes) {
+                    contentType = typeAndSubtype?.let { (type, subtype) -> ContentType(type, subtype) }
+                }
                 response.path
             } catch (e: Exception) {
                 Log.e("ChatManager", "Upload error: ${e.message}")
@@ -149,9 +167,6 @@ class ChatManager(
             val path = "$conversationId/${messageRef.id}"
             mediaUrl = uploadMediaToSupabase(context, mediaUri, path)
             Log.d("ChatManager", "Uploaded media to Supabase path: $mediaUrl")
-        } else {
-            assert(type == "text" && mediaUri == null)
-            // why would you have one and not the other??
         }
 
         val message = Message(
