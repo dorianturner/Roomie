@@ -121,7 +121,7 @@ class ChatManager(
                     bytes) {
                     contentType = typeAndSubtype?.let { (type, subtype) -> ContentType(type, subtype) }
                 }
-                response.path
+                storagePath
             } catch (e: Exception) {
                 Log.e("ChatManager", "Upload error: ${e.message}")
                 throw e

@@ -17,12 +17,35 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.foundation.Image
+import coil.compose.AsyncImage
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
+import com.example.roomie.components.SupabaseClient.supabase
+import io.github.jan.supabase.storage.storage
+import kotlin.time.Duration.Companion.seconds
+
+suspend fun getMediaUrlFromSupabase(
+    path: String,
+    bucket: String = "chat-media"
+): String {
+    val bucketRef = supabase.storage.from(bucket)
+
+    return bucketRef.createSignedUrl(path, 120.seconds) // valid for 1 hour
+}
+
+
 
 @Composable
 fun MessageItem(
     message: Message,
     userNameCache: MutableMap<String, String>
 ) {
+    val context = LocalContext.current
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val isCurrentUser = message.senderId == currentUserId
 
@@ -31,6 +54,17 @@ fun MessageItem(
 
     var senderName by remember(message.senderId) {
         mutableStateOf(userNameCache[message.senderId] ?: "Unknown")
+    }
+    var mediaUrl by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(message.id) {
+        val path = message.mediaUrl
+        if (message.mediaUrl == null) return@LaunchedEffect
+        try {
+            mediaUrl = getMediaUrlFromSupabase(path = path)
+        } catch (e: Exception) {
+            Log.e("MessageItem", "Failed to fetch media URL", e)
+        }
     }
 
     LaunchedEffect(message.senderId) {
@@ -76,21 +110,38 @@ fun MessageItem(
                 }
 
                 "image" -> {
-                    Text(
-                        text = "📷 Image: ${message.mediaUrl?.take(40)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                    // Future: Replace with actual image preview
+                    mediaUrl?.let { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "Image message",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 200.dp),
+                            placeholder = painterResource(com.example.roomie.R.drawable.placeholder), // optional
+                            error = painterResource(com.example.roomie.R.drawable.image_error) // optional
+                        )
+                    } ?: Text("Image unavailable", color = MaterialTheme.colorScheme.error)
                 }
 
                 "video" -> {
-                    Text(
-                        text = "📹 Video: ${message.mediaUrl?.take(40)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                    // Future: Replace with actual video player
+                    mediaUrl?.let { url ->
+                        AndroidView(
+                            factory = {
+                                val player = ExoPlayer.Builder(context).build().apply {
+                                    setMediaItem(MediaItem.fromUri(url))
+                                    prepare()
+                                    playWhenReady = false
+                                }
+                                PlayerView(context).apply {
+                                    this.player = player
+                                    useController = true
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp)
+                        )
+                    } ?: Text("Loading video...")
                 }
 
                 "audio" -> {

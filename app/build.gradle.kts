@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     // implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.foundation)
+    implementation(libs.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -83,5 +84,11 @@ dependencies {
     implementation(libs.storage.kt)
     implementation(libs.ktor.client.okhttp)
 
+    // Coil for image loading
+    implementation(libs.coil.compose)
+
+    // ExoPlayer for video playback
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 }
     // https://firebase.google.com/docs/android/setup#available-libraries
