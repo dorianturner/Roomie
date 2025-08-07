@@ -17,7 +17,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
-import androidx.compose.foundation.Image
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -25,20 +24,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.example.roomie.components.SupabaseClient.supabase
-import io.github.jan.supabase.storage.storage
-import kotlin.time.Duration.Companion.seconds
-
-suspend fun getMediaUrlFromSupabase(
-    path: String,
-    bucket: String = "chat-media"
-): String {
-    val bucketRef = supabase.storage.from(bucket)
-
-    return bucketRef.createSignedUrl(path, 120.seconds) // valid for 1 hour
-}
-
-
 
 @Composable
 fun MessageItem(
@@ -54,17 +39,6 @@ fun MessageItem(
 
     var senderName by remember(message.senderId) {
         mutableStateOf(userNameCache[message.senderId] ?: "Unknown")
-    }
-    var mediaUrl by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(message.id) {
-        val path = message.mediaUrl
-        if (message.mediaUrl == null) return@LaunchedEffect
-        try {
-            mediaUrl = getMediaUrlFromSupabase(path = path)
-        } catch (e: Exception) {
-            Log.e("MessageItem", "Failed to fetch media URL", e)
-        }
     }
 
     LaunchedEffect(message.senderId) {
@@ -110,7 +84,7 @@ fun MessageItem(
                 }
 
                 "image" -> {
-                    mediaUrl?.let { url ->
+                    message.mediaUrl?.let { url ->
                         AsyncImage(
                             model = url,
                             contentDescription = "Image message",
@@ -124,7 +98,7 @@ fun MessageItem(
                 }
 
                 "video" -> {
-                    mediaUrl?.let { url ->
+                    message.mediaUrl?.let { url ->
                         AndroidView(
                             factory = {
                                 val player = ExoPlayer.Builder(context).build().apply {

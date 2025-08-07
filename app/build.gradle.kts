@@ -6,8 +6,6 @@ plugins {
     kotlin("plugin.serialization") version "2.0.21"
 }
 
-val supabaseAnonKey = project.findProperty("SUPABASE_ANON_KEY") as String
-
 android {
     namespace = "com.example.roomie"
     compileSdk = 35
@@ -20,7 +18,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseAnonKey}\"")
     }
 
     buildTypes {
@@ -41,7 +38,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 }
 

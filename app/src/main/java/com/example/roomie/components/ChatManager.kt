@@ -9,15 +9,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.example.roomie.components.SupabaseClient.supabase
-import io.ktor.http.ContentType
-import io.github.jan.supabase.storage.storage
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
-
-object Constants {
-    const val BUCKET_NAME = "chat-media"
-}
+import com.google.firebase.storage.FirebaseStorage
 
 fun getMimeType(context: Context, uri: Uri): String? {
     return context.contentResolver.getType(uri)
@@ -93,55 +85,23 @@ class ChatManager(
     /**
      * Upload media to Supabase private bucket and return the relative path.
      */
-    private suspend fun uploadMediaToSupabase(
-        context: Context,
+    private suspend fun uploadMediaToFirebase(
         mediaUri: Uri,
-        storagePath: String
+        messageId: String
     ): String {
         return withContext(Dispatchers.IO) {
-            val contentResolver = context.contentResolver
-            val inputStream = contentResolver.openInputStream(mediaUri)
-                ?: throw IllegalArgumentException("Cannot open mediaUri stream")
-
-            val bytes = inputStream.readBytes()
-            inputStream.close()
-
-            val mimeType = getMimeType(context, mediaUri)
-            val typeAndSubtype: Pair<String, String>? = mimeType?.split("/")?.let{
-                    when (it.size) {
-                        2 -> it[0] to it[1]
-                        1 -> it[0] to "*"
-                        else -> null
-                    }
-                }
-
             try {
-                val response = supabase.storage.from(Constants.BUCKET_NAME).upload(
-                    storagePath,
-                    bytes) {
-                    contentType = typeAndSubtype?.let { (type, subtype) -> ContentType(type, subtype) }
-                }
-                storagePath
+                val storageRef = FirebaseStorage.getInstance().reference
+                    .child("chat-media/$messageId")
+
+                storageRef.putFile(mediaUri).await()
+                val downloadUrl = storageRef.downloadUrl.await().toString()
+                Log.d("ChatManager", "Uploaded media to: $downloadUrl")
+                downloadUrl
             } catch (e: Exception) {
-                Log.e("ChatManager", "Upload error: ${e.message}")
+                Log.e("ChatManager", "Upload failed: ${e.message}")
                 throw e
             }
-        }
-    }
-
-    /**
-     * Generate a signed URL for a media path, expires in 1 hour.
-     */
-    suspend fun getSignedMediaUrl(mediaPath: String, expiresInSeconds: Int = 3600): String? {
-        try {
-            return supabase.storage.from(Constants.BUCKET_NAME)
-                .createSignedUrl(
-                    mediaPath,
-                    expiresInSeconds.toDuration(DurationUnit.SECONDS)
-                )
-        } catch (e: Exception) {
-            Log.e("ChatManager", "Signed URL error: ${e.message}")
-            return null
         }
     }
 
@@ -164,9 +124,8 @@ class ChatManager(
         var mediaUrl: String? = null
 
         if (type != "text" && mediaUri != null) {
-            val path = "$conversationId/${messageRef.id}"
-            mediaUrl = uploadMediaToSupabase(context, mediaUri, path)
-            Log.d("ChatManager", "Uploaded media to Supabase path: $mediaUrl")
+            mediaUrl = uploadMediaToFirebase(mediaUri, messageRef.id)
+            Log.d("ChatManager", "Uploaded media to firebase, link: $mediaUrl")
         }
 
         val message = Message(
@@ -174,7 +133,7 @@ class ChatManager(
             senderId = senderId,
             text = text,
             type = type,
-            mediaUrl = mediaUrl, // actually mediaPath for Supabase
+            mediaUrl = mediaUrl,
             timestamp = Timestamp.now()
         )
 
