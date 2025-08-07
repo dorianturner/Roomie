@@ -63,6 +63,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.navigation:navigation-compose:2.7.2")
+    implementation(libs.material)
+    implementation(libs.androidx.activity.compose.v1101)
+    implementation (libs.androidx.material.icons.extended)
+
+
 
     // Firebase BoM
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))

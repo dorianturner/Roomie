@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun RoomieTopBar(title: String = "Roomie") {
     Surface(
+        color = MaterialTheme.colorScheme.primary,
         modifier = Modifier
             .fillMaxWidth()
             .systemBarsPadding()
@@ -29,7 +30,7 @@ fun RoomieTopBar(title: String = "Roomie") {
                     .align(Alignment.Center)
                     .padding(horizontal = 48.dp),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

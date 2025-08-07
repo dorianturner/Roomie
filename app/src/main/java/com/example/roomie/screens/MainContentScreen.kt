@@ -1,15 +1,25 @@
 package com.example.roomie.screens
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.navigation.Navigator
+import com.example.roomie.components.NavigationBarItem
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -18,13 +28,53 @@ import com.google.firebase.ktx.Firebase
 fun MainContentScreen(
     onEditProfile: () -> Unit, // New callback for editing profile
     onLogout: () -> Unit,
+//    onChats: () -> Unit,
+//    onBookmarks: () -> Unit,
+//    onPropertySearch: () -> Unit,
+//    onOptions: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val iconColor = MaterialTheme.colorScheme.primary
 
+    val navBarItemList = listOf(
+        NavigationBarItem("Chat", Icons.AutoMirrored.Filled.Chat),
+        NavigationBarItem("Bookmarks", Icons.Default.Favorite),
+        NavigationBarItem("Search", Icons.Default.Search),
+        NavigationBarItem("Profile", Icons.Default.Person),
+        NavigationBarItem("Options", Icons.Default.MoreVert)
+    )
+
+    var selectedPage by remember {
+        mutableIntStateOf(0)
+    }
+
     Scaffold(
+        bottomBar = @Composable {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .systemBarsPadding()
+            ) {
+                NavigationBar {
+                    navBarItemList.forEachIndexed { index, navigationItem ->
+                        NavigationBarItem(
+                            selected = selectedPage == index,
+                            onClick = {
+                                selectedPage = index
+                            },
+                            label = {Text(navigationItem.label)},
+                            icon = {
+                                Icon(imageVector = navigationItem.icon, contentDescription = navigationItem.label)
+                            }
+                        )
+                    }
+                }
+            }
+        },
         topBar = @Composable {
             Surface(
+                color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
                     .systemBarsPadding()
@@ -32,7 +82,7 @@ fun MainContentScreen(
                 Box(modifier = Modifier.fillMaxWidth()) {
                     // Centered title
                     Text(
-                        "Roomie",
+                        text = "Roomie",
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(horizontal = 48.dp), // Prevents overlap
@@ -40,7 +90,7 @@ fun MainContentScreen(
                         // Can put in below to give the header it's own colour
                         // color = MaterialTheme.colorScheme.primaryContainer,
                         style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.primary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -109,7 +159,10 @@ fun MainContentScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Welcome to Roomie! You are logged in.")
+            Text(
+                text = "Welcome to Roomie! You are logged in.",
+                color = MaterialTheme.colorScheme.onPrimary
+            )
         }
     }
 }
