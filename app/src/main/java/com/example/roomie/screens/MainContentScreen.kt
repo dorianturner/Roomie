@@ -1,5 +1,6 @@
 package com.example.roomie.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -19,6 +20,7 @@ import com.example.roomie.components.NavigationBarItem
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalConsumer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,10 @@ fun MainContentScreen(
     }
 
     Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.systemBars),
         bottomBar = @Composable {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
@@ -107,60 +113,6 @@ fun MainContentScreen(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-//
-//                    // Right-aligned actions
-//                    Row(
-//                        modifier = Modifier
-//                            .align(Alignment.CenterEnd)
-//                            // Spacing everything here is a bit fiddly might be an easier way to do it
-//                            .padding(end = 0.dp),
-//                        horizontalArrangement = Arrangement.spacedBy(0.dp),
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-//                        // Profile button
-//                        IconButton(
-//                            onClick = onEditProfile,
-//                            // Change this to change the size of the icon
-//                            modifier = Modifier.size(32.dp)
-//                        ) {
-//                            Icon(
-//                                Icons.Default.Person,
-//                                contentDescription = "Edit Profile",
-//                                tint = iconColor,
-//                                modifier = Modifier.size(48.dp)
-//                            )
-//                        }
-//
-//                        // Dropdown menu
-//                        Box(modifier = Modifier.size(48.dp)) {
-//                            IconButton(
-//                                onClick = { showMenu = true },
-//                                modifier = Modifier.size(48.dp)
-//                            ) {
-//                                Icon(
-//                                    Icons.Default.MoreVert,
-//                                    contentDescription = "Menu",
-//                                    tint = iconColor,
-//                                    // Change this to change the size of the icon
-//                                    modifier = Modifier.size(32.dp)
-//                                )
-//                            }
-//                            DropdownMenu(
-//                                expanded = showMenu,
-//                                onDismissRequest = { showMenu = false }
-//                            ) {
-//                                // Can add additional dropdown menu items here
-//                                DropdownMenuItem(
-//                                    text = { Text("Logout") },
-//                                    onClick = {
-//                                        showMenu = false
-//                                        Firebase.auth.signOut()
-//                                        onLogout()
-//                                    }
-//                                )
-//                            }
-//                        }
-//                    }
                 }
             }
         }
