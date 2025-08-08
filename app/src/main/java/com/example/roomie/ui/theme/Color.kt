@@ -2,12 +2,13 @@ package com.example.roomie.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val LightPrimary = Color(0xFFBCB09B)
-val LightOnPrimary = Color(0xFF2F2210)
-val LightSecondary = Color(0xFFA99D8A)
+// Light theme is exactly the same as dark theme, cba to change it
+val LightPrimary = Color(0xFF8b8c58)
+val LightOnPrimary = Color(0xFFF5F0E6)
+val LightSecondary = Color(0xFF7d7f45)
 
-val LightTertiary = Color(0xFF472D04)
-val LightBackground = Color(0xFFF2F5F2)
+val LightTertiary = Color(0xFF999a6c)
+val LightBackground = Color(0xFF121212)
 
 //not updated
 val LightSurface = Color(0xFF282828)
