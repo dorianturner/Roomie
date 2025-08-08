@@ -1,7 +1,9 @@
 package com.example.roomie.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
@@ -21,6 +23,9 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.res.painterResource
+import com.example.roomie.components.RoomieNameLogo
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,8 +33,8 @@ fun MainContentScreen(
     onEditProfile: () -> Unit, // New callback for editing profile
     onLogout: () -> Unit,
 ) {
+
     var showMenu by remember { mutableStateOf(false) }
-    val iconColor = MaterialTheme.colorScheme.primary
 
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
@@ -46,7 +51,7 @@ fun MainContentScreen(
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.systemBars),
         bottomBar = @Composable {
             Surface(
@@ -96,23 +101,42 @@ fun MainContentScreen(
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .systemBarsPadding()
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     // Centered title
-                    Text(
-                        text = "Roomie",
+                    RoomieNameLogo(
                         modifier = Modifier
+                            .width(150.dp)
                             .align(Alignment.Center)
-                            .padding(horizontal = 48.dp, vertical = 12.dp), // Prevents overlap
-
-                        // Can put in below to give the header it's own colour
-                        // color = MaterialTheme.colorScheme.primaryContainer,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
                     )
+                        IconButton(
+                            onClick = { showMenu = true },
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        ) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "Menu",
+                                tint = MaterialTheme.colorScheme.surfaceBright,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            // Can add additional dropdown menu items here
+                            DropdownMenuItem(
+                                text = { Text("Logout") },
+                                onClick = {
+                                    showMenu = false
+                                    Firebase.auth.signOut()
+                                    onLogout()
+                                }
+                            )
+                        }
+
                 }
             }
         }
