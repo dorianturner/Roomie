@@ -1,9 +1,8 @@
 package com.example.roomie.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
@@ -14,16 +13,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.roomie.components.NavigationBarItem
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalConsumer
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpOffset
 import com.example.roomie.components.RoomieNameLogo
 
 
@@ -41,7 +39,6 @@ fun MainContentScreen(
         NavigationBarItem("Bookmarks", Icons.Default.Favorite),
         NavigationBarItem("Search", Icons.Default.Search),
         NavigationBarItem("Profile", Icons.Default.Person),
-        NavigationBarItem("Options", Icons.Default.MoreVert)
     )
 
     var selectedPage by remember {
@@ -111,6 +108,11 @@ fun MainContentScreen(
                             .width(150.dp)
                             .align(Alignment.Center)
                     )
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                    ) {
                         IconButton(
                             onClick = { showMenu = true },
                             modifier = Modifier.align(Alignment.CenterEnd)
@@ -124,11 +126,25 @@ fun MainContentScreen(
                         }
                         DropdownMenu(
                             expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
+                            onDismissRequest = { showMenu = false },
+                            offset = DpOffset(x = (-10).dp, y = 7.dp),
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.secondary)
+                                .clip(RoundedCornerShape(10.dp))
                         ) {
                             // Can add additional dropdown menu items here
                             DropdownMenuItem(
-                                text = { Text("Logout") },
+                                text = {
+                                    Text(
+                                        text = "Log out",
+                                        // Probably should not be hard-coded, can make separate class when new items are added
+                                        modifier = Modifier.padding(horizontal = 5.dp),
+                                        style = TextStyle(
+                                            fontSize = 17.sp,
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    )
+                                       },
                                 onClick = {
                                     showMenu = false
                                     Firebase.auth.signOut()
@@ -136,7 +152,7 @@ fun MainContentScreen(
                                 }
                             )
                         }
-
+                    }
                 }
             }
         }
