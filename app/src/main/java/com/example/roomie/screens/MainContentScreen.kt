@@ -22,6 +22,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
+import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
 
 
@@ -33,6 +34,7 @@ fun MainContentScreen(
 ) {
 
     var showMenu by remember { mutableStateOf(false) }
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
 
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
@@ -102,6 +104,15 @@ fun MainContentScreen(
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    if (showLogoutConfirmation) {
+                        LogoutAlertDialog(
+                            onDismiss = { showLogoutConfirmation = false },
+                            onLogout = {
+                                Firebase.auth.signOut()
+                                onLogout()
+                            }
+                        )
+                    }
                     // Centered title
                     RoomieNameLogo(
                         modifier = Modifier
@@ -130,7 +141,6 @@ fun MainContentScreen(
                             offset = DpOffset(x = (-10).dp, y = 7.dp),
                             modifier = Modifier
                                 .background(MaterialTheme.colorScheme.secondary)
-                                .clip(RoundedCornerShape(10.dp))
                         ) {
                             // Can add additional dropdown menu items here
                             DropdownMenuItem(
@@ -147,8 +157,7 @@ fun MainContentScreen(
                                        },
                                 onClick = {
                                     showMenu = false
-                                    Firebase.auth.signOut()
-                                    onLogout()
+                                    showLogoutConfirmation = true
                                 }
                             )
                         }
