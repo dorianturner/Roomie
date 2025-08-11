@@ -41,7 +41,7 @@ fun MainContentScreen(
         NavigationBarItem("Profile", Icons.Default.Person),
     )
 
-    var selectedPage by remember {
+    var selectedPage = remember {
         mutableIntStateOf(0)
     }
 
@@ -55,16 +55,15 @@ fun MainContentScreen(
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .systemBarsPadding()
             ) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) {
                     navBarItemList.forEachIndexed { index, navigationItem ->
                         NavigationBarItem(
-                            selected = selectedPage == index,
+                            selected = selectedPage.intValue == index,
                             onClick = {
-                                selectedPage = index
+                                selectedPage.intValue = index
                             },
                             label = {
                                 Text(
@@ -164,17 +163,21 @@ fun MainContentScreen(
             }
         }
     ) { innerPadding ->
-        ContentScreen(modifier = Modifier.padding(innerPadding), selectedPage)
+        ContentScreen(
+            modifier = Modifier
+                .padding(paddingValues = innerPadding),
+            selectedIndex = selectedPage)
     }
 }
 
 @Composable
-fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int) {
-    when(selectedIndex){
-        0 -> ChatsScreen()
-        1 -> BookmarksScreen()
-        2 -> PropertySearchScreen()
-        3 -> ProfileEditorScreen(onProfileSaved = {})
-        4 -> OptionsScreen()
+fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : MutableIntState) {
+    when(selectedIndex.intValue){
+        0 -> ChatsScreen(modifier = modifier)
+        1 -> BookmarksScreen(modifier = modifier)
+        2 -> PropertySearchScreen(modifier = modifier)
+        3 -> ProfileScreen(modifier = modifier, selectedIndex)
+        4 -> OptionsScreen(modifier = modifier)
+        5 -> ProfileEditorScreen(onProfileSaved = {})
     }
 }
