@@ -23,7 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import com.example.roomie.ui.theme.Spacing
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
@@ -69,7 +69,7 @@ fun SplashScreen(
             Button(onClick = { showLoginFields = true }) {
                 Text("Login")
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.short))
             Button(onClick = { showCreateAccountFields = true }) {
                 Text("Create Account")
             }
@@ -79,16 +79,16 @@ fun SplashScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.long)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.extraShort))
             TextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.long)
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(Spacing.short))
 
             if (showLoginFields) {
                 Button(onClick = {
@@ -127,7 +127,7 @@ fun SplashScreen(
                     Text("Create Account Now")
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(Spacing.extraShort))
             Button(onClick = {
                 // Reset state to go back to initial splash buttons
                 showLoginFields = false
@@ -159,7 +159,7 @@ fun WaitForEmailVerificationScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.short))
 
         Button(onClick = {
             isChecking = true
@@ -176,7 +176,7 @@ fun WaitForEmailVerificationScreen(
             Text("Click here once verified")
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.extraShort))
 
         Button(onClick = {
             auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { resendTask ->

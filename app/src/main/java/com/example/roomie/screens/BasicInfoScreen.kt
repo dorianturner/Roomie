@@ -17,10 +17,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.components.ProfileTextFieldView
 import com.example.roomie.components.RoomieTopBar
+import com.example.roomie.ui.theme.Spacing
 
 @Composable
 fun BasicInfoScreen(
@@ -47,7 +47,7 @@ fun BasicInfoScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(Spacing.short)
             ) {
                 Text("Next")
             }
@@ -57,12 +57,12 @@ fun BasicInfoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = Spacing.short),
+            verticalArrangement = Arrangement.spacedBy(Spacing.short),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(Spacing.long))
             }
 
             item {
@@ -98,7 +98,7 @@ fun BasicInfoScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(Spacing.short))
             }
         }
     }

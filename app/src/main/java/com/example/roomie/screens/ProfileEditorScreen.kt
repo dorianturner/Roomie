@@ -11,8 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.example.roomie.components.*
+import com.example.roomie.ui.theme.Spacing
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -120,18 +120,18 @@ fun ProfileEditorScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(vertical = 140.dp), // Should not have been hardcoded
+            .padding(vertical = Spacing.massive),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.short))
 
         Text("Complete Your Profile", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Profile type toggle
         Text("I am a:", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.extraShort))
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SegmentedButton(
                 selected = !isLandlord,
@@ -146,7 +146,7 @@ fun ProfileEditorScreen(
             ) { Text("Landlord") }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Common fields
         ProfileTextFieldView(
@@ -156,7 +156,7 @@ fun ProfileEditorScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.short))
 
         ProfileTextFieldView(
             field = bioField.value,
@@ -165,7 +165,7 @@ fun ProfileEditorScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.short))
 
         ProfileTextFieldView(
             field = phoneNumberField.value,
@@ -174,7 +174,7 @@ fun ProfileEditorScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Conditional profile sections
         if (isLandlord) {
@@ -196,7 +196,7 @@ fun ProfileEditorScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(Spacing.long))
 
         // save profile button
         Button(
@@ -268,6 +268,6 @@ fun ProfileEditorScreen(
             Text("Save Profile")
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.short))
     }
 }

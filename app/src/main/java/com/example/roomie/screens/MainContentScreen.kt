@@ -22,6 +22,7 @@ import com.google.firebase.ktx.Firebase
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
+import com.example.roomie.ui.theme.Spacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +78,7 @@ fun MainContentScreen(
                                 Icon(
                                     imageVector = navigationItem.icon,
                                     contentDescription = navigationItem.label,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(Spacing.long)
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
