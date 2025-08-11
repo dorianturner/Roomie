@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
@@ -37,7 +38,8 @@ fun MainContentScreen(
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
         NavigationBarItem("Bookmarks", Icons.Default.Favorite),
-        NavigationBarItem("Search", Icons.Default.Search),
+        NavigationBarItem("Discover", Icons.Default.Search),
+        NavigationBarItem("Search", Icons.AutoMirrored.Filled.List),
         NavigationBarItem("Profile", Icons.Default.Person),
     )
 
@@ -173,8 +175,9 @@ fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int) {
     when(selectedIndex){
         0 -> ChatsScreen()
         1 -> BookmarksScreen()
-        2 -> PropertySearchScreen()
-        3 -> ProfileEditorScreen(onProfileSaved = {})
-        4 -> OptionsScreen()
+        2 -> UserDiscoveryScreen()
+        3 -> PropertySearchScreen()
+        4 -> ProfileEditorScreen(onProfileSaved = {})
+        5 -> OptionsScreen()
     }
 }
