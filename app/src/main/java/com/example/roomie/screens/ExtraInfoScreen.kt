@@ -1,12 +1,10 @@
 package com.example.roomie.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.MutableState
-import com.example.roomie.components.ProfileTextField
-
-import android.widget.Toast
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -23,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.roomie.components.ProfileTextField
 import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.components.ProfileTextFieldView
 import com.example.roomie.components.RoomieTopBar
