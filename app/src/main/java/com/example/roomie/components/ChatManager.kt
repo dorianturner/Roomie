@@ -114,8 +114,9 @@ class ChatManager(
     ) {
         check(conversationId != null) { "Conversation does not exist" }
 
-        val messageRef = db.collection("conversations")
+        val conversationRef = db.collection("conversations")
             .document(conversationId!!)
+        val messageRef = conversationRef
             .collection("messages")
             .document()
 
@@ -128,16 +129,29 @@ class ChatManager(
             Log.d("ChatManager", "Uploaded media to firebase, link: $mediaUrl")
         }
 
+        val now = Timestamp.now()
+
         val message = Message(
             id = messageRef.id,
             senderId = senderId,
             text = text,
             type = type,
             mediaUrl = mediaUrl,
-            timestamp = Timestamp.now()
+            timestamp = now
         )
 
-        messageRef.set(message).await()
+        db.runBatch { batch ->
+            batch.set(messageRef, message)
+
+            batch.update(conversationRef, mapOf(
+                "lastMessage" to when {
+                    type == "text" && !text.isNullOrBlank() -> text
+                    type != "text" && mediaUrl != null -> "[${type.replaceFirstChar {it.uppercase()}}]"
+                    else -> ""
+                },
+                "lastMessageAt" to now
+            ))
+        }.await()
     }
 
     suspend fun addParticipants(newParticipants: List<String>) {
