@@ -47,11 +47,14 @@ fun ChatItem(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column {
+            // Main content column (name + lastMessage)
+            Column(
+                modifier = Modifier.weight(1f) // take all remaining space except date column
+            ) {
                 Text(
                     text = name,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
+                    maxLines = 2, // allow wrapping for long names
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
@@ -62,11 +65,13 @@ fun ChatItem(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
+            // Date on its own column
             Text(
                 text = time?.let { formatTimestamp(it) } ?: "",
-                style = MaterialTheme.typography.labelSmall
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .wrapContentWidth(Alignment.End)
             )
         }
     }
