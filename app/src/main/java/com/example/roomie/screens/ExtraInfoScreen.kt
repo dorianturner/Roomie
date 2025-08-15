@@ -1,12 +1,12 @@
 package com.example.roomie.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.MutableState
 import com.example.roomie.components.ProfileTextField
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -23,10 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.roomie.components.ProfileTextField
 import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.components.ProfileTextFieldView
 import com.example.roomie.components.RoomieTopBar
 import com.example.roomie.components.saveProfile
+import com.example.roomie.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 @Composable
@@ -62,7 +64,7 @@ fun ExtraInfoScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Spacing.short),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(onClick = onBack) { Text("Back") }
@@ -90,11 +92,11 @@ fun ExtraInfoScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = Spacing.short),
+            verticalArrangement = Arrangement.spacedBy(Spacing.short),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item { Spacer(modifier = Modifier.height(24.dp)) }
+            item { Spacer(modifier = Modifier.height(Spacing.medium)) }
 
             if (profileState.isLandlord) {
                 item {
@@ -188,7 +190,7 @@ fun ExtraInfoScreen(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(64.dp)) } // leave room above bottom bar
+            item { Spacer(modifier = Modifier.height(Spacing.extraLong)) } // leave room above bottom bar
         }
     }
 }

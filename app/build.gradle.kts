@@ -55,7 +55,6 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.material3)
     implementation(libs.androidx.foundation.layout)
-    // implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.foundation)
     implementation(libs.ui)
     testImplementation(libs.junit)
@@ -75,10 +74,8 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-
-    // Supabase for cloud storage
-    implementation(libs.storage.kt)
-    implementation(libs.ktor.client.okhttp)
+    implementation(libs.androidx.activity.compose.v1101)
+    implementation(libs.material)
 
     // Coil for image loading
     implementation(libs.coil.compose)
@@ -87,4 +84,3 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
 }
-    // https://firebase.google.com/docs/android/setup#available-libraries

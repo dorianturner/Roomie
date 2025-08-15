@@ -3,6 +3,7 @@ package com.example.roomie
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -11,13 +12,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
-import com.example.roomie.ui.theme.RoomieTheme // Your app's theme
 import com.google.firebase.auth.auth
+import com.example.roomie.ui.theme.RoomieTheme
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.core.view.WindowCompat
 
 class MainActivity : ComponentActivity() {
 
@@ -25,7 +27,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+      
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge()
         // enable caching
         val db = FirebaseFirestore.getInstance()
 
@@ -37,7 +41,7 @@ class MainActivity : ComponentActivity() {
 
         // Initialize Firebase Auth
         auth = Firebase.auth
-
+      
         setContent {
             RoomieTheme {
                 Surface {

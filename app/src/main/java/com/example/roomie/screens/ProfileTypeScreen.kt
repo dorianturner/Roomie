@@ -15,9 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.components.RoomieTopBar
+import com.example.roomie.ui.theme.Spacing
 
 @Composable
 fun ProfileTypeScreen(
@@ -32,7 +32,7 @@ fun ProfileTypeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(Spacing.short),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(onClick = onBack) { Text("Back") }
@@ -44,16 +44,16 @@ fun ProfileTypeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = Spacing.short),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Select Profile Type")
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(Spacing.medium))
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.short)
             ) {
                 Button(
                     onClick = {
