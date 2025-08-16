@@ -3,6 +3,7 @@ package com.example.roomie.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
@@ -14,11 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
@@ -28,6 +30,7 @@ import com.example.roomie.ui.theme.Spacing
 @Composable
 fun MainContentScreen(
     onEditProfile: () -> Unit, // New callback for editing profile
+    onNavigateToChat: ()-> Unit,
     onLogout: () -> Unit,
 ) {
 
@@ -161,6 +164,24 @@ fun MainContentScreen(
                         }
                     }
                 }
+
+                // The chat button
+                Box(modifier = Modifier.fillMaxSize()) {
+                    IconButton(
+                        onClick = onNavigateToChat,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(vertical = 20.dp, horizontal = 20.dp),
+                    ) {
+                        Icon(
+                            // will need to dig around for a better icon
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Chat",
+                            tint = iconColor,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+                }
             }
         }
     ) { innerPadding ->
@@ -177,4 +198,5 @@ fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int) {
         3 -> ProfileEditorScreen(onProfileSaved = {})
         4 -> OptionsScreen()
     }
+
 }
