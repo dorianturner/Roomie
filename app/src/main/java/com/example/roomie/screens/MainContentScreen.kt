@@ -69,12 +69,14 @@ fun MainContentScreen(
         4 to { childNavController.navigate("options") },
     )
 
+    // To indicate which icon to highlight at the navBar
     val selectedPage = when (currentRoute) {
         "chats" -> 0
         "bookmarks" -> 1
         "search" -> 2
         "profile" -> 3
         "options" -> 4
+        "profile_editor" -> 3
         else -> 0
     }
 
