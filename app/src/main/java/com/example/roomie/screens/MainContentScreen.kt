@@ -1,5 +1,6 @@
 package com.example.roomie.screens
 
+import android.provider.ContactsContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
@@ -33,6 +35,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.roomie.components.ChatManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -208,7 +212,11 @@ fun MainContentScreen(
             ) {
                 composable("chats") {
                     ChatsScreen(
-                        onBack = {},
+                        onBack = {
+                            childNavController.navigate("chats") {
+                                popUpTo("chats") { inclusive = true }
+                            }
+                        },
                         navController = childNavController
                     )
                 }
@@ -219,10 +227,28 @@ fun MainContentScreen(
                     PropertySearchScreen()
                 }
                 composable("profile") {
-                    ProfileEditorScreen(onProfileSaved = {})
+                    ProfileScreen(navController = childNavController)
                 }
                 composable("options") {
                     OptionsScreen()
+                }
+                composable("profile_editor") {
+                    ProfileEditorScreen(onProfileSaved = {})
+                }
+                composable(
+                    "chat/{chatId}/{chatName}",
+                    arguments = listOf(
+                        navArgument("chatId") { type = NavType.StringType },
+                        navArgument("chatName") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val chatId = backStackEntry.arguments?.getString("chatId")!!
+                    val chatName = backStackEntry.arguments?.getString("chatName")!!
+                    SingleChatScreen(
+                        chatManager = ChatManager(chatId),
+                        chatName = chatName,
+                        onBack = { childNavController.popBackStack() }
+                    )
                 }
             }
         }

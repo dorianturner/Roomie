@@ -1,5 +1,6 @@
 package com.example.roomie.screens
 
+import androidx.compose.foundation.background
 import com.example.roomie.components.ChatItem
 
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.graphics.Color
 
 import com.example.roomie.components.ChatManager
 import com.example.roomie.components.Conversation
@@ -53,22 +55,15 @@ fun ChatsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Messages") },
-                navigationIcon = {
-                    // needs to be updated with correct route
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
             )
         }
     ) { innerPadding ->
         LazyColumn (
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                // Temporarily red so i can see whats going on
+                .background(color = Color.Red),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

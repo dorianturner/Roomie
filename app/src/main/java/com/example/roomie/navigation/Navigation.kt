@@ -105,32 +105,6 @@ fun RoomieNavHost(
                 }
             )
         }
-        composable(Routes.CHAT_SCREEN) {
-            // to be updated with further navigation
-            ChatsScreen(
-                navController = navController,
-                onBack = {
-                    navController.navigate(Routes.MAIN_CONTENT) {
-                        popUpTo(Routes.MAIN_CONTENT) { inclusive = true }
-                    }
-                }
-            )
-        }
-        composable(
-            "chat/{chatId}/{chatName}",
-            arguments = listOf(
-                navArgument("chatId") { type = NavType.StringType },
-                navArgument("chatName") { type = NavType.StringType }
-            )
-        ) { backStackEntry ->
-            val chatId = backStackEntry.arguments?.getString("chatId")!!
-            val chatName = backStackEntry.arguments?.getString("chatName")!!
-            SingleChatScreen(
-                chatManager = ChatManager(chatId),
-                chatName = chatName,
-                onBack = { navController.popBackStack() }
-            )
-        }
     }
 }
 
