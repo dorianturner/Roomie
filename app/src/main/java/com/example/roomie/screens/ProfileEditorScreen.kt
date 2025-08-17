@@ -29,16 +29,6 @@ fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
     return isValid
 }
 
-fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
-    var isValid = true
-    fields.forEach {
-        if (!it.value.validate()) {
-            isValid = false
-        }
-    }
-    return isValid
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileEditorScreen(

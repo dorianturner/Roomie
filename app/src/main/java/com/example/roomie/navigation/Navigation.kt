@@ -13,7 +13,7 @@ import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.screens.BasicInfoScreen
 import com.example.roomie.screens.ExtraInfoScreen
 import com.example.roomie.screens.MainContentScreen
-import com.example.roomie.screens.ChatScreen
+import com.example.roomie.screens.ChatsScreen
 import com.example.roomie.screens.ProfileEditorScreen
 import com.example.roomie.screens.ProfileTypeScreen
 import com.example.roomie.screens.SingleChatScreen
@@ -88,7 +88,7 @@ fun RoomieNavHost(
                         popUpTo("chatScreen") { inclusive = true }
                     }
                 },
-                    onLogout = {
+                onLogout = {
                     Firebase.auth.signOut()
                     navController.navigate(Routes.SPLASH_SCREEN) {
                         popUpTo("mainContent") { inclusive = true }
@@ -107,7 +107,7 @@ fun RoomieNavHost(
         }
         composable(Routes.CHAT_SCREEN) {
             // to be updated with further navigation
-            ChatScreen(
+            ChatsScreen(
                 navController = navController,
                 onBack = {
                     navController.navigate(Routes.MAIN_CONTENT) {
@@ -128,38 +128,6 @@ fun RoomieNavHost(
             SingleChatScreen(
                 chatManager = ChatManager(chatId),
                 chatName = chatName,
-                onBack = { navController.popBackStack() }
-            )
-        }
-    }
-}
-
-@Composable
-fun OnboardingFlow(
-    onFinish: () -> Unit,
-) {
-    val profileState = remember { mutableStateOf(OnboardingProfileState()) }
-    val navController = rememberNavController()
-
-    NavHost(navController = navController, startDestination = Routes.BASIC_INFO) {
-        composable(Routes.BASIC_INFO) {
-            BasicInfoScreen(
-                profileState = profileState.value,
-                onNext = { navController.navigate(Routes.PROFILE_TYPE) }
-            )
-        }
-        composable(Routes.PROFILE_TYPE) {
-            ProfileTypeScreen(
-                profileState = profileState.value,
-                onProfileStateChange = { newState: OnboardingProfileState -> profileState.value = newState },
-                onNext = { navController.navigate(Routes.EXTRA_INFO) },
-                onBack = { navController.popBackStack() }
-            )
-        }
-        composable(Routes.EXTRA_INFO) {
-            ExtraInfoScreen(
-                profileState = profileState.value,
-                onFinish = onFinish,
                 onBack = { navController.popBackStack() }
             )
         }

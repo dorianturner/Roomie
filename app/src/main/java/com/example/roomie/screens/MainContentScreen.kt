@@ -21,10 +21,18 @@ import com.google.firebase.auth.auth
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
+import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.Spacing
+
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,8 +42,13 @@ fun MainContentScreen(
     onLogout: () -> Unit,
 ) {
 
+    val childNavController = rememberNavController()
     var showMenu by remember { mutableStateOf(false) }
     var showLogoutConfirmation by remember { mutableStateOf(false) }
+
+    val navBackStackEntry by childNavController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
 
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
@@ -44,8 +57,21 @@ fun MainContentScreen(
         NavigationBarItem("Profile", Icons.Default.Person),
     )
 
-    var selectedPage by remember {
-        mutableIntStateOf(0)
+    val navigationMap: Map<Int, () -> Unit> = mapOf(
+        0 to { childNavController.navigate("chats") },
+        1 to { childNavController.navigate("bookmarks") },
+        2 to { childNavController.navigate("search") },
+        3 to { childNavController.navigate("profile") },
+        4 to { childNavController.navigate("options") },
+    )
+
+    val selectedPage = when (currentRoute) {
+        "chats" -> 0
+        "bookmarks" -> 1
+        "search" -> 2
+        "profile" -> 3
+        "options" -> 4
+        else -> 0
     }
 
     Scaffold(
@@ -67,7 +93,9 @@ fun MainContentScreen(
                         NavigationBarItem(
                             selected = selectedPage == index,
                             onClick = {
-                                selectedPage = index
+                                navigationMap[index]?.invoke() ?: run {
+                                    childNavController.navigate("chats")
+                                }
                             },
                             label = {
                                 Text(
@@ -164,39 +192,39 @@ fun MainContentScreen(
                         }
                     }
                 }
-
-                // The chat button
-                Box(modifier = Modifier.fillMaxSize()) {
-                    IconButton(
-                        onClick = onNavigateToChat,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(vertical = 20.dp, horizontal = 20.dp),
-                    ) {
-                        Icon(
-                            // will need to dig around for a better icon
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Chat",
-                            tint = iconColor,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-                }
             }
         }
     ) { innerPadding ->
-        ContentScreen(modifier = Modifier.padding(innerPadding), selectedPage)
+        Box(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            NavHost(
+                navController = childNavController,
+                startDestination = "chats",
+                modifier = Modifier
+            ) {
+                composable("chats") {
+                    ChatsScreen(
+                        onBack = {},
+                        navController = childNavController
+                    )
+                }
+                composable("bookmarks") {
+                    BookmarksScreen()
+                }
+                composable("search") {
+                    PropertySearchScreen()
+                }
+                composable("profile") {
+                    ProfileEditorScreen(onProfileSaved = {})
+                }
+                composable("options") {
+                    OptionsScreen()
+                }
+            }
+        }
     }
-}
-
-@Composable
-fun ContentScreen(modifier: Modifier = Modifier, selectedIndex : Int) {
-    when(selectedIndex){
-        0 -> ChatsScreen()
-        1 -> BookmarksScreen()
-        2 -> PropertySearchScreen()
-        3 -> ProfileEditorScreen(onProfileSaved = {})
-        4 -> OptionsScreen()
-    }
-
 }

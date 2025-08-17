@@ -25,7 +25,7 @@ import com.google.firebase.firestore.Query
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(
+fun ChatsScreen(
     onBack: () -> Unit, // callback to return to main content screen
     navController: NavController
 ) {
