@@ -1,14 +1,12 @@
 package com.example.roomie.screens
 
-import android.provider.ContactsContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -23,13 +21,10 @@ import com.google.firebase.auth.auth
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
-import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.Spacing
 
 import androidx.navigation.compose.NavHost
@@ -58,27 +53,27 @@ fun MainContentScreen(
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
         NavigationBarItem("Bookmarks", Icons.Default.Favorite),
-        NavigationBarItem("Discover", Icons.Default.Search),
-        NavigationBarItem("Search", Icons.AutoMirrored.Filled.List),
+        NavigationBarItem("Discover", Icons.Default.People),
+        NavigationBarItem("Search", Icons.Default.Search),
         NavigationBarItem("Profile", Icons.Default.Person),
     )
 
     val navigationMap: Map<Int, () -> Unit> = mapOf(
         0 to { childNavController.navigate("chats") },
         1 to { childNavController.navigate("bookmarks") },
-        2 to { childNavController.navigate("search") },
-        3 to { childNavController.navigate("profile") },
-        4 to { childNavController.navigate("options") },
+        2 to { childNavController.navigate("discover") },
+        3 to { childNavController.navigate("search") },
+        4 to { childNavController.navigate("profile") },
     )
 
     // To indicate which icon to highlight at the navBar
     val selectedPage = when (currentRoute) {
         "chats" -> 0
         "bookmarks" -> 1
-        "search" -> 2
-        "profile" -> 3
-        "options" -> 4
-        "profile_editor" -> 3
+        "discover" -> 2
+        "search" -> 3
+        "profile" -> 4
+        "profile_editor" -> 4
         else -> 0
     }
 
@@ -226,6 +221,9 @@ fun MainContentScreen(
                 }
                 composable("bookmarks") {
                     BookmarksScreen()
+                }
+                composable("discover") {
+                    UserDiscoveryScreen()
                 }
                 composable("search") {
                     PropertySearchScreen()
