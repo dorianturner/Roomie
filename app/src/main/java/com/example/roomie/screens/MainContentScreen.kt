@@ -223,7 +223,7 @@ fun MainContentScreen(
                     BookmarksScreen()
                 }
                 composable("discover") {
-                    UserDiscoveryScreen()
+                    UserDiscoveryScreen(childNavController)
                 }
                 composable("search") {
                     PropertySearchScreen()
