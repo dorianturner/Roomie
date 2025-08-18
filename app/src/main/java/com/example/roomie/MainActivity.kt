@@ -9,14 +9,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
+import com.google.firebase.auth.auth
 import com.example.roomie.ui.theme.RoomieTheme
-import com.google.firebase.firestore.ktx.firestore
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.google.firebase.firestore.*
+import com.google.firebase.firestore.FirebaseFirestore
 import androidx.core.view.WindowCompat
 
 class MainActivity : ComponentActivity() {
@@ -25,13 +27,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+      
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
+        // enable caching
+        val db = FirebaseFirestore.getInstance()
+
+        val settings = firestoreSettings {
+            setLocalCacheSettings(memoryCacheSettings {}) // Optional: Enable memory cache
+            setLocalCacheSettings(persistentCacheSettings {})
+        }
+        db.firestoreSettings = settings
 
         // Initialize Firebase Auth
         auth = Firebase.auth
-
+      
         setContent {
             RoomieTheme {
                 Surface {

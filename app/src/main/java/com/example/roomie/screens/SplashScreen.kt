@@ -24,11 +24,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.example.roomie.ui.theme.Spacing
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
-
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
 
 /**
  * This Composable represents the initial splash/authentication screen where users can log in or create an account.

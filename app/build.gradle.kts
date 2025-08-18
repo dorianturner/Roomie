@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -41,7 +42,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.material3)
     implementation(libs.androidx.foundation.layout)
+    implementation(libs.androidx.foundation)
     implementation(libs.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -63,18 +64,23 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("androidx.navigation:navigation-compose:2.7.2")
-    implementation(libs.material)
-    implementation(libs.androidx.activity.compose.v1101)
-    implementation (libs.androidx.material.icons.extended)
-
-
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.material.icons.extended)
 
     // Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.android.gms:play-services-auth:21.3.0")
-    implementation("com.google.firebase:firebase-firestore")
-    // https://firebase.google.com/docs/android/setup#available-libraries
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.firebase.storage)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.androidx.activity.compose.v1101)
+    implementation(libs.material)
+
+    // Coil for image loading
+    implementation(libs.coil.compose)
+
+    // ExoPlayer for video playback
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
 }
