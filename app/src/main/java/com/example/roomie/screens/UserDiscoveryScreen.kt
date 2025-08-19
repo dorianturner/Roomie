@@ -35,6 +35,7 @@ fun UserDiscoveryScreen(
 ) {
     var matches by remember { mutableStateOf<List<StudentProfile>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var currentIndex by remember { mutableStateOf(0) }
     val matchingService = MatchingService
     val coroutineScope = rememberCoroutineScope()
     val db = FirebaseFirestore.getInstance()
@@ -73,20 +74,17 @@ fun UserDiscoveryScreen(
                 Text("No matches found")
             }
             else -> {
-                // SHOW ONLY THE FIRST MATCH (if any)
-                val first = matches!!.firstOrNull()
-                if (first != null) {
-                    MatchCard(first)
+                val currentProfile = matches!!.getOrNull(currentIndex)
+                if (currentProfile != null) {
+                    MatchCard(currentProfile)
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // push button to bottom
                     Spacer(modifier = Modifier.weight(1f))
 
                     // Button: open/create 1:1 chat and navigate to chat page
                     Button(
                         onClick = {
-                            // create or find convo then navigate
                             coroutineScope.launch {
                                 try {
                                     if (currentUserId == null) {
@@ -94,10 +92,8 @@ fun UserDiscoveryScreen(
                                         return@launch
                                     }
 
-                                    // NOTE: change `studentId` if your StudentProfile uses a different field name
-                                    val otherUserId = first.id
+                                    val otherUserId = currentProfile.id
 
-                                    // Try to find existing conversation involving both users (client-side filter)
                                     val snapshot = db.collection("conversations")
                                         .whereArrayContains("participants", currentUserId)
                                         .get()
@@ -111,14 +107,15 @@ fun UserDiscoveryScreen(
                                     val conversationId = if (existingDoc != null) {
                                         existingDoc.id
                                     } else {
-                                        // create new conversation
                                         val chatManager = ChatManager()
-                                        chatManager.createConversation(listOf(currentUserId, otherUserId), isGroup = false)
+                                        chatManager.createConversation(
+                                            listOf(currentUserId, otherUserId),
+                                            isGroup = false
+                                        )
                                         checkNotNull(chatManager.conversationId)
                                     }
 
-                                    // Navigate to chat screen; encode the display name safely
-                                    val chatTitle = Uri.encode(first.name)
+                                    val chatTitle = Uri.encode(currentProfile.name)
                                     navController.navigate("chat/$conversationId/$chatTitle")
                                 } catch (e: Exception) {
                                     Log.e("UserDiscovery", "Failed to open/create chat: ${e.message}", e)
@@ -127,15 +124,37 @@ fun UserDiscoveryScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp)
+                            .padding(vertical = 2.dp)
                     ) {
                         Text("Message this user")
                     }
+
+                    // Button to go to next profile
+                    Button(
+                        onClick = {
+                            if (currentIndex < matches!!.lastIndex) {
+                                currentIndex++
+                            } else {
+                                errorMessage = "All users have been explored"
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text("Next Profile")
+                    }
+                } else {
+                    Text("All users have been explored")
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun MatchCard(profile: StudentProfile) {
