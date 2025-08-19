@@ -185,7 +185,6 @@ fun UserDiscoveryScreen(
                 onSave = {
                     weights = it
                     showFilterDialog = false
-                    // TODO: trigger re-ranking here with MatchingService using weights
                 }
             )
         }
