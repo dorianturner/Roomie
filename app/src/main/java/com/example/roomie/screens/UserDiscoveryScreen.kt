@@ -27,6 +27,17 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
+import com.example.roomie.components.PreferenceWeights
+
+// String descriptions for each of the weights
+private val weightLabels = arrayOf(
+    "Indifferent",     // 0
+    "Nice-to-have",    // 1
+    "Slightly want",   // 2
+    "Moderately want", // 3
+    "Want a lot",      // 4
+    "Must-have"        // 5
+)
 
 @Composable
 fun UserDiscoveryScreen(
@@ -36,14 +47,20 @@ fun UserDiscoveryScreen(
     var matches by remember { mutableStateOf<List<StudentProfile>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var currentIndex by remember { mutableStateOf(0) }
+    var weights by remember { mutableStateOf(PreferenceWeights()) }
+    var showFilterDialog by remember { mutableStateOf(false) }
+
     val matchingService = MatchingService
     val coroutineScope = rememberCoroutineScope()
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid
 
-    LaunchedEffect(Unit) {
+    // will reload every time weights change
+    LaunchedEffect(weights) {
         try {
-            matches = matchingService.findMatchesForCurrentUser()
+            errorMessage = null
+            matches = matchingService.findMatchesForCurrentUser(weights)
+            currentIndex = 0 // reset back to first profile when reranking
         } catch (e: Exception) {
             errorMessage = e.message ?: "Unknown error"
             Log.e("UserDiscoveryScreen", "Error fetching matches", e)
@@ -60,6 +77,14 @@ fun UserDiscoveryScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("User Discovery", style = MaterialTheme.typography.headlineMedium)
+
+        Button(
+            onClick = { showFilterDialog = true },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+        ) {
+            Text("Adjust Match Preferences")
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -152,6 +177,18 @@ fun UserDiscoveryScreen(
                 }
             }
         }
+
+        if (showFilterDialog) {
+            FilterDialog(
+                current = weights,
+                onDismiss = { showFilterDialog = false },
+                onSave = {
+                    weights = it
+                    showFilterDialog = false
+                    // TODO: trigger re-ranking here with MatchingService using weights
+                }
+            )
+        }
     }
 }
 
@@ -215,3 +252,60 @@ fun ProfileChip(icon: ImageVector, text: String) {
         }
     }
 }
+
+@Composable
+fun FilterDialog(
+    current: PreferenceWeights,
+    onDismiss: () -> Unit,
+    onSave: (PreferenceWeights) -> Unit
+) {
+    var localWeights by remember { mutableStateOf(current) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            Button(onClick = { onSave(localWeights) }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        title = { Text("Set Match Importance") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                WeightSlider("University", localWeights.university) {
+                    localWeights = localWeights.copy(university = it)
+                }
+                WeightSlider("Budget", localWeights.budget) {
+                    localWeights = localWeights.copy(budget = it)
+                }
+                WeightSlider("Commute", localWeights.commute) {
+                    localWeights = localWeights.copy(commute = it)
+                }
+                WeightSlider("Group Size", localWeights.groupSize) {
+                    localWeights = localWeights.copy(groupSize = it)
+                }
+                WeightSlider("Preferences", localWeights.preferences) {
+                    localWeights = localWeights.copy(preferences = it)
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun WeightSlider(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    Column {
+        Text("$label: ${weightLabels[value]}")
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = 0f..5f,
+            steps = 4 // gives 0..5 discrete
+        )
+    }
+}
+

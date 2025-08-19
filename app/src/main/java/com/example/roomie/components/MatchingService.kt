@@ -1,10 +1,10 @@
 package com.example.roomie.components
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-
 
 // maybe not needed, but kind of useful (we should really refactor user profiles)
 data class StudentProfile(
@@ -24,11 +24,13 @@ object MatchingService {
     private val db = FirebaseFirestore.getInstance()
 
     // Public API
-    suspend fun findMatchesForCurrentUser(): List<StudentProfile> {
+    suspend fun findMatchesForCurrentUser(
+        weights: PreferenceWeights
+    ): List<StudentProfile> {
         val uid = auth.currentUser?.uid ?: return emptyList()
         val current = getUserProfile(uid) ?: return emptyList()
         return when (current.profileType) {
-            "student" -> findStudentMatches(current)
+            "student" -> findStudentMatches(current, weights)
             else -> emptyList()
         }
     }
@@ -41,37 +43,102 @@ object MatchingService {
 
     // Firestore for broad filters
     // Firestore allows only one range filter per query for some fkn reason
-    private suspend fun queryBroadMatches(current: StudentProfile): List<StudentProfile> {
-        val snapshot = db.collection("users")
-            .whereEqualTo("profileType", "student")
-            .whereEqualTo("studentUniversity", current.studentUniversity)
-            .whereLessThanOrEqualTo("studentMaxCommute", current.studentMaxCommute)
-            .get()
-            .await()
+    private suspend fun queryBroadMatches(
+        current: StudentProfile,
+        weights: PreferenceWeights
+    ): List<StudentProfile> {
+        // TODO: ADD hard filtering based on the other person having maximum group size >= your current group size + 1
 
+        var query = db.collection("users")
+            .whereEqualTo("profileType", "student")
+
+        // If "University" is must-have (weight == 5), enforce in Firestore
+        if (weights.university == 5) {
+            query = query.whereEqualTo("studentUniversity", current.studentUniversity)
+        }
+
+        // If "Commute" is must-have, enforce in Firestore
+        if (weights.commute == 5) {
+            query = query.whereLessThanOrEqualTo("studentMaxCommute", current.studentMaxCommute)
+        }
+
+        // If "Budget" is must-have, enforce in Firestore
+        if (weights.budget == 5) {
+            query = query.whereLessThanOrEqualTo("studentMaxBudget", current.studentMaxBudget)
+        }
+
+        val snapshot = query.get().await()
         return snapshot.documents.mapNotNull { docToStudentProfileSafe(it) }
     }
 
+
     // in-memory filters
-    private fun refineMatches(current: StudentProfile, candidates: List<StudentProfile>): List<StudentProfile> {
-        val minA = current.studentDesiredGroupSize.getOrNull(0) ?: 0
-        val maxA = current.studentDesiredGroupSize.getOrNull(1) ?: 0
-        val maxBudgetAllowed = current.studentMaxBudget
+    private fun refineMatches(current: StudentProfile, candidates: List<StudentProfile>, weights: PreferenceWeights): List<StudentProfile> {
+        Log.d("MatchingService", "Refining matches for ${current.name}")
+        Log.d("MatchingService", "All current candidates: ${candidates.joinToString(", ") { it.name }}")
 
-        return candidates.filter { other ->
-            if (other.id == current.id) return@filter false
-            if (other.studentMaxBudget > maxBudgetAllowed) return@filter false
-
-            val minB = other.studentDesiredGroupSize.getOrNull(0) ?: 0
-            val maxB = other.studentDesiredGroupSize.getOrNull(1) ?: Int.MAX_VALUE
-            minA >= minB && maxA <= maxB
+        (candidates + current).forEach {
+            Log.d("MatchingService", "For ${it.name}: minA=${it.studentDesiredGroupSize.getOrNull(0) ?: 0}, maxA=${it.studentDesiredGroupSize.getOrNull(1) ?: 0}, maxBudgetAllowed=${it.studentMaxBudget}")
         }
+
+        val candidatesRanked = candidates.filter{ it.id != current.id }.map { it to computeRelevancyScore(current, it, weights) }
+            .sortedByDescending { it.second }
+
+        candidatesRanked.forEach {
+            Log.d("MatchingService", "For ${it.first.name}: score=${it.second}")
+        }
+
+        return candidatesRanked.map { it.first }
     }
 
+    private fun computeRelevancyScore(
+        current: StudentProfile,
+        other: StudentProfile,
+        weights: PreferenceWeights
+    ): Double {
+        var score = 0.0
+        var totalWeight = 0.0
 
-    private suspend fun findStudentMatches(current: StudentProfile): List<StudentProfile> {
-        val broad = queryBroadMatches(current)
-        return refineMatches(current, broad)
+        // University match: exact or not
+        val uniScore = if (current.studentUniversity == other.studentUniversity) 1.0 else 0.0
+        score += uniScore * weights.university
+        totalWeight += weights.university
+
+        // Budget: penalize if over budget, else closer is better
+        val budgetDiff = (other.studentMaxBudget - current.studentMaxBudget).coerceAtLeast(0)
+        val budgetScore = if (budgetDiff == 0) 1.0 else 1.0 / (1 + (budgetDiff.toDouble() / 10))
+        score += budgetScore * weights.budget
+        totalWeight += weights.budget
+
+        // Commute: closer is better, but allow outside range with lower score
+        val commuteDiff = (other.studentMaxCommute - current.studentMaxCommute).coerceAtLeast(0)
+        val commuteScore = if (commuteDiff <= 0) 1.0 else 1.0 / (1 + (commuteDiff.toDouble() / 2))
+        score += commuteScore * weights.commute
+        totalWeight += weights.commute
+
+        // Group size overlap: Jaccard-like similarity
+        val (minA, maxA) = current.studentDesiredGroupSize
+        val (minB, maxB) = other.studentDesiredGroupSize
+        val overlap = (minA..maxA).intersect(minB..maxB)
+        val groupScore = if (overlap.isNotEmpty()) 1.0 else 0.5 // partial credit
+        score += groupScore * weights.groupSize
+        totalWeight += weights.groupSize
+
+        // Basic preferences (strings): overlap ratio
+        // want to have some more robust algo for this
+        val commonPrefs = current.studentBasicPreferences.intersect(other.studentBasicPreferences.toSet()).size
+        val prefScore = if (current.studentBasicPreferences.isNotEmpty()) {
+            commonPrefs.toDouble() / current.studentBasicPreferences.size
+        } else 0.0
+        score += prefScore * weights.preferences
+        totalWeight += weights.preferences
+
+        return if (totalWeight > 0) score / totalWeight else 0.0
+    }
+
+    private suspend fun findStudentMatches(current: StudentProfile, weights: PreferenceWeights): List<StudentProfile> {
+        val broad = queryBroadMatches(current, weights)
+        return refineMatches(current, broad, weights)
     }
 
     // to avoid toObject() type errors
