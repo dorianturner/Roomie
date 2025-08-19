@@ -118,7 +118,7 @@ fun UserDiscoveryScreen(
                                     }
 
                                     // Navigate to chat screen; encode the display name safely
-                                    val chatTitle = Uri.encode(first.studentUniversity)
+                                    val chatTitle = Uri.encode(first.name)
                                     navController.navigate("chat/$conversationId/$chatTitle")
                                 } catch (e: Exception) {
                                     Log.e("UserDiscovery", "Failed to open/create chat: ${e.message}", e)
