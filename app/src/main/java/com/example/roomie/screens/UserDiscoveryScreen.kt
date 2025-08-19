@@ -3,11 +3,20 @@ package com.example.roomie.screens
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Commute
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.roomie.components.StudentProfile
@@ -136,11 +145,54 @@ fun MatchCard(profile: StudentProfile) {
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("University: ${profile.studentUniversity}", style = MaterialTheme.typography.bodyLarge)
-            Text("Preferences: ${profile.studentBasicPreferences.joinToString(", ")}", style = MaterialTheme.typography.bodyMedium)
-            Text("Desired Group Size: ${profile.studentDesiredGroupSize.joinToString(" - ")}", style = MaterialTheme.typography.bodyMedium)
-            Text("Max Commute: ${profile.studentMaxCommute} mins", style = MaterialTheme.typography.bodyMedium)
-            Text("Max Budget: $${profile.studentMaxBudget}", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = profile.name,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(bottom = 12.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ProfileChip(Icons.Default.School, profile.studentUniversity)
+                ProfileChip(Icons.Default.Group, "Group Size: ${profile.studentDesiredGroupSize.joinToString(" - ")}")
+                ProfileChip(Icons.Default.Commute, "${profile.studentMaxCommute} mins")
+                ProfileChip(Icons.Default.AttachMoney, "$${profile.studentMaxBudget}")
+            }
+
+            Text(
+                text = "Bio: ${profile.bio}",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(top = 12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ProfileChip(icon: ImageVector, text: String) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp).padding(end = 6.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

@@ -9,6 +9,8 @@ import kotlinx.coroutines.tasks.await
 // maybe not needed, but kind of useful (we should really refactor user profiles)
 data class StudentProfile(
     val id: String = "",
+    val name: String = "",
+    val bio: String = "",
     val profileType: String = "student",
     val studentUniversity: String = "",
     val studentBasicPreferences: List<String> = emptyList(),
@@ -95,6 +97,8 @@ object MatchingService {
 
         return StudentProfile(
             id = doc.id,
+            name = anyToString(d["name"]).ifEmpty { "Unknown Name" },
+            bio = anyToString(d["bio"]).ifEmpty { "This user is a mystery . . ." },
             profileType = anyToString(d["profileType"]).ifEmpty { "student" },
             studentUniversity = anyToString(d["studentUniversity"]),
             studentBasicPreferences = anyToStringList(d["studentBasicPreferences"]),
