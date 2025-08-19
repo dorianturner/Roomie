@@ -12,6 +12,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 
 // Simple reusable field model
 class ProfileTextField(
@@ -39,7 +40,8 @@ class ProfileTextField(
 @Composable
 fun ProfileTextFieldView(
     field: ProfileTextField,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     TextField(
         value = field.value,
@@ -49,7 +51,7 @@ fun ProfileTextFieldView(
                 if (!field.required) "${field.label} (optional)" else field.label
             )
         },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
@@ -128,18 +130,27 @@ fun StudentProfileSection(
                     if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
                         groupSizeMinField.value.value = newValue
                     }
-                }
+                },
+                modifier = Modifier.weight(1f) // let it take half width
             )
-            Text("-", modifier = Modifier.alignByBaseline())
+
+            Text(
+                "-",
+                modifier = Modifier.align(Alignment.CenterVertically),
+                style = MaterialTheme.typography.titleLarge // makes it visually balanced
+            )
+
             ProfileTextFieldView(
                 field = groupSizeMaxField.value,
                 onValueChange = { newValue ->
                     if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
                         groupSizeMaxField.value.value = newValue
                     }
-                }
+                },
+                modifier = Modifier.weight(1f) // take other half
             )
         }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         ProfileTextFieldView(

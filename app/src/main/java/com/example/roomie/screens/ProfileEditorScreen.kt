@@ -53,8 +53,8 @@ fun ProfileEditorScreen(
     val ageField = remember { mutableStateOf(ProfileTextField("Your Age", "", KeyboardType.Number)) }
     val universityField = remember { mutableStateOf(ProfileTextField("Your University", "")) }
     val preferencesField = remember { mutableStateOf(ProfileTextField("Basic Preferences", "")) }
-    val groupSizeMinField = remember { mutableStateOf(ProfileTextField("Min Group Size", "", KeyboardType.Number)) }
-    val groupSizeMaxField = remember { mutableStateOf(ProfileTextField("Max Group Size", "", KeyboardType.Number)) }
+    val groupSizeMinField = remember { mutableStateOf(ProfileTextField("Min", "", KeyboardType.Number)) }
+    val groupSizeMaxField = remember { mutableStateOf(ProfileTextField("Max", "", KeyboardType.Number)) }
     val maxCommuteField = remember { mutableStateOf(ProfileTextField("Max Commute (mins)", "", KeyboardType.Number)) }
     val maxBudgetField = remember { mutableStateOf(ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number)) }
 
