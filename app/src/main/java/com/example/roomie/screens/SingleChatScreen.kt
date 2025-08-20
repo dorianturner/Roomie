@@ -7,7 +7,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,6 +21,8 @@ import androidx.compose.material.icons.filled.Attachment
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -60,6 +65,9 @@ fun SingleChatScreen(
 
     val userID: String? = remember { Firebase.auth.currentUser?.uid }
     val userNameCache = remember { mutableStateMapOf<String, String>() }
+
+    var isUploading by remember { mutableStateOf(false) }
+    var uploadProgress by remember { mutableStateOf(0f) }
 
     // Listen for messages
     DisposableEffect(chatManager) {
@@ -115,6 +123,30 @@ fun SingleChatScreen(
                 }
             }
 
+            // progress bar for media upload
+            if (isUploading) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    LinearProgressIndicator(
+                        progress = { uploadProgress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Uploading... ${(uploadProgress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             // Input + send button + image picker
             Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
 
@@ -132,39 +164,56 @@ fun SingleChatScreen(
                     placeholder = { Text("Message") }
                 )
 
-                IconButton(onClick = {
-                    coroutineScope.launch {
-                        if (pickedImageUri != null) {
-                            val mimeType = getMimeType(context, pickedImageUri!!)
-                            if (mimeType == null) {
-                                return@launch
-                            }
-                            val type: String
-                            if (mimeType.startsWith("image")) {
-                                type = "image"
-                            } else if (mimeType.startsWith("video")) {
-                                type = "video"
-                            } else if (mimeType.startsWith("audio")) {
-                                type = "audio"
-                            } else if (mimeType == "application/pdf") {
-                                type = "pdf"
-                            } else {
-                                return@launch
-                            }
+                IconButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            if (pickedImageUri != null) {
+                                isUploading = true
+                                uploadProgress = 0f
 
-                            chatManager.sendMessage(
-                                context,
-                                userID!!,
-                                mediaUri = pickedImageUri,
-                                type = type
-                            )
-                            pickedImageUri = null
-                        } else if (inputText.isNotBlank()) {
-                            chatManager.sendMessage(context, userID!!, inputText)
+                                val mimeType = getMimeType(context, pickedImageUri!!)
+                                if (mimeType == null) {
+                                    return@launch
+                                }
+                                val type: String
+                                if (mimeType.startsWith("image")) {
+                                    type = "image"
+                                } else if (mimeType.startsWith("video")) {
+                                    type = "video"
+                                } else if (mimeType.startsWith("audio")) {
+                                    type = "audio"
+                                } else if (mimeType == "application/pdf") {
+                                    type = "pdf"
+                                } else {
+                                    return@launch
+                                }
+
+                                try {
+                                    chatManager.sendMessage(
+                                        context = context,
+                                        senderId = userID!!,
+                                        mediaUri = pickedImageUri,
+                                        type = type,
+                                        onProgress = { progress ->
+                                            // Update UI progress (must be on UI thread)
+                                            uploadProgress = progress
+                                        }
+                                    )
+                                    pickedImageUri = null
+                                } catch (e: Exception) {
+                                    // Handle error
+                                    throw e
+                                } finally {
+                                    isUploading = false
+                                }
+
+                            } else if (inputText.isNotBlank()) {
+                                chatManager.sendMessage(context, userID!!, inputText)
+                            }
+                            inputText = ""
                         }
-                        inputText = ""
                     }
-                }) {
+                ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
                 }
             }
