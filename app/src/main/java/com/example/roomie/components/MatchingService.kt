@@ -82,16 +82,25 @@ object MatchingService {
             Log.d("MatchingService", "For ${it.name}: minA=${it.studentDesiredGroupSize.getOrNull(0) ?: 0}, maxA=${it.studentDesiredGroupSize.getOrNull(1) ?: 0}, maxBudgetAllowed=${it.studentMaxBudget}")
         }
 
-        val unseenCandidates = candidates.filter { candidate ->
-            candidate.id != current.id &&
-                    !current.seenUsers.contains(candidate.id)
-        }
+        // keep all candidates (except self) but de-prioritise seen users instead of removing them
+        val candidatesNotSelf = candidates.filter { candidate -> candidate.id != current.id }
 
         Log.d("MatchingService", "All seen candidates: ${current.seenUsers.joinToString(", ") { it }}")
-        Log.d("MatchingService", "All unseen candidates: ${unseenCandidates.joinToString(", ") { it.name }}")
+        Log.d("MatchingService", "All candidates considered: ${candidatesNotSelf.joinToString(", ") { it.name }}")
 
-        val candidatesRanked = unseenCandidates
-            .map { it to computeRelevancyScore(current, it, weights) }
+        // Large penalty to push seen users to the bottom
+        val SEEN_PENALTY = 1
+
+        val candidatesRanked = candidatesNotSelf
+            .map { candidate ->
+                val baseScore = computeRelevancyScore(current, candidate, weights)
+                val adjustedScore = if (current.seenUsers.contains(candidate.id)) {
+                    baseScore - SEEN_PENALTY
+                } else {
+                    baseScore
+                }
+                candidate to adjustedScore
+            }
             .sortedByDescending { it.second }
 
         candidatesRanked.forEach {
@@ -100,6 +109,7 @@ object MatchingService {
 
         return candidatesRanked.map { it.first }
     }
+
 
     private fun computeRelevancyScore(
         current: StudentProfile,
