@@ -43,16 +43,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.roomie.components.AttachedFile
-import com.example.roomie.components.ChatManager
-import com.example.roomie.components.Message
-import com.example.roomie.components.MessageItem
-import com.example.roomie.components.getMimeType
-import com.example.roomie.components.AttachmentPreviewSection
+import com.example.roomie.components.chat.AttachedFile
+import com.example.roomie.components.chat.ChatManager
+import com.example.roomie.components.chat.Message
+import com.example.roomie.components.chat.MessageItem
+import com.example.roomie.components.chat.AttachmentPreviewSection
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

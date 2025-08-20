@@ -1,10 +1,8 @@
 package com.example.roomie.screens
 
-import android.provider.ContactsContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
@@ -22,13 +20,10 @@ import com.google.firebase.auth.auth
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
-import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.Spacing
 
 import androidx.navigation.compose.NavHost
@@ -36,7 +31,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.roomie.components.ChatManager
+import com.example.roomie.components.chat.ChatManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

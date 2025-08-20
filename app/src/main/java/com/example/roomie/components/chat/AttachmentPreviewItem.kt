@@ -1,7 +1,5 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
-import android.net.Uri
-import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,37 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-
-data class AttachedFile(
-    val uri: Uri,
-    val name: String,
-    val type: String, // "image", "video", "pdf", etc.
-    val size: Long? = null
-)
-
-@Composable
-fun AttachmentPreviewSection(
-    attachedFiles: List<AttachedFile>,
-    onRemoveFile: (Uri) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        Text(
-            text = "Attachments (${attachedFiles.size})",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        attachedFiles.forEach { file ->
-            AttachmentPreviewItem(
-                file = file,
-                onRemove = { onRemoveFile(file.uri) },
-                modifier = Modifier.padding(vertical = 4.dp)
-            )
-        }
-    }
-}
 
 @Composable
 fun AttachmentPreviewItem(

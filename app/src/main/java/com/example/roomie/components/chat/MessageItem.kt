@@ -1,4 +1,4 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -24,6 +24,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import com.example.roomie.R
+import com.example.roomie.components.fetchUserNameFromFirestore
+import com.example.roomie.components.formatTimestamp
 
 @Composable
 fun MessageItem(
@@ -91,8 +94,8 @@ fun MessageItem(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 200.dp),
-                            placeholder = painterResource(com.example.roomie.R.drawable.placeholder), // optional
-                            error = painterResource(com.example.roomie.R.drawable.image_error) // optional
+                            placeholder = painterResource(R.drawable.placeholder), // optional
+                            error = painterResource(R.drawable.image_error) // optional
                         )
                     } ?: Text("Image unavailable", color = MaterialTheme.colorScheme.error)
                 }

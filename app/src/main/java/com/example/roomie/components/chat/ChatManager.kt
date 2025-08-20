@@ -1,4 +1,4 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
 import android.content.Context
 import android.net.Uri

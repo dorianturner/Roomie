@@ -1,4 +1,4 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
 import com.google.firebase.Timestamp
 
