@@ -16,7 +16,8 @@ data class StudentProfile(
     val studentBasicPreferences: List<String> = emptyList(),
     val studentDesiredGroupSize: List<Int> = listOf(0, 0),
     val studentMaxCommute: Int = 0,
-    val studentMaxBudget: Int = 0
+    val studentMaxBudget: Int = 0,
+    val seenUsers: List<String> = emptyList()
 )
 
 object MatchingService {
@@ -81,7 +82,16 @@ object MatchingService {
             Log.d("MatchingService", "For ${it.name}: minA=${it.studentDesiredGroupSize.getOrNull(0) ?: 0}, maxA=${it.studentDesiredGroupSize.getOrNull(1) ?: 0}, maxBudgetAllowed=${it.studentMaxBudget}")
         }
 
-        val candidatesRanked = candidates.filter{ it.id != current.id }.map { it to computeRelevancyScore(current, it, weights) }
+        val unseenCandidates = candidates.filter { candidate ->
+            candidate.id != current.id &&
+                    !current.seenUsers.contains(candidate.id)
+        }
+
+        Log.d("MatchingService", "All seen candidates: ${current.seenUsers.joinToString(", ") { it }}")
+        Log.d("MatchingService", "All unseen candidates: ${unseenCandidates.joinToString(", ") { it.name }}")
+
+        val candidatesRanked = unseenCandidates
+            .map { it to computeRelevancyScore(current, it, weights) }
             .sortedByDescending { it.second }
 
         candidatesRanked.forEach {
@@ -173,7 +183,8 @@ object MatchingService {
                 if (it.size >= 2) it else listOf(it.getOrNull(0) ?: 0, it.getOrNull(1) ?: 0)
             },
             studentMaxCommute = anyToInt(d["studentMaxCommute"]),
-            studentMaxBudget = anyToInt(d["studentMaxBudget"])
+            studentMaxBudget = anyToInt(d["studentMaxBudget"]),
+            seenUsers = anyToStringList(d["seenUsers"])
         )
     }
 }

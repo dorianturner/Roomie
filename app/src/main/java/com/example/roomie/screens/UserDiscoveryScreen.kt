@@ -28,6 +28,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 import com.example.roomie.components.PreferenceWeights
+import com.google.firebase.firestore.FieldValue
 
 // String descriptions for each of the weights
 private val weightLabels = arrayOf(
@@ -157,10 +158,17 @@ fun UserDiscoveryScreen(
                     // Button to go to next profile
                     Button(
                         onClick = {
-                            if (currentIndex < matches!!.lastIndex) {
-                                currentIndex++
-                            } else {
-                                errorMessage = "All users have been explored"
+                            coroutineScope.launch {
+                                if (currentUserId != null) {
+                                    db.collection("users").document(currentUserId)
+                                        .update("seenUsers", FieldValue.arrayUnion(currentProfile.id))
+                                        .await()
+                                }
+                                if (currentIndex < matches!!.lastIndex) {
+                                    currentIndex++
+                                } else {
+                                    errorMessage = "All users have been explored"
+                                }
                             }
                         },
                         modifier = Modifier
