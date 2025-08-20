@@ -188,7 +188,6 @@ fun ProfileEditorScreen(
             StudentProfileSection(
                 ageField = ageField,
                 universityField = universityField,
-                preferencesField = preferencesField,
                 groupSizeMinField = groupSizeMinField,
                 groupSizeMaxField = groupSizeMaxField,
                 maxCommuteField = maxCommuteField,
@@ -235,7 +234,6 @@ fun ProfileEditorScreen(
 
                         data["studentAge"] = age ?: 0
                         data["studentUniversity"] = universityField.value.value
-                        data["studentBasicPreferences"] = preferencesField.value.value
                         data["studentDesiredGroupSize"] = listOf(gMin, gMax)
                         data["studentMaxCommute"] = commute ?: 0
                         data["studentMaxBudget"] = budget ?: 0

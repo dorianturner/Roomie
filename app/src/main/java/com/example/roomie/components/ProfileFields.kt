@@ -84,7 +84,6 @@ fun LandlordProfileSection(
 fun StudentProfileSection(
     ageField: MutableState<ProfileTextField>,
     universityField: MutableState<ProfileTextField>,
-    preferencesField: MutableState<ProfileTextField>,
     groupSizeMinField: MutableState<ProfileTextField>,
     groupSizeMaxField: MutableState<ProfileTextField>,
     maxCommuteField: MutableState<ProfileTextField>,
@@ -108,14 +107,6 @@ fun StudentProfileSection(
             field = universityField.value,
             onValueChange = {
                 universityField.value.value = it
-            }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ProfileTextFieldView(
-            field = preferencesField.value,
-            onValueChange = {
-                preferencesField.value.value = it
             }
         )
         Spacer(modifier = Modifier.height(16.dp))

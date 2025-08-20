@@ -40,15 +40,13 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
 
             data["studentAge"] = age
             data["studentUniversity"] = state.university.value
-            data["studentBasicPreferences"] = state.preferences.value
             data["studentDesiredGroupSize"] = listOf(gMin, gMax)
             data["studentMaxCommute"] = commute ?: 999
             data["studentMaxBudget"] = budget ?: 10000
 
             if (
                 state.university.value.isBlank() ||
-                state.preferences.value.isBlank() ||
-                age == -1
+                age < 0
             ) return false // fails checks
         }
 
