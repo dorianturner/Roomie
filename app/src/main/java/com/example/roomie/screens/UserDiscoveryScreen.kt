@@ -29,6 +29,21 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 import com.example.roomie.components.PreferenceWeights
 
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.abs
+
 // String descriptions for each of the weights
 private val weightLabels = arrayOf(
     "Indifferent",     // 0
@@ -38,6 +53,8 @@ private val weightLabels = arrayOf(
     "Want a lot",      // 4
     "Must-have"        // 5
 )
+
+enum class SwipeDirection { LEFT, RIGHT, NONE }
 
 @Composable
 fun UserDiscoveryScreen(
@@ -79,108 +96,77 @@ fun UserDiscoveryScreen(
     ) {
         Text("User Discovery", style = MaterialTheme.typography.headlineMedium)
 
-        Button(
-            onClick = { showFilterDialog = true },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-        ) {
-            Text("Adjust Match Preferences")
-        }
-
-
         Spacer(modifier = Modifier.height(16.dp))
 
         when {
-            matches == null -> {
-                CircularProgressIndicator()
-            }
-            errorMessage != null -> {
-                Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
-            }
-            matches!!.isEmpty() -> {
-                Text("No matches found")
-            }
+            matches == null -> CircularProgressIndicator()
+            errorMessage != null -> Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
+            matches!!.isEmpty() -> Text("No matches found")
             else -> {
                 val currentProfile = matches!!.getOrNull(currentIndex)
                 if (currentProfile != null) {
-                    MatchCard(currentProfile)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Button: open/create 1:1 chat and navigate to chat page
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                try {
-                                    if (currentUserId == null) {
-                                        Log.e("UserDiscovery", "No current user id - cannot create chat")
-                                        return@launch
-                                    }
-
-                                    val otherUserId = currentProfile.id
-
-                                    val snapshot = db.collection("conversations")
-                                        .whereArrayContains("participants", currentUserId)
-                                        .get()
-                                        .await()
-
-                                    val existingDoc = snapshot.documents.firstOrNull { doc ->
-                                        val participants = doc.get("participants") as? List<*>
-                                        participants?.contains(otherUserId) == true && (participants.size == 2)
-                                    }
-
-                                    val conversationId = if (existingDoc != null) {
-                                        existingDoc.id
-                                    } else {
-                                        val chatManager = ChatManager()
-                                        chatManager.createConversation(
-                                            listOf(currentUserId, otherUserId),
-                                            isGroup = false
-                                        )
-                                        checkNotNull(chatManager.conversationId)
-                                    }
-
-                                    val chatTitle = Uri.encode(currentProfile.name)
-                                    navController.navigate("chat/$conversationId/$chatTitle")
-                                } catch (e: Exception) {
-                                    Log.e("UserDiscovery", "Failed to open/create chat: ${e.message}", e)
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                    ) {
-                        Text("Message this user")
-                    }
-
-                    // Button to go to next profile
-                    Button(
-                        onClick = {
+                    SwipeableMatchCard(
+                        profile = currentProfile,
+                        onSwiped = {
+                            dir ->
                             coroutineScope.launch {
                                 if (currentUserId != null) {
                                     db.collection("users").document(currentUserId)
                                         .update("seenUsersTimestamps.${currentProfile.id}", System.currentTimeMillis())
                                         .await()
                                 }
-                                if (currentIndex < matches!!.lastIndex) {
-                                    currentIndex++
-                                } else {
-                                    // bump reloadKey to retrigger LaunchedEffect to reload matches
-                                    reloadKey++
+
+                                when (dir) {
+                                    SwipeDirection.RIGHT -> {
+                                        // YES - create or open chat
+                                        try {
+                                            if (currentUserId == null) {
+                                                Log.e("UserDiscovery", "No current user id - cannot create chat")
+                                                return@launch
+                                            }
+
+                                            val otherUserId = currentProfile.id
+
+                                            val snapshot = db.collection("conversations")
+                                                .whereArrayContains("participants", currentUserId)
+                                                .get()
+                                                .await()
+
+                                            val existingDoc = snapshot.documents.firstOrNull { doc ->
+                                                val participants = doc.get("participants") as? List<*>
+                                                participants?.contains(otherUserId) == true && (participants.size == 2)
+                                            }
+
+                                            val conversationId = if (existingDoc != null) {
+                                                existingDoc.id
+                                            } else {
+                                                val chatManager = ChatManager()
+                                                chatManager.createConversation(
+                                                    listOf(currentUserId, otherUserId),
+                                                    isGroup = false
+                                                )
+                                                checkNotNull(chatManager.conversationId)
+                                            }
+
+                                            val chatTitle = Uri.encode(currentProfile.name)
+                                            navController.navigate("chat/$conversationId/$chatTitle")
+                                        } catch (e: Exception) {
+                                            Log.e("UserDiscovery", "Failed to open/create chat: ${e.message}", e)
+                                        }
+                                    }
+                                    SwipeDirection.LEFT -> {
+                                        if (currentIndex < matches!!.lastIndex) {
+                                            currentIndex++
+                                        } else {
+                                            // bump reloadKey to retrigger LaunchedEffect to reload matches
+                                            reloadKey++
+                                        }
+                                    }
+                                    SwipeDirection.NONE -> {} // No action
                                 }
                             }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                        Text("Next Profile")
-                    }
+                        }
+                    )
                 } else {
                     Text("All users have been explored")
                 }
@@ -260,6 +246,77 @@ fun ProfileChip(icon: ImageVector, text: String) {
         }
     }
 }
+@Composable
+fun SwipeableMatchCard(
+    profile: StudentProfile,
+    onSwiped: (SwipeDirection) -> Unit
+) {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+    val swipeDistancePx = screenWidthPx / 2f
+
+    // Anchors for swipe directions
+    val anchors = remember(swipeDistancePx) {
+        DraggableAnchors {
+            SwipeDirection.LEFT at -swipeDistancePx
+            SwipeDirection.NONE at 0f
+            SwipeDirection.RIGHT at swipeDistancePx
+        }
+    }
+
+    val state = remember(anchors) {
+        AnchoredDraggableState(
+            initialValue = SwipeDirection.NONE,
+            anchors = anchors
+        )
+    }
+
+    // Trigger callback when fully swiped
+    LaunchedEffect(state.settledValue) {
+        if (state.currentValue == SwipeDirection.LEFT || state.currentValue == SwipeDirection.RIGHT) {
+            onSwiped(state.currentValue)
+            state.animateTo(SwipeDirection.NONE, tween(300, 20)) // doesnt work
+            // state.snapTo(SwipeDirection.NONE)
+        }
+    }
+
+    val offsetX = state.requireOffset()
+    val progress = (offsetX / swipeDistancePx).coerceIn(-1f, 1f)
+
+    val rotation = progress * 10f // max ±10 degrees
+    val alphaValue = 1f - abs(progress) * 0.5f // slightly fade out
+    val bgColor = when {
+        progress > 0f -> Color.Green.copy(alpha = abs(progress) * 0.3f)
+        progress < 0f -> Color.Red.copy(alpha = abs(progress) * 0.3f)
+        else -> Color.Transparent
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp) // adjust card height
+            .background(bgColor)
+            .anchoredDraggable(
+                state = state,
+                orientation = Orientation.Horizontal,
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    translationX = offsetX
+                    rotationZ = rotation
+                    alpha = alphaValue
+                    transformOrigin = TransformOrigin(0.5f, 1f) // bottom center
+                }
+        ) {
+            MatchCard(profile)
+        }
+    }
+}
+
 
 @Composable
 fun FilterDialog(
@@ -316,4 +373,3 @@ fun WeightSlider(label: String, value: Int, onValueChange: (Int) -> Unit) {
         )
     }
 }
-
