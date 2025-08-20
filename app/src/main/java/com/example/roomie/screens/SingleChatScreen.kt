@@ -1,6 +1,9 @@
 package com.example.roomie.screens
 
+import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,13 +43,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.roomie.components.AttachedFile
 import com.example.roomie.components.ChatManager
 import com.example.roomie.components.Message
 import com.example.roomie.components.MessageItem
 import com.example.roomie.components.getMimeType
+import com.example.roomie.components.AttachmentPreviewSection
+
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +67,8 @@ fun SingleChatScreen(
 ) {
     val context = LocalContext.current
     val messagesState = remember { mutableStateListOf<Message>() }
-    var pickedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    var attachedFiles by remember { mutableStateOf<List<AttachedFile>>(emptyList()) }
 
     var inputText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
@@ -80,12 +90,91 @@ fun SingleChatScreen(
         }
     }
 
-    val pickMedia =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            uri?.let {
-                pickedImageUri = it
+    suspend fun getFileName(context: Context, uri: Uri): String {
+        return withContext(Dispatchers.IO) {
+            var fileName = "Unknown file"
+
+            // Try to get filename from content resolver first
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (cursor.moveToFirst() && nameIndex != -1) {
+                    fileName = cursor.getString(nameIndex)
+                }
+            }
+
+            // If that fails, try to extract from Uri path
+            if (fileName == "Unknown file") {
+                uri.path?.let { path ->
+                    val segments = path.split("/")
+                    if (segments.isNotEmpty()) {
+                        fileName = segments.last()
+                    }
+                }
+            }
+
+            fileName
+        }
+    }
+
+    suspend fun getFileSize(context: Context, uri: Uri): Long? {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Method 1: Using content resolver
+                var size: Long? = null
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (cursor.moveToFirst() && sizeIndex != -1) {
+                        size = cursor.getLong(sizeIndex)
+                    }
+                }
+
+                // Method 2: Using ParcelFileDescriptor (fallback)
+                if (size == null || size == 0L) {
+                    try {
+                        context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                            size = pfd.statSize
+                        }
+                    } catch (e: Exception) {
+                        // Ignore and return null
+                    }
+                }
+
+                size
+            } catch (e: Exception) {
+                null
             }
         }
+    }
+
+    suspend fun getFileInfo(context: Context, uri: Uri): AttachedFile {
+        return withContext(Dispatchers.IO) {
+            val mimeType = context.contentResolver.getType(uri) ?: ""
+            val fileName = getFileName(context, uri)
+            val fileSize = getFileSize(context, uri)
+
+            // probably can extrapolate with other mimetype cases below
+            val type = when {
+                mimeType.startsWith("image") -> "image"
+                mimeType.startsWith("video") -> "video"
+                mimeType.startsWith("audio") -> "audio"
+                mimeType == "application/pdf" -> "pdf"
+                else -> "file"
+            }
+
+            AttachedFile(uri, fileName, type, fileSize)
+        }
+    }
+
+    val pickMedia = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let { selectedUri ->
+            coroutineScope.launch {
+                val fileInfo = getFileInfo(context, selectedUri)
+                attachedFiles = attachedFiles + fileInfo
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -121,6 +210,17 @@ fun SingleChatScreen(
                         userNameCache
                     )
                 }
+            }
+
+            if (attachedFiles.isNotEmpty() && !isUploading) {
+                AttachmentPreviewSection(
+                    attachedFiles = attachedFiles,
+                    onRemoveFile = { uriToRemove ->
+                        attachedFiles = attachedFiles.filter { it.uri != uriToRemove }
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             // progress bar for media upload
@@ -167,50 +267,70 @@ fun SingleChatScreen(
                 IconButton(
                     onClick = {
                         coroutineScope.launch {
-                            if (pickedImageUri != null) {
+                            if (attachedFiles.isNotEmpty()) {
+                                // === UPLOAD ALL ATTACHED FILES ===
                                 isUploading = true
                                 uploadProgress = 0f
-
-                                val mimeType = getMimeType(context, pickedImageUri!!)
-                                if (mimeType == null) {
-                                    return@launch
-                                }
-                                val type: String
-                                if (mimeType.startsWith("image")) {
-                                    type = "image"
-                                } else if (mimeType.startsWith("video")) {
-                                    type = "video"
-                                } else if (mimeType.startsWith("audio")) {
-                                    type = "audio"
-                                } else if (mimeType == "application/pdf") {
-                                    type = "pdf"
-                                } else {
-                                    return@launch
-                                }
+                                var uploadSuccess = true
 
                                 try {
-                                    chatManager.sendMessage(
-                                        context = context,
-                                        senderId = userID!!,
-                                        mediaUri = pickedImageUri,
-                                        type = type,
-                                        onProgress = { progress ->
-                                            // Update UI progress (must be on UI thread)
-                                            uploadProgress = progress
+                                    // Send each attached file
+                                    attachedFiles.forEachIndexed { index, file ->
+                                        try {
+                                            chatManager.sendMessage(
+                                                context = context,
+                                                senderId = userID!!,
+                                                mediaUri = file.uri,
+                                                type = file.type,
+                                                onProgress = { progress ->
+                                                    // Update overall progress (weighted average)
+                                                    val weightedProgress = (index + progress) / attachedFiles.size
+                                                    coroutineScope.launch {
+                                                        withContext(Dispatchers.Main) {
+                                                            uploadProgress = weightedProgress.coerceIn(0f, 1f)
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                        } catch (e: Exception) {
+                                            Log.e("SingleChatScreen", "Failed to upload ${file.name}: ${e.message}")
+                                            uploadSuccess = false
+                                            // Continue with other files instead of stopping
                                         }
-                                    )
-                                    pickedImageUri = null
+                                    }
+
+                                    // Send text message if there's any text input
+                                    if (inputText.isNotBlank()) {
+                                        try {
+                                            chatManager.sendMessage(context, userID!!, inputText)
+                                        } catch (e: Exception) {
+                                            Log.e("SingleChatScreen", "Failed to send text: ${e.message}")
+                                            uploadSuccess = false
+                                        }
+                                    }
+
                                 } catch (e: Exception) {
-                                    // Handle error
-                                    throw e
+                                    Log.e("SingleChatScreen", "Upload failed: ${e.message}")
+                                    uploadSuccess = false
                                 } finally {
+                                    // Only clear if all uploads were successful
+                                    if (uploadSuccess) {
+                                        attachedFiles = emptyList()
+                                    }
                                     isUploading = false
+                                    uploadProgress = 0f
                                 }
 
                             } else if (inputText.isNotBlank()) {
-                                chatManager.sendMessage(context, userID!!, inputText)
+                                // === SEND TEXT ONLY ===
+                                try {
+                                    chatManager.sendMessage(context, userID!!, inputText)
+                                    inputText = ""
+                                } catch (e: Exception) {
+                                    Log.e("SingleChatScreen", "Failed to send text: ${e.message}")
+                                    // Don't clear input text on error so user can retry
+                                }
                             }
-                            inputText = ""
                         }
                     }
                 ) {
