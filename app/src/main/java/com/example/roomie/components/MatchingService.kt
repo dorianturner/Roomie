@@ -96,32 +96,11 @@ object MatchingService {
         Log.d("MatchingService", "All seen candidates: ${current.seenUsersTimestamps.keys.joinToString(", ")}")
         Log.d("MatchingService", "All candidates considered: ${candidatesNotSelf.joinToString(", ") { it.name }}")
 
-        val SEEN_PENALTY = 1.0
-        val DECAY_DURATION_MS = 5 * 24 * 60 * 60 * 1000L // 5 days
-        val now = System.currentTimeMillis()
-
         val candidatesRanked = candidatesNotSelf
             .map { candidate ->
                 val baseScore = computeRelevancyScore(current, candidate, weights)
 
-                val lastSeen = current.seenUsersTimestamps[candidate.id]
-                val penalty = if (lastSeen != null) {
-                    val elapsed = now - lastSeen
-                    val decayFactor = (1.0 - (elapsed.toDouble() / DECAY_DURATION_MS)).coerceIn(0.0, 1.0)
-                    val p = SEEN_PENALTY * decayFactor
-                    Log.d(
-                        "MatchingService",
-                        "Penalty for ${candidate.name}: elapsed=${elapsed / 1000}s, decayFactor=$decayFactor, penalty=$p"
-                    )
-                    p
-                } else {
-                    0.0
-                }
-
-                val adjustedScore = baseScore - penalty
-                Log.d("MatchingService", "For ${candidate.name}: base=$baseScore, penalty=$penalty, adjusted=$adjustedScore")
-
-                candidate to adjustedScore
+                candidate to baseScore
             }
             .sortedByDescending { it.second }
 
@@ -141,6 +120,9 @@ object MatchingService {
     ): Double {
         var score = 0.0
         var totalWeight = 0.0
+
+        val decay_duration_ms = 5 * 24 * 60 * 60 * 1000L // 5 days
+        val now = System.currentTimeMillis()
 
         // University match: exact or not
         val uniScore = if (current.studentUniversity == other.studentUniversity) 1.0 else 0.0
@@ -176,7 +158,27 @@ object MatchingService {
         score += prefScore * weights.preferences
         totalWeight += weights.preferences
 
-        return if (totalWeight > 0) score / totalWeight else 0.0
+        val baseScore = if (totalWeight > 0) score / totalWeight else 0.0 // normalises into [0,1]
+
+        val lastSeen = current.seenUsersTimestamps[other.id]
+        val penalty = if (lastSeen != null) {
+            val elapsed = now - lastSeen
+            val decayFactor = (1.0 - (elapsed.toDouble() / decay_duration_ms)).coerceIn(0.0, 1.0)
+            val p = weights.lastSeen * decayFactor
+            Log.d(
+                "MatchingService",
+                "Penalty for ${other.name}: elapsed=${elapsed / 1000}s, decayFactor=$decayFactor, penalty=$p"
+            )
+            p
+        } else {
+            0.0
+        }
+
+        val adjustedScore = baseScore - penalty
+
+        Log.d("MatchingService", "Raw score for ${other.name}: $baseScore, penalty=$penalty, adjusted=$adjustedScore")
+
+        return adjustedScore
     }
 
     private suspend fun findStudentMatches(current: StudentProfile, weights: PreferenceWeights): List<StudentProfile> {

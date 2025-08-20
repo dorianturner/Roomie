@@ -28,7 +28,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.launch
 import com.example.roomie.components.PreferenceWeights
-import com.google.firebase.firestore.FieldValue
 
 // String descriptions for each of the weights
 private val weightLabels = arrayOf(
@@ -50,6 +49,7 @@ fun UserDiscoveryScreen(
     var currentIndex by remember { mutableStateOf(0) }
     var weights by remember { mutableStateOf(PreferenceWeights()) }
     var showFilterDialog by remember { mutableStateOf(false) }
+    var reloadKey by remember { mutableStateOf(0) } // trigger a reload of the matches
 
     val matchingService = MatchingService
     val coroutineScope = rememberCoroutineScope()
@@ -57,7 +57,7 @@ fun UserDiscoveryScreen(
     val currentUserId = Firebase.auth.currentUser?.uid
 
     // will reload every time weights change
-    LaunchedEffect(weights) {
+    LaunchedEffect(weights, reloadKey) {
         try {
             errorMessage = null
             matches = matchingService.findMatchesForCurrentUser(weights)
@@ -167,7 +167,8 @@ fun UserDiscoveryScreen(
                                 if (currentIndex < matches!!.lastIndex) {
                                     currentIndex++
                                 } else {
-                                    errorMessage = "All users have been explored"
+                                    // bump reloadKey to retrigger LaunchedEffect to reload matches
+                                    reloadKey++
                                 }
                             }
                         },
