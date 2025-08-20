@@ -17,7 +17,7 @@ data class StudentProfile(
     val studentDesiredGroupSize: List<Int> = listOf(0, 0),
     val studentMaxCommute: Int = 0,
     val studentMaxBudget: Int = 0,
-    val seenUsers: List<String> = emptyList()
+    val seenUsersTimestamps: Map<String, Long> = emptyMap()
 )
 
 object MatchingService {
@@ -74,41 +74,64 @@ object MatchingService {
 
 
     // in-memory filters
-    private fun refineMatches(current: StudentProfile, candidates: List<StudentProfile>, weights: PreferenceWeights): List<StudentProfile> {
+    private fun refineMatches(
+        current: StudentProfile,
+        candidates: List<StudentProfile>,
+        weights: PreferenceWeights
+    ): List<StudentProfile> {
         Log.d("MatchingService", "Refining matches for ${current.name}")
         Log.d("MatchingService", "All current candidates: ${candidates.joinToString(", ") { it.name }}")
 
         (candidates + current).forEach {
-            Log.d("MatchingService", "For ${it.name}: minA=${it.studentDesiredGroupSize.getOrNull(0) ?: 0}, maxA=${it.studentDesiredGroupSize.getOrNull(1) ?: 0}, maxBudgetAllowed=${it.studentMaxBudget}")
+            Log.d(
+                "MatchingService",
+                "For ${it.name}: minA=${it.studentDesiredGroupSize.getOrNull(0) ?: 0}, " +
+                        "maxA=${it.studentDesiredGroupSize.getOrNull(1) ?: 0}, " +
+                        "maxBudgetAllowed=${it.studentMaxBudget}"
+            )
         }
 
-        // keep all candidates (except self) but de-prioritise seen users instead of removing them
         val candidatesNotSelf = candidates.filter { candidate -> candidate.id != current.id }
 
-        Log.d("MatchingService", "All seen candidates: ${current.seenUsers.joinToString(", ") { it }}")
+        Log.d("MatchingService", "All seen candidates: ${current.seenUsersTimestamps.keys.joinToString(", ")}")
         Log.d("MatchingService", "All candidates considered: ${candidatesNotSelf.joinToString(", ") { it.name }}")
 
-        // Large penalty to push seen users to the bottom
-        val SEEN_PENALTY = 1
+        val SEEN_PENALTY = 1.0
+        val DECAY_DURATION_MS = 5 * 24 * 60 * 60 * 1000L // 5 days
+        val now = System.currentTimeMillis()
 
         val candidatesRanked = candidatesNotSelf
             .map { candidate ->
                 val baseScore = computeRelevancyScore(current, candidate, weights)
-                val adjustedScore = if (current.seenUsers.contains(candidate.id)) {
-                    baseScore - SEEN_PENALTY
+
+                val lastSeen = current.seenUsersTimestamps[candidate.id]
+                val penalty = if (lastSeen != null) {
+                    val elapsed = now - lastSeen
+                    val decayFactor = (1.0 - (elapsed.toDouble() / DECAY_DURATION_MS)).coerceIn(0.0, 1.0)
+                    val p = SEEN_PENALTY * decayFactor
+                    Log.d(
+                        "MatchingService",
+                        "Penalty for ${candidate.name}: elapsed=${elapsed / 1000}s, decayFactor=$decayFactor, penalty=$p"
+                    )
+                    p
                 } else {
-                    baseScore
+                    0.0
                 }
+
+                val adjustedScore = baseScore - penalty
+                Log.d("MatchingService", "For ${candidate.name}: base=$baseScore, penalty=$penalty, adjusted=$adjustedScore")
+
                 candidate to adjustedScore
             }
             .sortedByDescending { it.second }
 
         candidatesRanked.forEach {
-            Log.d("MatchingService", "For ${it.first.name}: score=${it.second}")
+            Log.d("MatchingService", "Final score for ${it.first.name}: ${it.second}")
         }
 
         return candidatesRanked.map { it.first }
     }
+
 
 
     private fun computeRelevancyScore(
@@ -182,6 +205,20 @@ object MatchingService {
             else -> listOf(0, 0)
         }
 
+        fun anyToMapStringLong(any: Any?): Map<String, Long> = when (any) {
+            is Map<*, *> -> any.mapNotNull { (k, v) ->
+                (k as? String)?.let { key ->
+                    val value = when (v) {
+                        is Number -> v.toLong()
+                        is String -> v.toLongOrNull()
+                        else -> null
+                    }
+                    value?.let { key to it }
+                }
+            }.toMap()
+            else -> emptyMap()
+        }
+
         return StudentProfile(
             id = doc.id,
             name = anyToString(d["name"]).ifEmpty { "Unknown Name" },
@@ -194,7 +231,7 @@ object MatchingService {
             },
             studentMaxCommute = anyToInt(d["studentMaxCommute"]),
             studentMaxBudget = anyToInt(d["studentMaxBudget"]),
-            seenUsers = anyToStringList(d["seenUsers"])
+            seenUsersTimestamps = anyToMapStringLong(d["seenUsersTimestamps"])
         )
     }
 }

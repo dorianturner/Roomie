@@ -161,7 +161,7 @@ fun UserDiscoveryScreen(
                             coroutineScope.launch {
                                 if (currentUserId != null) {
                                     db.collection("users").document(currentUserId)
-                                        .update("seenUsers", FieldValue.arrayUnion(currentProfile.id))
+                                        .update("seenUsersTimestamps.${currentProfile.id}", System.currentTimeMillis())
                                         .await()
                                 }
                                 if (currentIndex < matches!!.lastIndex) {
