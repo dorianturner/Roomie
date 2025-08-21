@@ -6,187 +6,47 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-// maybe not needed, but kind of useful (we should really refactor user profiles)
-data class StudentProfile(
-    val id: String = "",
-    val name: String = "",
-    val bio: String = "",
-    val profileType: String = "student",
-    val studentUniversity: String = "",
-    val studentBasicPreferences: List<String> = emptyList(),
-    val studentDesiredGroupSize: List<Int> = listOf(0, 0),
-    val studentMaxCommute: Int = 0,
-    val studentMaxBudget: Int = 0,
-    val seenUsersTimestamps: Map<String, Long> = emptyMap()
-)
-
 object MatchingService {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
 
-    // Public API
-    suspend fun findMatchesForCurrentUser(
-        weights: PreferenceWeights
-    ): List<StudentProfile> {
-        val uid = auth.currentUser?.uid ?: return emptyList()
-        val current = getUserProfile(uid) ?: return emptyList()
-        return when (current.profileType) {
-            "student" -> findStudentMatches(current, weights)
-            else -> emptyList()
-        }
+    suspend fun getCurrentUserGroup(): GroupProfile? {
+        val uid = auth.currentUser?.uid ?: return null
+        val userSnap = db.collection("users").document(uid).get().await()
+        val groupId = userSnap.getString("groupId") ?: return null
+        return getGroupById(groupId)
     }
 
-    // Safe fetch of the current user's profile
-    private suspend fun getUserProfile(uid: String): StudentProfile? {
-        val snap = db.collection("users").document(uid).get().await()
-        return docToStudentProfileSafe(snap)
+    suspend fun getGroupById(groupId: String): GroupProfile? {
+        val usersSnap = db.collection("users")
+            .whereEqualTo("groupId", groupId)
+            .get()
+            .await()
+
+        val members = usersSnap.documents.mapNotNull { docToStudentProfileSafe(it) }
+        if (members.isEmpty()) return null
+
+        val stats = computeStats(members)
+        return GroupProfile(
+            id = groupId,
+            name = if (members.size == 1) members[0].name else "Group: ${members.joinToString { it.name }}",
+            members = members,
+            stats = stats
+        )
     }
 
-    // Firestore for broad filters
-    // Firestore allows only one range filter per query for some fkn reason
-    private suspend fun queryBroadMatches(
-        current: StudentProfile,
-        weights: PreferenceWeights
-    ): List<StudentProfile> {
-        // TODO: ADD hard filtering based on the other person having maximum group size >= your current group size + 1
+    private fun computeStats(members: List<StudentProfile>): GroupStats {
+        val size = members.size
+        val avgBudget = members.map { it.studentMaxBudget }.average().toInt()
+        val avgCommute = members.map { it.studentMaxCommute }.average().toInt()
+        val avgAge = members.map {
+            // You may need to add `studentAge` to StudentProfile if not already there
+            it.studentDesiredGroupSize.firstOrNull() ?: 0
+        }.average().toInt()
 
-        var query = db.collection("users")
-            .whereEqualTo("profileType", "student")
-
-        // If "University" is must-have (weight == 5), enforce in Firestore
-        if (weights.university == 5) {
-            query = query.whereEqualTo("studentUniversity", current.studentUniversity)
-        }
-
-        // If "Commute" is must-have, enforce in Firestore
-        if (weights.commute == 5) {
-            query = query.whereLessThanOrEqualTo("studentMaxCommute", current.studentMaxCommute)
-        }
-
-        // If "Budget" is must-have, enforce in Firestore
-        if (weights.budget == 5) {
-            query = query.whereLessThanOrEqualTo("studentMaxBudget", current.studentMaxBudget)
-        }
-
-        val snapshot = query.get().await()
-        return snapshot.documents.mapNotNull { docToStudentProfileSafe(it) }
+        return GroupStats(size, avgBudget, avgCommute, avgAge)
     }
 
-
-    // in-memory filters
-    private fun refineMatches(
-        current: StudentProfile,
-        candidates: List<StudentProfile>,
-        weights: PreferenceWeights
-    ): List<StudentProfile> {
-        Log.d("MatchingService", "Refining matches for ${current.name}")
-        Log.d("MatchingService", "All current candidates: ${candidates.joinToString(", ") { it.name }}")
-
-        (candidates + current).forEach {
-            Log.d(
-                "MatchingService",
-                "For ${it.name}: minA=${it.studentDesiredGroupSize.getOrNull(0) ?: 0}, " +
-                        "maxA=${it.studentDesiredGroupSize.getOrNull(1) ?: 0}, " +
-                        "maxBudgetAllowed=${it.studentMaxBudget}"
-            )
-        }
-
-        val candidatesNotSelf = candidates.filter { candidate -> candidate.id != current.id }
-
-        Log.d("MatchingService", "All seen candidates: ${current.seenUsersTimestamps.keys.joinToString(", ")}")
-        Log.d("MatchingService", "All candidates considered: ${candidatesNotSelf.joinToString(", ") { it.name }}")
-
-        val candidatesRanked = candidatesNotSelf
-            .map { candidate ->
-                val baseScore = computeRelevancyScore(current, candidate, weights)
-
-                candidate to baseScore
-            }
-            .sortedByDescending { it.second }
-
-        candidatesRanked.forEach {
-            Log.d("MatchingService", "Final score for ${it.first.name}: ${it.second}")
-        }
-
-        return candidatesRanked.map { it.first }
-    }
-
-
-
-    private fun computeRelevancyScore(
-        current: StudentProfile,
-        other: StudentProfile,
-        weights: PreferenceWeights
-    ): Double {
-        var score = 0.0
-        var totalWeight = 0.0
-
-        val decay_duration_ms = 5 * 24 * 60 * 60 * 1000L // 5 days
-        val now = System.currentTimeMillis()
-
-        // University match: exact or not
-        val uniScore = if (current.studentUniversity == other.studentUniversity) 1.0 else 0.0
-        score += uniScore * weights.university
-        totalWeight += weights.university
-
-        // Budget: penalize if over budget, else closer is better
-        val budgetDiff = (other.studentMaxBudget - current.studentMaxBudget).coerceAtLeast(0)
-        val budgetScore = if (budgetDiff == 0) 1.0 else 1.0 / (1 + (budgetDiff.toDouble() / 10))
-        score += budgetScore * weights.budget
-        totalWeight += weights.budget
-
-        // Commute: closer is better, but allow outside range with lower score
-        val commuteDiff = (other.studentMaxCommute - current.studentMaxCommute).coerceAtLeast(0)
-        val commuteScore = if (commuteDiff <= 0) 1.0 else 1.0 / (1 + (commuteDiff.toDouble() / 2))
-        score += commuteScore * weights.commute
-        totalWeight += weights.commute
-
-        // Group size overlap: Jaccard-like similarity
-        val (minA, maxA) = current.studentDesiredGroupSize
-        val (minB, maxB) = other.studentDesiredGroupSize
-        val overlap = (minA..maxA).intersect(minB..maxB)
-        val groupScore = if (overlap.isNotEmpty()) 1.0 else 0.5 // partial credit
-        score += groupScore * weights.groupSize
-        totalWeight += weights.groupSize
-
-        // Basic preferences (strings): overlap ratio
-        // want to have some more robust algo for this
-        val commonPrefs = current.studentBasicPreferences.intersect(other.studentBasicPreferences.toSet()).size
-        val prefScore = if (current.studentBasicPreferences.isNotEmpty()) {
-            commonPrefs.toDouble() / current.studentBasicPreferences.size
-        } else 0.0
-        score += prefScore * weights.preferences
-        totalWeight += weights.preferences
-
-        val baseScore = if (totalWeight > 0) score / totalWeight else 0.0 // normalises into [0,1]
-
-        val lastSeen = current.seenUsersTimestamps[other.id]
-        val penalty = if (lastSeen != null) {
-            val elapsed = now - lastSeen
-            val decayFactor = (1.0 - (elapsed.toDouble() / decay_duration_ms)).coerceIn(0.0, 1.0)
-            val p = weights.lastSeen * decayFactor
-            Log.d(
-                "MatchingService",
-                "Penalty for ${other.name}: elapsed=${elapsed / 1000}s, decayFactor=$decayFactor, penalty=$p"
-            )
-            p
-        } else {
-            0.0
-        }
-
-        val adjustedScore = baseScore - penalty
-
-        Log.d("MatchingService", "Raw score for ${other.name}: $baseScore, penalty=$penalty, adjusted=$adjustedScore")
-
-        return adjustedScore
-    }
-
-    private suspend fun findStudentMatches(current: StudentProfile, weights: PreferenceWeights): List<StudentProfile> {
-        val broad = queryBroadMatches(current, weights)
-        return refineMatches(current, broad, weights)
-    }
-
-    // to avoid toObject() type errors
     private fun docToStudentProfileSafe(doc: DocumentSnapshot): StudentProfile? {
         val d = doc.data ?: return null
 
@@ -206,7 +66,6 @@ object MatchingService {
             is String -> any.split(",").mapNotNull { it.trim().toIntOrNull() }
             else -> listOf(0, 0)
         }
-
         fun anyToMapStringLong(any: Any?): Map<String, Long> = when (any) {
             is Map<*, *> -> any.mapNotNull { (k, v) ->
                 (k as? String)?.let { key ->
@@ -223,17 +82,140 @@ object MatchingService {
 
         return StudentProfile(
             id = doc.id,
-            name = anyToString(d["name"]).ifEmpty { "Unknown Name" },
-            bio = anyToString(d["bio"]).ifEmpty { "This user is a mystery . . ." },
-            profileType = anyToString(d["profileType"]).ifEmpty { "student" },
+            name = anyToString(d["name"]),
+            bio = anyToString(d["bio"]),
+            profileType = anyToString(d["profileType"]),
             studentUniversity = anyToString(d["studentUniversity"]),
             studentBasicPreferences = anyToStringList(d["studentBasicPreferences"]),
-            studentDesiredGroupSize = anyToIntList(d["studentDesiredGroupSize"]).let {
-                if (it.size >= 2) it else listOf(it.getOrNull(0) ?: 0, it.getOrNull(1) ?: 0)
-            },
+            studentDesiredGroupSize = anyToIntList(d["studentDesiredGroupSize"]),
             studentMaxCommute = anyToInt(d["studentMaxCommute"]),
             studentMaxBudget = anyToInt(d["studentMaxBudget"]),
-            seenUsersTimestamps = anyToMapStringLong(d["seenUsersTimestamps"])
+            studentAge = anyToInt(d["studentAge"]),
+            seenGroupsTimestamps = anyToMapStringLong(d["seenGroupsTimestamps"])
+        )
+    }
+
+    // Public API
+    suspend fun findMatchesForCurrentUser(
+        weights: PreferenceWeights
+    ): List<GroupProfile> {
+        // fetch current user's group
+        val currentGroup = getCurrentUserGroup() ?: return emptyList()
+        Log.d("MatchingService", "Current group: ${currentGroup.name}, UID: ${currentGroup.id}, Members: ${currentGroup.members.joinToString { it.name }}")
+
+        val broadMatches = queryBroadGroupMatches(currentGroup, weights)
+        Log.d("MatchingService", "Broad matches: ${broadMatches.joinToString { it.name }}")
+        return refineGroupMatches(currentGroup, broadMatches, weights)
+    }
+
+    // Broad Firestore filters for groups
+    private suspend fun queryBroadGroupMatches(
+        current: GroupProfile,
+        weights: PreferenceWeights
+    ): List<GroupProfile> {
+        // TODO: Add hard filtering based on the other group having at least space for my group
+        var query = db.collection("groups").whereGreaterThanOrEqualTo("membersCount", 1) // placeholder
+
+        if (weights.commute == 5) {
+            query = query.whereLessThanOrEqualTo("stats.sumCommute", current.stats.avgCommute)
+        }
+
+        if (weights.budget == 5) {
+            query = query.whereLessThanOrEqualTo("stats.sumBudgets", current.stats.avgBudget)
+        }
+
+        val snapshot = query.get().await()
+        Log.d("MatchingService", "Broad group matches: ${snapshot.documents.size}")
+        return snapshot.documents.mapNotNull { docToGroupProfileSafe(it) }
+    }
+
+    // Refine & rank groups in memory
+    private fun refineGroupMatches(
+        current: GroupProfile,
+        candidates: List<GroupProfile>,
+        weights: PreferenceWeights,
+    ): List<GroupProfile> {
+        val candidatesNotSelf = candidates.filter { it.id != current.id }
+
+        val ranked = candidatesNotSelf
+            .map { group ->
+                val score = computeGroupRelevancyScore(current, group, weights)
+                group to score
+            }
+            .sortedByDescending { it.second }
+
+        ranked.forEach {
+            Log.d("MatchingService", "Final score for group ${it.first.name}: ${it.second}")
+        }
+
+        return ranked.map { it.first }
+    }
+
+    // Group-level scoring
+    private fun computeGroupRelevancyScore(
+        current: GroupProfile,
+        other: GroupProfile,
+        weights: PreferenceWeights
+    ): Double {
+        var score = 0.0
+        var totalWeight = 0.0
+
+        val decay_duration_ms = 5 * 24 * 60 * 60 * 1000L // 5 days
+        val now = System.currentTimeMillis()
+
+        // Commute similarity
+        val commuteDiff = (other.stats.avgCommute - current.stats.avgCommute).coerceAtLeast(0)
+        val commuteScore = if (commuteDiff <= 0) 1.0 else 1.0 / (1 + (commuteDiff.toDouble() / 2))
+        score += commuteScore * weights.commute
+        totalWeight += weights.commute
+
+        // Budget similarity
+        val budgetDiff = (other.stats.avgBudget - current.stats.avgBudget).coerceAtLeast(0)
+        val budgetScore = if (budgetDiff == 0) 1.0 else 1.0 / (1 + (budgetDiff.toDouble() / 10))
+        score += budgetScore * weights.budget
+        totalWeight += weights.budget
+
+        val baseScore = if (totalWeight > 0) score / totalWeight else 0.0 // normalised into [0,1]
+
+        val uid = auth.currentUser!!.uid
+        val lastSeen = current.members.first { it.id == uid }.seenGroupsTimestamps[other.id]
+        val penalty = if (lastSeen != null) {
+            val elapsed = now - lastSeen
+            val decayFactor = (1.0 - (elapsed.toDouble() / decay_duration_ms)).coerceIn(0.0, 1.0)
+            val p = weights.lastSeen * decayFactor
+            Log.d( "MatchingService", "Penalty for ${other.members.joinToString { it.name }}: elapsed=${elapsed / 1000}s, decayFactor=$decayFactor, penalty=$p" )
+            p
+        } else { 0.0 }
+
+        return baseScore - penalty
+    }
+
+    // Convert Firestore doc -> GroupProfile
+    private suspend fun docToGroupProfileSafe(doc: DocumentSnapshot): GroupProfile? {
+        if (!doc.exists()) return null
+
+        val id = doc.id
+
+        // Load members
+        val membersSnap = db.collection("users")
+            .whereEqualTo("groupId", id)
+            .get()
+            .await()
+        val members = membersSnap.documents.mapNotNull { docToStudentProfileSafe(it) }
+
+        val stats =
+            GroupStats(
+                size = members.size,
+                avgBudget = members.map { it.studentMaxBudget }.average().toInt(),
+                avgCommute = members.map { it.studentMaxCommute }.average().toInt(),
+                avgAge = members.map { it.studentAge }.average().toInt()
+            )
+
+        return GroupProfile(
+            id = id,
+            name = if (members.size == 1) members[0].name else "Group: ${members.joinToString { it.name }}",
+            members = members,
+            stats = stats
         )
     }
 }

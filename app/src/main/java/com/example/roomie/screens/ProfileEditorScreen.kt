@@ -1,5 +1,6 @@
 package com.example.roomie.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -52,12 +53,12 @@ fun ProfileEditorScreen(
     // Student fields
     val ageField = remember { mutableStateOf(ProfileTextField("Your Age", "", KeyboardType.Number)) }
     val universityField = remember { mutableStateOf(ProfileTextField("Your University", "")) }
-    val preferencesField = remember { mutableStateOf(ProfileTextField("Basic Preferences", "")) }
+    val preferencesField = remember { mutableStateOf(ProfileTextField("Basic Preferences", "", required = false)) }
     val groupSizeMinField = remember { mutableStateOf(ProfileTextField("Min", "", KeyboardType.Number)) }
     val groupSizeMaxField = remember { mutableStateOf(ProfileTextField("Max", "", KeyboardType.Number)) }
     val maxCommuteField = remember { mutableStateOf(ProfileTextField("Max Commute (mins)", "", KeyboardType.Number)) }
     val maxBudgetField = remember { mutableStateOf(ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number)) }
-    var isPartOfGroup = false
+    var isPartOfGroup by remember { mutableStateOf(false) }
 
     val allFields = remember {
         mutableListOf<MutableState<ProfileTextField>>()
@@ -107,7 +108,11 @@ fun ProfileEditorScreen(
                             groupSizeMaxField.value.value = (group?.getOrNull(1) as? Long)?.toString().orEmpty()
                             maxCommuteField.value.value = doc.getLong("studentMaxCommute")?.toString().orEmpty()
                             maxBudgetField.value.value = doc.getLong("studentMaxBudget")?.toString().orEmpty()
-                            if (doc.getString("groupId") != null) isPartOfGroup = true
+                            if (doc.getString("groupId") != null) {
+                                isPartOfGroup = true
+                            } else {
+                                isPartOfGroup = false
+                            }
                         }
                     }
                 }
@@ -250,6 +255,7 @@ fun ProfileEditorScreen(
                         ) isMinProfileSet = false
 
                         if (!isPartOfGroup) {
+                            Log.d("ProfileEditorScreen", "Setting groupId for user ${currentUser.uid}")
                             data["groupId"] = currentUser.uid
                             val groupData = mutableMapOf<String, Any>(
                                 "membersCount" to 1,

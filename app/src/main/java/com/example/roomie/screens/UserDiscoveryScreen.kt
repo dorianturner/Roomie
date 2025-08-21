@@ -34,14 +34,17 @@ import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import com.example.roomie.components.GroupProfile
 import kotlin.math.abs
 
 // String descriptions for each of the weights
@@ -61,7 +64,7 @@ fun UserDiscoveryScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
-    var matches by remember { mutableStateOf<List<StudentProfile>?>(null) }
+    var matches by remember { mutableStateOf<List<GroupProfile>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var currentIndex by remember { mutableStateOf(0) }
     var weights by remember { mutableStateOf(PreferenceWeights()) }
@@ -248,7 +251,7 @@ fun ProfileChip(icon: ImageVector, text: String) {
 }
 @Composable
 fun SwipeableMatchCard(
-    profile: StudentProfile,
+    profile: GroupProfile,
     onSwiped: (SwipeDirection) -> Unit
 ) {
     val configuration = LocalConfiguration.current
@@ -312,10 +315,80 @@ fun SwipeableMatchCard(
                     transformOrigin = TransformOrigin(0.5f, 1f) // bottom center
                 }
         ) {
-            MatchCard(profile)
+            GroupMatchCard(profile)
         }
     }
 }
+
+@Composable
+fun GroupMatchCard(group: GroupProfile) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Title - make it clear this is a group
+            Text(
+                text = "Group: ${group.name} (${group.stats.size} members)",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(bottom = 12.dp),
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // Group-level stats
+            Column(
+                modifier = Modifier.padding(top = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ProfileChip(Icons.Default.Group, "Size: ${group.stats.size}")
+                ProfileChip(Icons.Default.Commute, "Avg commute: ${group.stats.avgCommute} mins")
+                ProfileChip(Icons.Default.AttachMoney, "Avg budget: $${group.stats.avgBudget}")
+                ProfileChip(Icons.Default.Cake, "Avg age: ${group.stats.avgAge}")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Horizontally scrollable member list
+            Text(
+                text = "Members",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                group.members.forEach { member ->
+                    MemberMiniCard(member)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MemberMiniCard(profile: StudentProfile) {
+    Card(
+        modifier = Modifier
+            .width(200.dp)
+            .height(180.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(profile.name, style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            ProfileChip(Icons.Default.School, profile.studentUniversity)
+            ProfileChip(Icons.Default.Commute, "${profile.studentMaxCommute} mins")
+            ProfileChip(Icons.Default.AttachMoney, "$${profile.studentMaxBudget}")
+        }
+    }
+}
+
 
 
 @Composable
