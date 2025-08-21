@@ -63,7 +63,7 @@ fun ChatsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 // Temporarily red so i can see whats going on
-                .background(color = Color.Red),
+                .background(color = MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
