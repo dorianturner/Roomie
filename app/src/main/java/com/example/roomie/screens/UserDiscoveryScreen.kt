@@ -3,7 +3,6 @@ package com.example.roomie.screens
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +36,7 @@ import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -201,11 +201,11 @@ fun MatchCard(profile: StudentProfile) {
                 modifier = Modifier.padding(bottom = 12.dp)
             )
 
-            Row(
+            Column(
                 modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState())
                     .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ProfileChip(Icons.Default.School, profile.studentUniversity)
                 ProfileChip(Icons.Default.Group, "Group Size: ${profile.studentDesiredGroupSize.joinToString(" - ")}")
