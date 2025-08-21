@@ -1,4 +1,4 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
 import android.content.Context
 import android.net.Uri
@@ -10,6 +10,10 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 fun getMimeType(context: Context, uri: Uri): String? {
     return context.contentResolver.getType(uri)
@@ -87,20 +91,57 @@ class ChatManager(
      */
     private suspend fun uploadMediaToFirebase(
         mediaUri: Uri,
-        messageId: String
+        messageId: String,
+        onProgress: (progress: Float) -> Unit
     ): String {
         return withContext(Dispatchers.IO) {
             try {
                 val storageRef = FirebaseStorage.getInstance().reference
                     .child("chat-media/$messageId")
 
-                storageRef.putFile(mediaUri).await()
+
+                val uploadTask = storageRef.putFile(mediaUri)
+
+                // coverts the task to a suspend function to track the progress
+                val result = uploadTask.awaitWithProgress(onProgress)
+
                 val downloadUrl = storageRef.downloadUrl.await().toString()
+
                 Log.d("ChatManager", "Uploaded media to: $downloadUrl")
                 downloadUrl
+
             } catch (e: Exception) {
                 Log.e("ChatManager", "Upload failed: ${e.message}")
                 throw e
+            }
+        }
+    }
+    private suspend fun UploadTask.awaitWithProgress(
+        onProgress: (progress: Float) -> Unit
+    ): UploadTask.TaskSnapshot = suspendCancellableCoroutine { continuation ->
+        val task = addOnProgressListener { snapshot ->
+            val progress = snapshot.bytesTransferred.toFloat() / snapshot.totalByteCount
+            onProgress(progress)
+        }
+
+        addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                continuation.resume(task.result)
+            } else {
+                continuation.resumeWithException(task.exception ?: Exception("Unknown error"))
+            }
+        }
+
+        addOnCanceledListener {
+            continuation.cancel()
+        }
+
+        // Handle coroutine cancellation
+        continuation.invokeOnCancellation {
+            try {
+                cancel()
+            } catch (e: Exception) {
+                // Ignore cancellation errors
             }
         }
     }
@@ -111,6 +152,7 @@ class ChatManager(
         text: String? = null,
         type: String = "text",
         mediaUri: Uri? = null,
+        onProgress: ((Float) -> Unit)? = null, // optional progress callback
     ) {
         check(conversationId != null) { "Conversation does not exist" }
 
@@ -125,7 +167,14 @@ class ChatManager(
         var mediaUrl: String? = null
 
         if (type != "text" && mediaUri != null) {
-            mediaUrl = uploadMediaToFirebase(mediaUri, messageRef.id)
+            mediaUrl = uploadMediaToFirebase(
+                mediaUri,
+                messageRef.id,
+                onProgress = { progress ->
+                    // forward progress to caller
+                    onProgress?.invoke(progress)
+                }
+            )
             Log.d("ChatManager", "Uploaded media to firebase, link: $mediaUrl")
         }
 

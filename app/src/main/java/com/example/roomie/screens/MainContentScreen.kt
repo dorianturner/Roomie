@@ -32,7 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.roomie.components.ChatManager
+import com.example.roomie.components.chat.ChatManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,5 +1,6 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
+import android.net.Uri
 import com.google.firebase.Timestamp
 
 data class Conversation(
@@ -19,4 +20,11 @@ data class Message(
     val mediaUrl: String? = null,                 // For multimedia
     val mediaMetadata: Map<String, Any>? = null,  // width/height/duration
     val timestamp: Timestamp? = null
+)
+
+data class AttachedFile(
+    val uri: Uri,
+    val name: String,
+    val type: String, // "image", "video", "pdf", etc.
+    val size: Long? = null
 )

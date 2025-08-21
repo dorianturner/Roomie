@@ -57,6 +57,7 @@ fun ProfileEditorScreen(
     val groupSizeMaxField = remember { mutableStateOf(ProfileTextField("Max", "", KeyboardType.Number)) }
     val maxCommuteField = remember { mutableStateOf(ProfileTextField("Max Commute (mins)", "", KeyboardType.Number)) }
     val maxBudgetField = remember { mutableStateOf(ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number)) }
+    var isPartOfGroup = false
 
     val allFields = remember {
         mutableListOf<MutableState<ProfileTextField>>()
@@ -106,6 +107,7 @@ fun ProfileEditorScreen(
                             groupSizeMaxField.value.value = (group?.getOrNull(1) as? Long)?.toString().orEmpty()
                             maxCommuteField.value.value = doc.getLong("studentMaxCommute")?.toString().orEmpty()
                             maxBudgetField.value.value = doc.getLong("studentMaxBudget")?.toString().orEmpty()
+                            if (doc.getString("groupId") != null) isPartOfGroup = true
                         }
                     }
                 }
@@ -219,6 +221,8 @@ fun ProfileEditorScreen(
 
                     var isMinProfileSet = true
 
+                    val batch = db.batch()
+
                     if (isLandlord) {
                         val company = companyField.value.value
                         val name = nameField.value.value
@@ -244,12 +248,26 @@ fun ProfileEditorScreen(
                             gMin == null || gMax == null ||
                             commute == null || budget == null
                         ) isMinProfileSet = false
+
+                        if (!isPartOfGroup) {
+                            data["groupId"] = currentUser.uid
+                            val groupData = mutableMapOf<String, Any>(
+                                "membersCount" to 1,
+                                "stats" to mapOf(
+                                    "sumAges" to data["studentAge"]!!,
+                                    "sumBudgets" to data["studentMaxBudget"]!!,
+                                    "sumCommutes" to data["studentMaxCommute"]!!
+                                )
+                            )
+                            batch.set(db.collection("groups").document(currentUser.uid), groupData)
+                        }
                     }
 
                     data["minimumRequiredProfileSet"] = isMinProfileSet
 
-                    db.collection("users").document(currentUser.uid)
-                        .set(data)
+                    batch.set(db.collection("users").document(currentUser.uid), data)
+
+                    batch.commit()
                         .addOnSuccessListener {
                             Toast.makeText(context, "Profile saved successfully!", Toast.LENGTH_SHORT).show()
                             onProfileSaved()

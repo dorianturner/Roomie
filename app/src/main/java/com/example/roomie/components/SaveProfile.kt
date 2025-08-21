@@ -21,7 +21,7 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             "bio" to state.bio.value,
             "phoneNumber" to state.phoneNumber.value,
             "profileType" to if (state.isLandlord) "landlord" else "student",
-            "lastUpdated" to System.currentTimeMillis()
+            "lastUpdated" to System.currentTimeMillis(),
         )
 
         var isMinProfileSet = true
@@ -43,6 +43,7 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             data["studentDesiredGroupSize"] = listOf(gMin, gMax)
             data["studentMaxCommute"] = commute ?: 999
             data["studentMaxBudget"] = budget ?: 10000
+            data["groupId"] = currentUser.uid
 
             if (
                 state.university.value.isBlank() ||
@@ -52,16 +53,27 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
 
         data["minimumRequiredProfileSet"] = isMinProfileSet
 
+        val groupData = mutableMapOf<String, Any>(
+            "membersCount" to 1,
+            "stats" to mapOf(
+                "sumAges" to data["studentAge"]!!,
+                "sumBudgets" to data["studentMaxBudget"]!!,
+                "sumCommutes" to data["studentMaxCommute"]!!
+            )
+        )
+
         return suspendCoroutine { cont ->
-            db.collection("users")
-                .document(currentUser.uid)
-                .set(data)
-                .addOnSuccessListener {
-                    cont.resume(true)
-                }
-                .addOnFailureListener {
-                    cont.resume(false)
-                }
+            val batch = db.batch()
+
+            val userRef = db.collection("users").document(currentUser.uid)
+            val groupRef = db.collection("groups").document(currentUser.uid)
+
+            batch.set(userRef, data)
+            batch.set(groupRef, groupData)
+
+            batch.commit()
+                .addOnSuccessListener { cont.resume(true) }
+                .addOnFailureListener { cont.resume(false) }
         }
     } else {
         return false

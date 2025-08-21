@@ -1,4 +1,4 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.roomie.components.formatTimestamp
 import com.google.firebase.Timestamp
 
 @Composable
