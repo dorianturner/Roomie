@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.roomie.components.StudentProfile
 import com.example.roomie.components.MatchingService
-import com.example.roomie.components.ChatManager
+import com.example.roomie.components.chat.ChatManager
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
