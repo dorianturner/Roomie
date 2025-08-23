@@ -13,10 +13,10 @@ data class OnboardingProfileState(
     var age: ProfileTextField = ProfileTextField("Your Age", "", KeyboardType.Number),
     var university: ProfileTextField = ProfileTextField("Your University", ""),
     var preferences: ProfileTextField = ProfileTextField("Basic Preferences", "", required = false),
-    var groupSizeMin: ProfileTextField = ProfileTextField("Min Group Size", "", KeyboardType.Number, false),
-    var groupSizeMax: ProfileTextField = ProfileTextField("Max Group Size", "", KeyboardType.Number, false),
-    var maxCommute: ProfileTextField = ProfileTextField("Max Commute (mins)", "", KeyboardType.Number, false),
-    var maxBudget: ProfileTextField = ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number, false),
+    var groupSizeMin: ProfileTextField = ProfileTextField("Min Group Size", "", KeyboardType.Number),
+    var groupSizeMax: ProfileTextField = ProfileTextField("Max Group Size", "", KeyboardType.Number),
+    var maxCommute: ProfileTextField = ProfileTextField("Max Commute (mins)", "", KeyboardType.Number),
+    var maxBudget: ProfileTextField = ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number),
 
     // Landlord fields
     var company: ProfileTextField = ProfileTextField("Your Company Name", "")

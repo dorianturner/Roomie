@@ -249,7 +249,6 @@ fun ProfileEditorScreen(
 
                         if (name.isBlank() || age == null ||
                             universityField.value.value.isBlank() ||
-                            preferencesField.value.value.isBlank() ||
                             gMin == null || gMax == null ||
                             commute == null || budget == null
                         ) isMinProfileSet = false
