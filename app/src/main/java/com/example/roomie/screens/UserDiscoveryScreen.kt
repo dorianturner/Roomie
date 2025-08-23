@@ -298,7 +298,7 @@ fun SwipeableMatchCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(400.dp) // adjust card height
+            .wrapContentHeight()
             .background(bgColor)
             .anchoredDraggable(
                 state = state,
@@ -323,14 +323,16 @@ fun SwipeableMatchCard(
 @Composable
 fun GroupMatchCard(group: GroupProfile) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Title - make it clear this is a group
             Text(
-                text = "Group: ${group.name} (${group.stats.size} members)",
+                text = if (group.stats.size == 1) "User: ${group.name}" else "Group: ${group.name} (${group.stats.size} members)",
                 style = MaterialTheme.typography.headlineLarge,
                 modifier = Modifier.padding(bottom = 12.dp),
                 color = MaterialTheme.colorScheme.primary
@@ -363,6 +365,7 @@ fun GroupMatchCard(group: GroupProfile) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 group.members.forEach { member ->
+                    Log.d("GroupMatchCard", "Member: ${member.name}, Age: ${member.studentAge}")
                     MemberMiniCard(member)
                 }
             }
@@ -375,16 +378,21 @@ fun MemberMiniCard(profile: StudentProfile) {
     Card(
         modifier = Modifier
             .width(200.dp)
-            .height(180.dp),
+            .wrapContentHeight(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(profile.name, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(profile.bio, style = MaterialTheme.typography.bodyMedium)
+            ProfileChip(Icons.Default.Cake, profile.studentAge.toString())
             ProfileChip(Icons.Default.School, profile.studentUniversity)
             ProfileChip(Icons.Default.Commute, "${profile.studentMaxCommute} mins")
             ProfileChip(Icons.Default.AttachMoney, "$${profile.studentMaxBudget}")
+
         }
     }
 }
