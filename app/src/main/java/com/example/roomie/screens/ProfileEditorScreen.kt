@@ -20,6 +20,9 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import com.example.roomie.components.PhotoItem
+import com.example.roomie.components.deletePhoto
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
     var isValid = true
@@ -41,6 +44,7 @@ fun ProfileEditorScreen(
     val auth: FirebaseAuth = remember { Firebase.auth }
     val db: FirebaseFirestore = remember { Firebase.firestore }
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
 
     // photos
     var profilePictureUrl by remember { mutableStateOf<String?>(null) }
@@ -247,8 +251,10 @@ fun ProfileEditorScreen(
                         "bio" to bioField.value.value,
                         "phoneNumber" to phoneNumberField.value.value,
                         "profileType" to if (isLandlord) "landlord" else "student",
-                        "lastUpdated" to System.currentTimeMillis()
+                        "lastUpdated" to System.currentTimeMillis(),
                     )
+
+                    data["profilePictureUrl"] = profilePictureUrl ?: ""
 
                     var isMinProfileSet = true
 
@@ -259,6 +265,12 @@ fun ProfileEditorScreen(
                         val name = nameField.value.value
                         data["landlordCompany"] = company
                         if (name.isBlank() || company.isBlank()) isMinProfileSet = false
+
+                        // delete all student photos in the cloud.
+                        scope.launch {
+                            deleteAllStudentPhotos(currentUser.uid, photos)
+                            photos = emptyList()
+                        }
                     } else {
                         val age = ageField.value.value.toIntOrNull()
                         val gMin = groupSizeMinField.value.value.toIntOrNull()
@@ -316,5 +328,11 @@ fun ProfileEditorScreen(
         }
 
         Spacer(modifier = Modifier.height(Spacing.short))
+    }
+}
+
+suspend fun deleteAllStudentPhotos(uid: String, photos: List<PhotoItem>) {
+    photos.forEach { photo ->
+        deletePhoto(uid, photo.path)
     }
 }

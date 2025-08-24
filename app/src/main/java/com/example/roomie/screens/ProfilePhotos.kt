@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.Dp
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 
 // contains a composable for editing the profile photos and one for viewing the profile photos.
 
@@ -63,11 +65,18 @@ fun ProfilePhotosEdit(
             isLoading = true
             try {
                 val (url, path) = uploadProfileImage(uri, uid)
+
+                // Ensure user doc exists
+                val userRef = FirebaseFirestore.getInstance().collection("users").document(uid)
+                userRef.set(mapOf("photos" to emptyList<String>()), SetOptions.merge())
+
+                // Add photo to Firestore array
                 val added = addPhotoToUser(uid, url, path)
-                if (added) photos = fetchUserPhotos(uid)
-                onPhotosChanged(photos)
-            } catch (e: Exception) {
-                // handle error (toast/snackbar) - omitted for brevity
+
+                if (added) {
+                    photos = fetchUserPhotos(uid)
+                    onPhotosChanged(photos)
+                }
             } finally {
                 isLoading = false
             }
