@@ -19,6 +19,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import com.example.roomie.components.PhotoItem
 
 fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
     var isValid = true
@@ -40,6 +41,9 @@ fun ProfileEditorScreen(
     val auth: FirebaseAuth = remember { Firebase.auth }
     val db: FirebaseFirestore = remember { Firebase.firestore }
     val scrollState = rememberScrollState()
+
+    // photos
+    var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
 
     // Common fields
     val nameField = remember { mutableStateOf(ProfileTextField("Your Name", "")) }
@@ -182,6 +186,16 @@ fun ProfileEditorScreen(
         )
 
         Spacer(modifier = Modifier.height(Spacing.medium))
+
+        // Photo editor section
+        ProfilePhotosEdit(
+            modifier = Modifier.fillMaxWidth(),
+            onPhotosChanged = { updated ->
+                photos = updated
+            }
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.short))
 
         // Conditional profile sections
         if (isLandlord) {
