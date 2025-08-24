@@ -68,7 +68,11 @@ fun ProfilePhotosEdit(
 
                 // Ensure user doc exists
                 val userRef = FirebaseFirestore.getInstance().collection("users").document(uid)
-                userRef.set(mapOf("photos" to emptyList<String>()), SetOptions.merge())
+                userRef.get().addOnSuccessListener { doc ->
+                    if (!doc.exists()) {
+                        userRef.set(mapOf("photos" to emptyList<Map<String, String>>()), SetOptions.merge())
+                    }
+                }
 
                 // Add photo to Firestore array
                 val added = addPhotoToUser(uid, url, path)
