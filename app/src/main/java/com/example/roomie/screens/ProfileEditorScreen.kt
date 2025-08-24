@@ -43,6 +43,7 @@ fun ProfileEditorScreen(
     val scrollState = rememberScrollState()
 
     // photos
+    var profilePictureUrl by remember { mutableStateOf<String?>(null) }
     var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
 
     // Common fields
@@ -100,6 +101,7 @@ fun ProfileEditorScreen(
                         bioField.value.value = doc.getString("bio").orEmpty()
                         phoneNumberField.value.value = doc.getString("phoneNumber").orEmpty()
                         isLandlord = doc.getString("profileType") == "landlord"
+                        profilePictureUrl = doc.getString("profilePictureUrl")
 
                         if (isLandlord) {
                             companyField.value.value = doc.getString("landlordCompany").orEmpty()
@@ -160,6 +162,16 @@ fun ProfileEditorScreen(
         Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Common fields
+        ProfilePictureEditor(
+            currentUrl = profilePictureUrl,
+            onPictureUpdated = { newUrl ->
+                profilePictureUrl = newUrl
+                // save this URL in Firestore when saving profile
+            }
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.short))
+
         ProfileTextFieldView(
             field = nameField.value,
             onValueChange = {
@@ -187,16 +199,6 @@ fun ProfileEditorScreen(
 
         Spacer(modifier = Modifier.height(Spacing.medium))
 
-        // Photo editor section
-        ProfilePhotosEdit(
-            modifier = Modifier.fillMaxWidth(),
-            onPhotosChanged = { updated ->
-                photos = updated
-            }
-        )
-
-        Spacer(modifier = Modifier.height(Spacing.short))
-
         // Conditional profile sections
         if (isLandlord) {
             LandlordProfileSection(
@@ -206,6 +208,16 @@ fun ProfileEditorScreen(
                 }
             )
         } else {
+            // Photo editor section
+            ProfilePhotosEdit(
+                modifier = Modifier.fillMaxWidth(),
+                onPhotosChanged = { updated ->
+                    photos = updated
+                }
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.short))
+
             StudentProfileSection(
                 ageField = ageField,
                 universityField = universityField,

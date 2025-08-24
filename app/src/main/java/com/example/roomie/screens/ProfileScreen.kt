@@ -24,25 +24,41 @@ import com.example.roomie.components.PhotoItem
 import com.example.roomie.components.fetchUserPhotos
 import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var profilePictureUrl by remember { mutableStateOf<String?>(null) }
+    var isLandlord by remember { mutableStateOf(false) }
 
     // load photos once (re-runs when uid changes)
     LaunchedEffect(uid) {
         if (uid == null) {
             photos = emptyList()
+            profilePictureUrl = null
+            isLandlord = false
             isLoading = false
         } else {
             isLoading = true
-            photos = try {
-                fetchUserPhotos(uid)
-            } catch (e: Exception) {
-                emptyList()
-            }
+            val userDoc = FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .get()
+                .await()
+            isLandlord = userDoc?.getString("profileType") == "landlord"
+
+            // load profile picture separately
+            profilePictureUrl = userDoc?.getString("profilePictureUrl")
+
+            // load photos only if student
+            photos = if (!isLandlord) {
+                try { fetchUserPhotos(uid) } catch (e: Exception) { emptyList() }
+            } else emptyList()
+
             isLoading = false
         }
     }
@@ -80,38 +96,18 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        // Avatar: show first uploaded photo if available, otherwise fallback drawable
-        Box(modifier = Modifier.size(200.dp), contentAlignment = Alignment.Center) {
-            if (isLoading) {
-                CircularProgressIndicator()
-            } else {
-                if (photos.isNotEmpty()) {
-                    AsyncImage(
-                        model = photos[0].url,
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(200.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(R.drawable.profile),
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(200.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-        }
+        // profile pic :P
+        ProfilePictureDisplay(url = profilePictureUrl, size = 150.dp)
+
 
         // Gallery (pass the photo URLs)
-        ProfilePhotoGallery(
-            photos = photos.map { it.url },
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (!isLandlord){
+            ProfilePhotoGallery(
+                photos = photos.map { it.url },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
 
         // Third row: Name and age (placeholder — fetch & show real data if you want)
         Row(
