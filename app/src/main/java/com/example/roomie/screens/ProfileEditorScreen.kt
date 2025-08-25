@@ -70,6 +70,11 @@ fun ProfileEditorScreen(
     val maxBudgetField = remember { mutableStateOf(ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number)) }
     var isPartOfGroup by remember { mutableStateOf(false) }
 
+    val smokingStatusState = remember { mutableStateOf("Neither") }
+    val bedtimeState = remember { mutableStateOf("") }
+    val alcoholState = remember { mutableStateOf(1) }
+    val musicField = remember { mutableStateOf(ProfileTextField("The type of music I like the most is...", "", required = false)) }
+
     val allFields = remember {
         mutableListOf<MutableState<ProfileTextField>>()
     }
@@ -120,6 +125,11 @@ fun ProfileEditorScreen(
                             maxCommuteField.value.value = doc.getLong("studentMaxCommute")?.toString().orEmpty()
                             maxBudgetField.value.value = doc.getLong("studentMaxBudget")?.toString().orEmpty()
                             isPartOfGroup = doc.getString("groupId") != null
+                            // load lifestyle fields
+                            smokingStatusState.value = doc.getString("studentSmokingStatus") ?: "Neither"
+                            bedtimeState.value = doc.getString("studentBedtime") ?: ""
+                            alcoholState.value = (doc.getLong("studentAlcohol")?.toInt() ?: 1)
+                            musicField.value.value = doc.getString("studentMusic").orEmpty()
                         }
                     }
                 }
@@ -226,6 +236,10 @@ fun ProfileEditorScreen(
                 groupSizeMaxField = groupSizeMaxField,
                 maxCommuteField = maxCommuteField,
                 maxBudgetField = maxBudgetField,
+                smokingStatus = smokingStatusState,
+                bedtime = bedtimeState,
+                alcoholLevel = alcoholState,
+                musicField = musicField
             )
         }
 
@@ -281,6 +295,16 @@ fun ProfileEditorScreen(
                         data["studentDesiredGroupSize"] = listOf(gMin, gMax)
                         data["studentMaxCommute"] = commute ?: 0
                         data["studentMaxBudget"] = budget ?: 0
+
+                        if (smokingStatusState.value.isBlank() || bedtimeState.value.isBlank() || alcoholState.value !in 1..5) {
+                            Toast.makeText(context, "Please fill smoking, bedtime and drinking preferences.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        data["studentSmokingStatus"] = smokingStatusState.value
+                        data["studentBedtime"] = bedtimeState.value
+                        data["studentAlcohol"] = alcoholState.value
+                        data["studentMusic"] = musicField.value.value
 
                         if (name.isBlank() || age == null ||
                             universityField.value.value.isBlank() ||

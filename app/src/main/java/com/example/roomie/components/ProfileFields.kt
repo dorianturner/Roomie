@@ -87,80 +87,53 @@ fun StudentProfileSection(
     groupSizeMinField: MutableState<ProfileTextField>,
     groupSizeMaxField: MutableState<ProfileTextField>,
     maxCommuteField: MutableState<ProfileTextField>,
-    maxBudgetField: MutableState<ProfileTextField>
+    maxBudgetField: MutableState<ProfileTextField>,
+    smokingStatus: MutableState<String>,
+    bedtime: MutableState<String>,
+    alcoholLevel: MutableState<Int>,
+    musicField: MutableState<ProfileTextField>
 ) {
     Column {
         Text("Student Profile", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(
-            field = ageField.value,
-            onValueChange = { newValue ->
-                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    ageField.value.value = newValue
-                }
-            }
-        )
+        // ... existing fields (age/university/group size/commute/budget) - unchanged ...
+        ProfileTextFieldView(field = ageField.value, onValueChange = { newValue ->
+            if (newValue.all { it.isDigit() } || newValue.isEmpty()) ageField.value.value = newValue
+        })
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(
-            field = universityField.value,
-            onValueChange = {
-                universityField.value.value = it
-            }
-        )
+        ProfileTextFieldView(field = universityField.value, onValueChange = { universityField.value.value = it })
         Spacer(modifier = Modifier.height(16.dp))
 
+        // group size row...
         Text("Desired Group Size (Min-Max):", style = MaterialTheme.typography.labelLarge)
         Spacer(modifier = Modifier.height(8.dp))
-
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProfileTextFieldView(
-                field = groupSizeMinField.value,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                        groupSizeMinField.value.value = newValue
-                    }
-                },
-                modifier = Modifier.weight(1f) // let it take half width
-            )
-
-            Text(
-                "-",
-                modifier = Modifier.align(Alignment.CenterVertically),
-                style = MaterialTheme.typography.titleLarge // makes it visually balanced
-            )
-
-            ProfileTextFieldView(
-                field = groupSizeMaxField.value,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                        groupSizeMaxField.value.value = newValue
-                    }
-                },
-                modifier = Modifier.weight(1f) // take other half
-            )
+            ProfileTextFieldView(field = groupSizeMinField.value, onValueChange = { v ->
+                if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMinField.value.value = v
+            }, modifier = Modifier.weight(1f))
+            Text("-", modifier = Modifier.align(Alignment.CenterVertically))
+            ProfileTextFieldView(field = groupSizeMaxField.value, onValueChange = { v ->
+                if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMaxField.value.value = v
+            }, modifier = Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        ProfileTextFieldView(
-            field = maxCommuteField.value,
-            onValueChange = { newValue ->
-                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    maxCommuteField.value.value = newValue
-                }
-            }
-        )
+        ProfileTextFieldView(field = maxCommuteField.value, onValueChange = { v ->
+            if (v.all { it.isDigit() } || v.isEmpty()) maxCommuteField.value.value = v
+        })
         Spacer(modifier = Modifier.height(16.dp))
+        ProfileTextFieldView(field = maxBudgetField.value, onValueChange = { v ->
+            if (v.all { it.isDigit() } || v.isEmpty()) maxBudgetField.value.value = v
+        })
 
-        ProfileTextFieldView(
-            field = maxBudgetField.value,
-            onValueChange = { newValue ->
-                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    maxBudgetField.value.value = newValue
-                }
-            }
+        // Lifestyle section (smoking/bedtime/alcohol/music)
+        LifestyleSection(
+            smokingStatus = smokingStatus,
+            bedtime = bedtime,
+            alcoholLevel = alcoholLevel,
+            musicField = musicField
         )
     }
 }

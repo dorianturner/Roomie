@@ -67,22 +67,31 @@ fun ExtraInfoScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Button(onClick = onBack) { Text("Back") }
+                val buttonLabel = if (profileState.isLandlord) "Finish" else "Next"
                 Button(onClick = {
                     if (!validateFields(fieldsToValidate)) {
                         Toast.makeText(context, "Please fill all mandatory fields", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
-                    coroutineScope.launch {
-                        val success = saveProfile(profileState)
-                        if (success) {
-                            Toast.makeText(context, "Profile saved successfully!", Toast.LENGTH_SHORT).show()
-                            onFinish()
-                        } else {
-                            Toast.makeText(context, "Error saving profile.", Toast.LENGTH_LONG).show()
+                    if (profileState.isLandlord) {
+                        // landlords finish here — save and then finish
+                        coroutineScope.launch {
+                            val success = saveProfile(profileState)
+                            if (success) {
+                                Toast.makeText(context, "Profile saved successfully!", Toast.LENGTH_SHORT).show()
+                                onFinish()
+                            } else {
+                                Toast.makeText(context, "Error saving profile.", Toast.LENGTH_LONG).show()
+                            }
                         }
+                    } else {
+                        // student: don't call saveProfile yet (TellMore will collect mandatory lifestyle fields)
+                        // update profileState with the fields we edited on this screen are already written by the UI bindings
+                        // simply continue the flow — OnboardingFlow routes to TellMoreScreen for students
+                        onFinish()
                     }
                 }) {
-                    Text("Finish")
+                    Text(buttonLabel)
                 }
             }
         }

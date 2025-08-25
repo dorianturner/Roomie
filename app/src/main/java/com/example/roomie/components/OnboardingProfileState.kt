@@ -19,5 +19,11 @@ data class OnboardingProfileState(
     var maxBudget: ProfileTextField = ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number),
 
     // Landlord fields
-    var company: ProfileTextField = ProfileTextField("Your Company Name", "")
+    var company: ProfileTextField = ProfileTextField("Your Company Name", ""),
+
+    // Lifestyle / extra info
+    var smokingStatus: String = "Neither",    // "Smoke" | "Vape" | "Neither"
+    var bedtime: String = "",                 // e.g. "11pm–12am"
+    var alcoholLevel: Int = 1,                // 1..5
+    var musicPref: ProfileTextField = ProfileTextField("The type of music I like the most is...", "", required = false)
 )

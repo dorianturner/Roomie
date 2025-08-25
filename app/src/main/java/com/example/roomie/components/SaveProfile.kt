@@ -38,12 +38,22 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             val commute = state.maxCommute.value.toIntOrNull()
             val budget = state.maxBudget.value.toIntOrNull()
 
+            // mandatory lifestyle checks
+            if (state.smokingStatus.isBlank() || state.bedtime.isBlank()) return false
+            if (state.alcoholLevel !in 1..5) return false
+
             data["studentAge"] = age
             data["studentUniversity"] = state.university.value
             data["studentDesiredGroupSize"] = listOf(gMin, gMax)
             data["studentMaxCommute"] = commute ?: 999
             data["studentMaxBudget"] = budget ?: 10000
             data["groupId"] = currentUser.uid
+
+            // persist lifestyle
+            data["studentSmokingStatus"] = state.smokingStatus
+            data["studentBedtime"] = state.bedtime
+            data["studentAlcohol"] = state.alcoholLevel
+            data["studentMusic"] = state.musicPref.value
 
             if (
                 state.university.value.isBlank() ||
