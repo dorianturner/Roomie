@@ -33,7 +33,7 @@ fun ProfilePictureDisplay(
     modifier: Modifier = Modifier,
     size: Dp = 200.dp
 ) {
-    if (url != null) {
+    if (url != null && url != "") {
         AsyncImage(
             model = url,
             contentDescription = "Profile Picture",
@@ -83,7 +83,7 @@ fun ProfilePictureEditor(
             if (isLoading) {
                 CircularProgressIndicator()
             } else {
-                if (currentUrl != null) {
+                if (currentUrl != null && currentUrl != "") {
                     AsyncImage(
                         model = currentUrl,
                         contentDescription = "Profile Picture",
