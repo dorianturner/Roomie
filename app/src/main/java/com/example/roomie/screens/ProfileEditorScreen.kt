@@ -22,6 +22,7 @@ import com.google.firebase.firestore.firestore
 import com.example.roomie.components.PhotoItem
 import com.example.roomie.components.deletePhoto
 import androidx.compose.runtime.rememberCoroutineScope
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.launch
 
 fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
@@ -118,11 +119,7 @@ fun ProfileEditorScreen(
                             groupSizeMaxField.value.value = (group?.getOrNull(1) as? Long)?.toString().orEmpty()
                             maxCommuteField.value.value = doc.getLong("studentMaxCommute")?.toString().orEmpty()
                             maxBudgetField.value.value = doc.getLong("studentMaxBudget")?.toString().orEmpty()
-                            if (doc.getString("groupId") != null) {
-                                isPartOfGroup = true
-                            } else {
-                                isPartOfGroup = false
-                            }
+                            isPartOfGroup = doc.getString("groupId") != null
                         }
                     }
                 }
@@ -308,7 +305,11 @@ fun ProfileEditorScreen(
 
                     data["minimumRequiredProfileSet"] = isMinProfileSet
 
-                    batch.set(db.collection("users").document(currentUser.uid), data)
+                    batch.set(
+                        db.collection("users").document(currentUser.uid),
+                        data,
+                        SetOptions.merge()
+                    )
 
                     batch.commit()
                         .addOnSuccessListener {
