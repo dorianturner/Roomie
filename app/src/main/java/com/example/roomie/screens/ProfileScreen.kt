@@ -34,6 +34,8 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var profilePictureUrl by remember { mutableStateOf<String?>(null) }
     var isLandlord by remember { mutableStateOf(false) }
+    var name by remember {mutableStateOf<String?>(null)}
+    var age by remember { mutableStateOf<Int?>(null) }
 
     // load photos once (re-runs when uid changes)
     LaunchedEffect(uid) {
@@ -50,6 +52,8 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
                 .get()
                 .await()
             isLandlord = userDoc?.getString("profileType") == "landlord"
+            name = userDoc?.getString("name")
+            if (!isLandlord) age = userDoc?.getLong("studentAge")?.toInt()
 
             // load profile picture separately
             profilePictureUrl = userDoc?.getString("profilePictureUrl")
@@ -96,9 +100,35 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
             }
         }
 
-        // profile pic :P
-        ProfilePictureDisplay(url = profilePictureUrl, size = 150.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = Spacing.short),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.short)
+        ) {
+            // Smaller profile pic, left aligned
+            ProfilePictureDisplay(url = profilePictureUrl, size = 80.dp)
 
+            // Name + age to the right
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = name ?: "Unknown User",
+                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                if (age != null){
+                    Text(
+                        text = age.toString(),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
 
         // Gallery (pass the photo URLs)
         if (!isLandlord){
@@ -110,23 +140,7 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
 
 
         // Third row: Name and age (placeholder — fetch & show real data if you want)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort, Alignment.CenterHorizontally)
-        ) {
-            Text(
-                text = "Name",
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 25.sp
-            )
-            Text(
-                text = "19",
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 25.sp
-            )
-        }
+
         // Fourth row: City and country (keep as you wish)
     }
 }
