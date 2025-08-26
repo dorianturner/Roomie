@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.roomie.screens.ProfilePhotoGallery
@@ -92,54 +93,77 @@ fun ProfileCard(
             }
 
             // ---------- Icon rows (under the gallery) ----------
-            // row 1: birthday, pets, bedtime, smoking
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(6.dp)
+                    )
+                    .padding(6.dp)
             ) {
-                birthday?.let { IconWithLabel(R.drawable.ic_birthday, it.toString()) }
-                pets?.takeIf { it.isNotBlank() }?.let { IconWithLabel(R.drawable.ic_pets, it) }
-                bedtime?.takeIf { it.isNotBlank() }?.let { IconWithLabel(R.drawable.ic_bedtime, it) }
-                smokingStatus?.takeIf { it.isNotBlank() }?.let { IconWithLabel(R.drawable.ic_smoking, if (it == "Neither") "No" else it) }
-            }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Row 1: birthday, pets, bedtime, smoking
+                    val row1 = listOfNotNull(
+                        birthday?.let { R.drawable.ic_birthday to it.toString() },
+                        pets?.takeIf { it.isNotBlank() }?.let { R.drawable.ic_pets to it },
+                        bedtime?.takeIf { it.isNotBlank() }?.let { R.drawable.ic_bedtime to it },
+                        smokingStatus?.takeIf { it.isNotBlank() }?.let {
+                            R.drawable.ic_smoking to if (it == "Neither") "No" else it
+                        }
+                    )
 
-            // row 2: group size (min-max), max commute, max budget
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (groupMin != null || groupMax != null) {
+                    if (row1.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row1.forEach { (drawable, label) ->
+                                // each item is a compact unit that will wrap as a whole
+                                IconWithLabelUnit(drawable, label)
+                            }
+                        }
+                    }
+
+                    // Row 2: group size, commute, budget
                     val gText = when {
                         groupMin != null && groupMax != null -> "$groupMin - $groupMax"
                         groupMin != null -> "Min $groupMin"
                         groupMax != null -> "Max $groupMax"
                         else -> null
                     }
-                    gText?.let { IconWithLabel(R.drawable.ic_group_size, it) }
-                }
 
-                maxCommute?.let { IconWithLabel(R.drawable.ic_commute, "$it min") }
-                maxBudget?.let { IconWithLabel(R.drawable.ic_budget, "${it}/wk") }
-            }
+                    val row2 = listOfNotNull(
+                        gText?.let { R.drawable.ic_group_size to it },
+                        maxCommute?.let { R.drawable.ic_commute to "$it min" },
+                        maxBudget?.let { R.drawable.ic_budget to "${it}/wk" } // preserved format
+                    )
 
-            // row 3: university (single)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp, bottom = 4.dp),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                university?.takeIf { it.isNotBlank() }?.let {
-                    IconWithLabel(R.drawable.ic_university, it)
+                    if (row2.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row2.forEach { (drawable, label) ->
+                                IconWithLabelUnit(drawable, label)
+                            }
+                        }
+                    }
+
+                    // Row 3: university (single)
+                    university?.takeIf { it.isNotBlank() }?.let { uni ->
+                        // single item; keep it left-aligned but allow it to use whole width
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            IconWithLabelUnit(R.drawable.ic_university, uni, takeFullWidth = true)
+                        }
+                    }
                 }
-            }
+            } // end icon box
 
             // --- Bio ---
             bio?.let {
@@ -163,20 +187,22 @@ fun ProfileCard(
 }
 
 @Composable
-private fun IconWithLabel(drawableId: Int, label: String) {
+private fun IconWithLabelUnit(drawableId: Int, label: String, takeFullWidth: Boolean = false) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.padding(end = 6.dp)
+        modifier = if (takeFullWidth) Modifier.fillMaxWidth() else Modifier.wrapContentWidth()
     ) {
         Icon(
             painter = painterResource(id = drawableId),
             contentDescription = label,
             tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(16.dp)
         )
         Text(
             text = label,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodySmall.copy(
                 color = MaterialTheme.colorScheme.onSurface
             )
