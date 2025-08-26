@@ -101,6 +101,22 @@ fun ProfileScreen(
                     name = data["name"] as? String,
                     age = (data["studentAge"] as? Long)?.toInt(),
                     profilePictureUrl = data["profilePictureUrl"] as? String,
+
+                    // icon-row fields
+                    birthday = (data["studentAge"] as? Long)?.toInt(),
+                    pets = data["studentPet"] as? String,
+                    bedtime = data["studentBedtime"] as? String,
+                    smokingStatus = data["studentSmokingStatus"] as? String,
+
+                    // group size stored as list [min, max]
+                    groupMin = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(0) as? Long)?.toInt(),
+                    groupMax = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(1) as? Long)?.toInt(),
+
+                    maxCommute = (data["studentMaxCommute"] as? Long)?.toInt(),
+                    maxBudget = (data["studentMaxBudget"] as? Long)?.toInt(),
+                    university = data["studentUniversity"] as? String,
+
+                    // rest
                     bio = data["studentBio"] as? String,
                     addicted = data["studentAddicted"] as? String,
                     petPeeve = data["studentPetPeeve"] as? String,

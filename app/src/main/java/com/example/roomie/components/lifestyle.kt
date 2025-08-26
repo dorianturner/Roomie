@@ -60,7 +60,7 @@ fun LifestyleSection(
     Text("Typical bedtime", style = MaterialTheme.typography.titleMedium)
     Spacer(modifier = Modifier.height(8.dp))
     var expanded by remember { mutableStateOf(false) }
-    val bedtimeOptions = listOf("Before 10pm", "10–11pm", "11pm–12am", "12–1am", "After 1am")
+    val bedtimeOptions = listOf("<10pm", "10–11pm", "11pm–12am", "12–1am", ">1am")
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         TextField(
             value = bedtime.value,
