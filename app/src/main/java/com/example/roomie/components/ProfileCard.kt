@@ -23,7 +23,6 @@ fun ProfileCard(
     age: Int?,
     profilePictureUrl: String?,
     // icon-row fields
-    birthday: Int?,                  // age
     pets: String?,                   // "Yes"/"No" or text
     bedtime: String?,
     smokingStatus: String?,          // "Smoke"/"Vape"/"Neither"
@@ -72,14 +71,14 @@ fun ProfileCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     )
-                    birthday?.let {
-                        Text(
-                            text = it.toString(),
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        )
-                    }
+//                    age?.let {
+//                        Text(
+//                            text = it.toString(),
+//                            style = MaterialTheme.typography.bodyLarge.copy(
+//                                color = MaterialTheme.colorScheme.onSurfaceVariant
+//                            )
+//                        )
+//                    }
                 }
             }
 
@@ -108,7 +107,7 @@ fun ProfileCard(
                 ) {
                     // Row 1: birthday, pets, bedtime, smoking
                     val row1 = listOfNotNull(
-                        birthday?.let { R.drawable.ic_birthday to it.toString() },
+                        age?.let { R.drawable.ic_birthday to it.toString() },
                         pets?.takeIf { it.isNotBlank() }?.let { R.drawable.ic_pets to it },
                         bedtime?.takeIf { it.isNotBlank() }?.let { R.drawable.ic_bedtime to it },
                         smokingStatus?.takeIf { it.isNotBlank() }?.let {

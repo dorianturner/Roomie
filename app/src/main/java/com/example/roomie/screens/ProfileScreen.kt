@@ -99,11 +99,10 @@ fun ProfileScreen(
                 ProfileCard(
                     photos = photos.map { it.url },
                     name = data["name"] as? String,
-                    age = (data["studentAge"] as? Long)?.toInt(),
                     profilePictureUrl = data["profilePictureUrl"] as? String,
 
                     // icon-row fields
-                    birthday = (data["studentAge"] as? Long)?.toInt(),
+                    age = (data["studentAge"] as? Long)?.toInt(),
                     pets = data["studentPet"] as? String,
                     bedtime = data["studentBedtime"] as? String,
                     smokingStatus = data["studentSmokingStatus"] as? String,
@@ -117,7 +116,7 @@ fun ProfileScreen(
                     university = data["studentUniversity"] as? String,
 
                     // rest
-                    bio = data["studentBio"] as? String,
+                    bio = data["bio"] as? String,
                     addicted = data["studentAddicted"] as? String,
                     petPeeve = data["studentPetPeeve"] as? String,
                     passionate = data["studentPassionate"] as? String,

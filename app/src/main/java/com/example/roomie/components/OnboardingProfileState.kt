@@ -5,7 +5,7 @@ import androidx.compose.ui.text.input.KeyboardType
 // Data class for shared state
 data class OnboardingProfileState(
     var name: ProfileTextField = ProfileTextField("Your Name", ""),
-    var bio: ProfileTextField = ProfileTextField("About you", ""),
+    var bio: ProfileTextField = ProfileTextField("About you", "", required=false),
     var phoneNumber: ProfileTextField = ProfileTextField("Phone Number", "", KeyboardType.Phone, false),
     var isLandlord: Boolean = false,
 
