@@ -13,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,8 +39,13 @@ fun TellMoreScreen(
     // local UI state initialised from profileState
     val smoking = remember { mutableStateOf(profileState.smokingStatus) }
     val bedtime = remember { mutableStateOf(profileState.bedtime) }
-    val alcohol = remember { mutableStateOf(profileState.alcoholLevel) } // MutableState<Int>
+    val alcohol = remember { mutableIntStateOf(profileState.alcoholLevel) } // MutableState<Int>
+    val pet = remember { mutableStateOf(profileState.pet) }
     val music = remember { mutableStateOf(profileState.musicPref) }
+    val petPeeve = remember { mutableStateOf(profileState.petPeeve) }
+    val addicted = remember { mutableStateOf(profileState.addicted) }
+    val ideal = remember { mutableStateOf(profileState.ideal) }
+    val passionate = remember { mutableStateOf(profileState.passionate) }
 
     var isSaving = remember { mutableStateOf(false) }
 
@@ -69,7 +75,12 @@ fun TellMoreScreen(
                     profileState.smokingStatus = smoking.value
                     profileState.bedtime = bedtime.value
                     profileState.alcoholLevel = alcohol.value
+                    profileState.pet = pet.value
                     profileState.musicPref = music.value
+                    profileState.petPeeve = petPeeve.value
+                    profileState.addicted = addicted.value
+                    profileState.ideal = ideal.value
+                    profileState.passionate = passionate.value
 
                     // perform final save
                     coroutineScope.launch {
@@ -109,7 +120,12 @@ fun TellMoreScreen(
                     smokingStatus = smoking,
                     bedtime = bedtime,
                     alcoholLevel = alcohol,
-                    musicField = music
+                    pet = pet,
+                    musicField = music,
+                    petPeeve = petPeeve,
+                    addicted = addicted,
+                    ideal = ideal,
+                    passionate = passionate
                 )
             }
 

@@ -30,7 +30,12 @@ fun LifestyleSection(
     smokingStatus: MutableState<String>,
     bedtime: MutableState<String>,
     alcoholLevel: MutableState<Int>,
-    musicField: MutableState<ProfileTextField>
+    pet: MutableState<String>,
+    musicField: MutableState<ProfileTextField>,
+    petPeeve: MutableState<ProfileTextField>,
+    addicted: MutableState<ProfileTextField>,
+    ideal: MutableState<ProfileTextField>,
+    passionate: MutableState<ProfileTextField>,
 ) {
     Spacer(modifier = Modifier.height(16.dp))
     Text("Lifestyle", style = MaterialTheme.typography.titleLarge)
@@ -98,11 +103,66 @@ fun LifestyleSection(
 
     Spacer(modifier = Modifier.height(16.dp))
 
+    // pets
+    Text("Do you own a pet?", style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        listOf("Yes", "No").forEach { option ->
+            SegmentedButton(
+                selected = pet.value == option,
+                onClick = { pet.value = option },
+                shape = SegmentedButtonDefaults.baseShape
+            ) { Text(option) }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
     // Music preference text
     ProfileTextFieldView(
         field = musicField.value,
         onValueChange = {
             musicField.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // pet peeve preference text
+    ProfileTextFieldView(
+        field = petPeeve.value,
+        onValueChange = {
+            petPeeve.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // addicted preference text
+    ProfileTextFieldView(
+        field = addicted.value,
+        onValueChange = {
+            addicted.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // ideal preference text
+    ProfileTextFieldView(
+        field = ideal.value,
+        onValueChange = {
+            ideal.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // passionate preference text
+    ProfileTextFieldView(
+        field = passionate.value,
+        onValueChange = {
+            passionate.value.value = it
         }
     )
 }

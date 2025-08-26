@@ -53,7 +53,12 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             data["studentSmokingStatus"] = state.smokingStatus
             data["studentBedtime"] = state.bedtime
             data["studentAlcohol"] = state.alcoholLevel
+            data["studentPet"] = state.pet
             data["studentMusic"] = state.musicPref.value
+            data["studentPetPeeve"] = state.petPeeve.value
+            data["studentAddicted"] = state.addicted.value
+            data["studentIdeal"] = state.ideal.value
+            data["studentPassionate"] = state.passionate.value
 
             if (
                 state.university.value.isBlank() ||

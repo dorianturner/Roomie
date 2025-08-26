@@ -25,5 +25,10 @@ data class OnboardingProfileState(
     var smokingStatus: String = "Neither",    // "Smoke" | "Vape" | "Neither"
     var bedtime: String = "",                 // e.g. "11pm–12am"
     var alcoholLevel: Int = 1,                // 1..5
-    var musicPref: ProfileTextField = ProfileTextField("The type of music I like the most is...", "", required = false)
+    var pet: String = "No",
+    var musicPref: ProfileTextField = ProfileTextField("The type of music I like the most is...", "", required = false),
+    var petPeeve: ProfileTextField = ProfileTextField("My biggest pet peeve is...", "", required = false),
+    var ideal: ProfileTextField = ProfileTextField("My ideal night is...", "", required = false),
+    var addicted: ProfileTextField = ProfileTextField("I am completely addicted to", "", required = false),
+    var passionate: ProfileTextField = ProfileTextField("I am passionate about", "", required = false),
 )

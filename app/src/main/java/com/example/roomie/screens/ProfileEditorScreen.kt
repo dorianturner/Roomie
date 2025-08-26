@@ -24,6 +24,7 @@ import com.example.roomie.components.deletePhoto
 import androidx.compose.runtime.rememberCoroutineScope
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.launch
+import kotlin.collections.set
 
 fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
     var isValid = true
@@ -72,8 +73,13 @@ fun ProfileEditorScreen(
 
     val smokingStatusState = remember { mutableStateOf("Neither") }
     val bedtimeState = remember { mutableStateOf("") }
-    val alcoholState = remember { mutableStateOf(1) }
+    val alcoholState = remember { mutableIntStateOf(1) }
+    val petState = remember {mutableStateOf("No")}
     val musicField = remember { mutableStateOf(ProfileTextField("The type of music I like the most is...", "", required = false)) }
+    val petPeeveField = remember { mutableStateOf(ProfileTextField("My biggest pet peeve is...", "", required = false)) }
+    val addictedField = remember { mutableStateOf(ProfileTextField("My ideal night is...", "", required = false)) }
+    val idealField = remember { mutableStateOf(ProfileTextField("I am completely addicted to", "", required = false)) }
+    val passionateField = remember { mutableStateOf(ProfileTextField("I am passionate about", "", required = false),) }
 
     val allFields = remember {
         mutableListOf<MutableState<ProfileTextField>>()
@@ -128,8 +134,13 @@ fun ProfileEditorScreen(
                             // load lifestyle fields
                             smokingStatusState.value = doc.getString("studentSmokingStatus") ?: "Neither"
                             bedtimeState.value = doc.getString("studentBedtime") ?: ""
-                            alcoholState.value = (doc.getLong("studentAlcohol")?.toInt() ?: 1)
+                            alcoholState.intValue = (doc.getLong("studentAlcohol")?.toInt() ?: 1)
+                            petState.value = doc.getString("studentPet") ?: "No"
                             musicField.value.value = doc.getString("studentMusic").orEmpty()
+                            petPeeveField.value.value = doc.getString("studentPetPeeve").orEmpty()
+                            addictedField.value.value = doc.getString("studentAddicted").orEmpty()
+                            idealField.value.value = doc.getString("studentIdeal").orEmpty()
+                            passionateField.value.value = doc.getString("studentPassionate").orEmpty()
                         }
                     }
                 }
@@ -239,7 +250,12 @@ fun ProfileEditorScreen(
                 smokingStatus = smokingStatusState,
                 bedtime = bedtimeState,
                 alcoholLevel = alcoholState,
-                musicField = musicField
+                pet = petState,
+                musicField = musicField,
+                petPeeve = petPeeveField,
+                addicted = addictedField,
+                ideal = idealField,
+                passionate = passionateField
             )
         }
 
@@ -304,7 +320,12 @@ fun ProfileEditorScreen(
                         data["studentSmokingStatus"] = smokingStatusState.value
                         data["studentBedtime"] = bedtimeState.value
                         data["studentAlcohol"] = alcoholState.value
+                        data["studentPet"] = petState.value
                         data["studentMusic"] = musicField.value.value
+                        data["studentPetPeeve"] = petPeeveField.value.value
+                        data["studentAddicted"] = addictedField.value.value
+                        data["studentIdeal"] = idealField.value.value
+                        data["studentPassionate"] = passionateField.value.value
 
                         if (name.isBlank() || age == null ||
                             universityField.value.value.isBlank() ||

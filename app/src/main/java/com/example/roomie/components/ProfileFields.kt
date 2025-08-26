@@ -91,7 +91,13 @@ fun StudentProfileSection(
     smokingStatus: MutableState<String>,
     bedtime: MutableState<String>,
     alcoholLevel: MutableState<Int>,
-    musicField: MutableState<ProfileTextField>
+    pet: MutableState<String>,
+    musicField: MutableState<ProfileTextField>,
+    petPeeve: MutableState<ProfileTextField>,
+    addicted: MutableState<ProfileTextField>,
+    ideal: MutableState<ProfileTextField>,
+    passionate: MutableState<ProfileTextField>,
+
 ) {
     Column {
         Text("Student Profile", style = MaterialTheme.typography.titleLarge)
@@ -133,7 +139,12 @@ fun StudentProfileSection(
             smokingStatus = smokingStatus,
             bedtime = bedtime,
             alcoholLevel = alcoholLevel,
-            musicField = musicField
+            pet = pet,
+            musicField = musicField,
+            petPeeve = petPeeve,
+            addicted = addicted,
+            ideal = ideal,
+            passionate = passionate
         )
     }
 }
