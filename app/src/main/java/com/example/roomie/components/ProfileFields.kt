@@ -113,16 +113,33 @@ fun StudentProfileSection(
         Spacer(modifier = Modifier.height(16.dp))
 
         // group size row...
-        Text("Desired Group Size (Min-Max):", style = MaterialTheme.typography.labelLarge)
+        Text(
+            "Desired Group Size (Min-Max):",
+            style = MaterialTheme.typography.labelLarge
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProfileTextFieldView(field = groupSizeMinField.value, onValueChange = { v ->
-                if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMinField.value.value = v
-            }, modifier = Modifier.weight(1f))
-            Text("-", modifier = Modifier.align(Alignment.CenterVertically))
-            ProfileTextFieldView(field = groupSizeMaxField.value, onValueChange = { v ->
-                if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMaxField.value.value = v
-            }, modifier = Modifier.weight(1f))
+        Row(
+            verticalAlignment = Alignment.CenterVertically, // ensures the dash is centered with text fields
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ProfileTextFieldView(
+                field = groupSizeMinField.value,
+                onValueChange = { v ->
+                    if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMinField.value.value = v
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            Text("-", style = MaterialTheme.typography.bodyLarge) // optional style for consistency
+
+            ProfileTextFieldView(
+                field = groupSizeMaxField.value,
+                onValueChange = { v ->
+                    if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMaxField.value.value = v
+                },
+                modifier = Modifier.weight(1f)
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))

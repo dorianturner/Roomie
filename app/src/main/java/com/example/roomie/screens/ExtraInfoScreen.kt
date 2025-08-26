@@ -139,27 +139,34 @@ fun ExtraInfoScreen(
                 }
 
                 item {
-                    ProfileTextFieldView(
-                        field = groupSizeMinField.value,
-                        onValueChange = {
-                            if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
-                                groupSizeMinField.value.value = it
-                                profileState.groupSizeMin.value = it
-                            }
-                        }
-                    )
-                }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        ProfileTextFieldView(
+                            field = groupSizeMinField.value,
+                            onValueChange = {
+                                if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                                    groupSizeMinField.value.value = it
+                                    profileState.groupSizeMin.value = it
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
 
-                item {
-                    ProfileTextFieldView(
-                        field = groupSizeMaxField.value,
-                        onValueChange = {
-                            if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
-                                groupSizeMaxField.value.value = it
-                                profileState.groupSizeMax.value = it
-                            }
-                        }
-                    )
+                        Text("-")
+
+                        ProfileTextFieldView(
+                            field = groupSizeMaxField.value,
+                            onValueChange = {
+                                if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                                    groupSizeMaxField.value.value = it
+                                    profileState.groupSizeMax.value = it
+                                }
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
 
                 item {
