@@ -67,80 +67,92 @@ fun ProfileScreen(modifier: Modifier = Modifier, navController: NavController) {
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = Spacing.short, vertical = Spacing.extraShort),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.short)
-    ) {
-        // First row: Profile title text and edit button
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+    // dont display until loaded
+    if (isLoading) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Profile",
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Left,
-                fontSize = 40.sp,
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Button(
-                onClick = { navController.navigate("profile_editor") },
-                modifier = Modifier
-                    .padding(Spacing.extraShort)
-            ) {
-                Text("Edit")
-            }
+            CircularProgressIndicator()
         }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = Spacing.short),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.short)
+    } else {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = Spacing.short, vertical = Spacing.extraShort),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(Spacing.short)
         ) {
-            // Smaller profile pic, left aligned
-            ProfilePictureDisplay(url = profilePictureUrl, size = 80.dp)
-
-            // Name + age to the right
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.Start
+            // First row: Profile title text and edit button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = name ?: "Unknown User",
-                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
-                    color = MaterialTheme.colorScheme.onBackground
+                    text = "Profile",
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Left,
+                    fontSize = 40.sp,
                 )
-                if (age != null){
-                    Text(
-                        text = age.toString(),
-                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+
+                Spacer(Modifier.weight(1f))
+
+                Button(
+                    onClick = { navController.navigate("profile_editor") },
+                    modifier = Modifier
+                        .padding(Spacing.extraShort)
+                ) {
+                    Text("Edit")
                 }
             }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = Spacing.short),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.short)
+            ) {
+                // Smaller profile pic, left aligned
+                ProfilePictureDisplay(url = profilePictureUrl, size = 80.dp)
+
+                // Name + age to the right
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = name ?: "Unknown User",
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    if (age != null) {
+                        Text(
+                            text = age.toString(),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            }
+
+            // Gallery (pass the photo URLs)
+            if (!isLandlord) {
+                ProfilePhotoGallery(
+                    photos = photos.map { it.url },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+
+            // Third row: Name and age (placeholder — fetch & show real data if you want)
+
+            // Fourth row: City and country (keep as you wish)
         }
-
-        // Gallery (pass the photo URLs)
-        if (!isLandlord){
-            ProfilePhotoGallery(
-                photos = photos.map { it.url },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-
-        // Third row: Name and age (placeholder — fetch & show real data if you want)
-
-        // Fourth row: City and country (keep as you wish)
     }
 }
