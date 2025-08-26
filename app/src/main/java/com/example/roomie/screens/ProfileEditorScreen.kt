@@ -155,31 +155,31 @@ fun ProfileEditorScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
-            .padding(vertical = Spacing.massive),
+            .padding(vertical = Spacing.short),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(Spacing.short))
 
         Text("Complete Your Profile", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(Spacing.medium))
-
-        // Profile type toggle
-        Text("I am a:", style = MaterialTheme.typography.titleMedium)
-        Spacer(modifier = Modifier.height(Spacing.extraShort))
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SegmentedButton(
-                selected = !isLandlord,
-                onClick = { isLandlord = false },
-                shape = SegmentedButtonDefaults.baseShape
-            ) { Text("Student") }
-
-            SegmentedButton(
-                selected = isLandlord,
-                onClick = { isLandlord = true },
-                shape = SegmentedButtonDefaults.baseShape
-            ) { Text("Landlord") }
-        }
+//        Spacer(modifier = Modifier.height(Spacing.medium))
+//
+//        // Profile type toggle
+//        Text("I am a:", style = MaterialTheme.typography.titleMedium)
+//        Spacer(modifier = Modifier.height(Spacing.extraShort))
+//        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+//            SegmentedButton(
+//                selected = !isLandlord,
+//                onClick = { isLandlord = false },
+//                shape = SegmentedButtonDefaults.baseShape
+//            ) { Text("Student") }
+//
+//            SegmentedButton(
+//                selected = isLandlord,
+//                onClick = { isLandlord = true },
+//                shape = SegmentedButtonDefaults.baseShape
+//            ) { Text("Landlord") }
+//        }
 
         Spacer(modifier = Modifier.height(Spacing.medium))
 
