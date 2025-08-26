@@ -3,6 +3,10 @@ package com.example.roomie.components.chat
 import android.net.Uri
 import com.google.firebase.Timestamp
 
+const val ABOVE_NANOSECOND_DIGITS = 10000000000
+
+typealias Uid = Long
+
 data class Conversation(
     val id: String = "",
     val isGroup: Boolean = false,
@@ -24,6 +28,7 @@ data class Message(
 
 data class AttachedFile(
     val uri: Uri,
+    val uid: Long,
     val name: String,
     val type: String, // "image", "video", "pdf", etc.
     val size: Long? = null
