@@ -121,7 +121,6 @@ fun ProfileScreen(
                     petPeeve = data["studentPetPeeve"] as? String,
                     passionate = data["studentPassionate"] as? String,
                     idealNight = data["studentIdeal"] as? String,
-                    alwaysClean = data["studentPet"] as? String,
                     listening = data["studentMusic"] as? String
                 )
             } ?: run {

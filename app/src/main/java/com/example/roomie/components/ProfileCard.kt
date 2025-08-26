@@ -37,7 +37,6 @@ fun ProfileCard(
     petPeeve: String?,
     passionate: String?,
     idealNight: String?,
-    alwaysClean: String?,
     listening: String?,
     modifier: Modifier = Modifier
 ) {
@@ -179,7 +178,6 @@ fun ProfileCard(
             LifestyleSection("My biggest pet peeve is", petPeeve)
             LifestyleSection("I am passionate about", passionate)
             LifestyleSection("My ideal night looks like", idealNight)
-            LifestyleSection("The one thing I always clean first is", alwaysClean)
             LifestyleSection("You'll always catch me listening to", listening)
         }
     }
