@@ -31,6 +31,7 @@ fun ProfileScreen(
     var isLandlord by remember {mutableStateOf(false)}
     var profileData by remember { mutableStateOf<Map<String, Any>?>(null) }
     var name by remember {mutableStateOf("")}
+    var companyName by remember {mutableStateOf("")}
     var pfpUrl by remember {mutableStateOf("")}
 
     LaunchedEffect(uid) {
@@ -49,6 +50,7 @@ fun ProfileScreen(
             profileData = userDoc?.data
             isLandlord = userDoc?.getString("profileType") == "landlord"
             name = userDoc?.getString("name") ?: "Unknown User"
+            companyName = userDoc?.getString("landlordCompany") ?: "companyless"
             pfpUrl = userDoc?.getString("profilePictureUrl") ?: ""
             photos = if (!isLandlord) {
                 try { fetchUserPhotos(uid) } catch (_: Exception) { emptyList() }
@@ -118,6 +120,11 @@ fun ProfileScreen(
                         Text(
                             text = name,
                             style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = companyName,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
                             color = MaterialTheme.colorScheme.onBackground
                         )
                     }
