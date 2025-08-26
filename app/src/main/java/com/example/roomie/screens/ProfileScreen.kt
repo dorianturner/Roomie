@@ -28,7 +28,10 @@ fun ProfileScreen(
     val uid = FirebaseAuth.getInstance().currentUser?.uid
     var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
+    var isLandlord by remember {mutableStateOf(false)}
     var profileData by remember { mutableStateOf<Map<String, Any>?>(null) }
+    var name by remember {mutableStateOf("")}
+    var pfpUrl by remember {mutableStateOf("")}
 
     LaunchedEffect(uid) {
         if (uid == null) {
@@ -44,8 +47,10 @@ fun ProfileScreen(
                 .await()
 
             profileData = userDoc?.data
-
-            photos = if (userDoc?.getString("profileType") != "landlord") {
+            isLandlord = userDoc?.getString("profileType") == "landlord"
+            name = userDoc?.getString("name") ?: "Unknown User"
+            pfpUrl = userDoc?.getString("profilePictureUrl") ?: ""
+            photos = if (!isLandlord) {
                 try { fetchUserPhotos(uid) } catch (_: Exception) { emptyList() }
             } else emptyList()
 
@@ -94,41 +99,66 @@ fun ProfileScreen(
                 }
             }
 
-            // Profile card itself
-            profileData?.let { data ->
-                ProfileCard(
-                    photos = photos.map { it.url },
-                    name = data["name"] as? String,
-                    profilePictureUrl = data["profilePictureUrl"] as? String,
-
-                    // icon-row fields
-                    age = (data["studentAge"] as? Long)?.toInt(),
-                    pets = data["studentPet"] as? String,
-                    bedtime = data["studentBedtime"] as? String,
-                    smokingStatus = data["studentSmokingStatus"] as? String,
-
-                    // group size stored as list [min, max]
-                    groupMin = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(0) as? Long)?.toInt(),
-                    groupMax = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(1) as? Long)?.toInt(),
-
-                    maxCommute = (data["studentMaxCommute"] as? Long)?.toInt(),
-                    maxBudget = (data["studentMaxBudget"] as? Long)?.toInt(),
-                    university = data["studentUniversity"] as? String,
-
-                    // rest
-                    bio = data["bio"] as? String,
-                    addicted = data["studentAddicted"] as? String,
-                    petPeeve = data["studentPetPeeve"] as? String,
-                    passionate = data["studentPassionate"] as? String,
-                    idealNight = data["studentIdeal"] as? String,
-                    listening = data["studentMusic"] as? String
-                )
-            } ?: run {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+            if (isLandlord) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.short),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.short)
                 ) {
-                    Text("Profile not found", color = MaterialTheme.colorScheme.onSurface)
+                    // Smaller profile pic, left aligned
+                    ProfilePictureDisplay(url = pfpUrl, size = 80.dp)
+
+                    // Name + age to the right
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text(
+                            text = name,
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
+            } else {
+                // Profile card itself
+                profileData?.let { data ->
+                    ProfileCard(
+                        photos = photos.map { it.url },
+                        name = name,
+                        profilePictureUrl = pfpUrl,
+
+                        // icon-row fields
+                        age = (data["studentAge"] as? Long)?.toInt(),
+                        pets = data["studentPet"] as? String,
+                        bedtime = data["studentBedtime"] as? String,
+                        smokingStatus = data["studentSmokingStatus"] as? String,
+
+                        // group size stored as list [min, max]
+                        groupMin = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(0) as? Long)?.toInt(),
+                        groupMax = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(1) as? Long)?.toInt(),
+
+                        maxCommute = (data["studentMaxCommute"] as? Long)?.toInt(),
+                        maxBudget = (data["studentMaxBudget"] as? Long)?.toInt(),
+                        university = data["studentUniversity"] as? String,
+
+                        // rest
+                        bio = data["bio"] as? String,
+                        addicted = data["studentAddicted"] as? String,
+                        petPeeve = data["studentPetPeeve"] as? String,
+                        passionate = data["studentPassionate"] as? String,
+                        idealNight = data["studentIdeal"] as? String,
+                        listening = data["studentMusic"] as? String
+                    )
+                } ?: run {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Profile not found", color = MaterialTheme.colorScheme.onSurface)
+                    }
                 }
             }
         }
