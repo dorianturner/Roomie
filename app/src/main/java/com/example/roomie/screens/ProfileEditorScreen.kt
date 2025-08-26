@@ -54,7 +54,7 @@ fun ProfileEditorScreen(
 
     // Common fields
     val nameField = remember { mutableStateOf(ProfileTextField("Your Name", "")) }
-    val bioField = remember { mutableStateOf(ProfileTextField("About you", "")) }
+    val bioField = remember { mutableStateOf(ProfileTextField("About you", "", required = false)) }
     val phoneNumberField = remember { mutableStateOf(ProfileTextField("Phone Number", "", KeyboardType.Phone, false)) }
     var isLandlord by remember { mutableStateOf(false) }
 
