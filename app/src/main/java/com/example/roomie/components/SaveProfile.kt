@@ -14,8 +14,7 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
 
     val currentUser = auth.currentUser
     if (currentUser != null) {
-        if (state.name.value.isBlank() ||
-            state.bio.value.isBlank()) return false // fails checks
+        if (state.name.value.isBlank()) return false // fails checks
         val data = mutableMapOf<String, Any>(
             "name" to state.name.value,
             "bio" to state.bio.value,

@@ -12,7 +12,6 @@ data class OnboardingProfileState(
     // Student fields
     var age: ProfileTextField = ProfileTextField("Your Age", "", KeyboardType.Number),
     var university: ProfileTextField = ProfileTextField("Your University", ""),
-    var preferences: ProfileTextField = ProfileTextField("Basic Preferences", "", required = false),
     var groupSizeMin: ProfileTextField = ProfileTextField("Min Group Size", "", KeyboardType.Number),
     var groupSizeMax: ProfileTextField = ProfileTextField("Max Group Size", "", KeyboardType.Number),
     var maxCommute: ProfileTextField = ProfileTextField("Max Commute (mins)", "", KeyboardType.Number),

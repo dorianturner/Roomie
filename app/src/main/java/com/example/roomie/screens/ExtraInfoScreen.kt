@@ -43,7 +43,6 @@ fun ExtraInfoScreen(
     val companyField = remember { mutableStateOf(profileState.company) }
     val ageField = remember { mutableStateOf(profileState.age) }
     val universityField = remember { mutableStateOf(profileState.university) }
-    val preferencesField = remember { mutableStateOf(profileState.preferences) }
     val groupSizeMinField = remember { mutableStateOf(profileState.groupSizeMin) }
     val groupSizeMaxField = remember { mutableStateOf(profileState.groupSizeMax) }
     val maxCommuteField = remember { mutableStateOf(profileState.maxCommute) }
@@ -52,7 +51,7 @@ fun ExtraInfoScreen(
     val fieldsToValidate: List<MutableState<ProfileTextField>> =
         if (profileState.isLandlord) listOf(companyField)
         else listOf(
-            ageField, universityField, preferencesField,
+            ageField, universityField,
             groupSizeMinField, groupSizeMaxField,
             maxCommuteField, maxBudgetField
         )
@@ -135,16 +134,6 @@ fun ExtraInfoScreen(
                         onValueChange = {
                             universityField.value.value = it
                             profileState.university.value = it
-                        }
-                    )
-                }
-
-                item {
-                    ProfileTextFieldView(
-                        field = preferencesField.value,
-                        onValueChange = {
-                            preferencesField.value.value = it
-                            profileState.preferences.value = it
                         }
                     )
                 }
