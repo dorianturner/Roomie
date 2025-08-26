@@ -67,23 +67,29 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
 
         data["minimumRequiredProfileSet"] = isMinProfileSet
 
-        val groupData = mutableMapOf<String, Any>(
-            "membersCount" to 1,
-            "stats" to mapOf(
-                "sumAges" to data["studentAge"]!!,
-                "sumBudgets" to data["studentMaxBudget"]!!,
-                "sumCommutes" to data["studentMaxCommute"]!!
-            )
-        )
 
         return suspendCoroutine { cont ->
             val batch = db.batch()
 
             val userRef = db.collection("users").document(currentUser.uid)
-            val groupRef = db.collection("groups").document(currentUser.uid)
 
             batch.set(userRef, data)
-            batch.set(groupRef, groupData)
+
+            // temp fix while landlords arent there
+            if (!state.isLandlord) {
+                val groupRef = db.collection("groups").document(currentUser.uid)
+
+                val groupData = mutableMapOf<String, Any>(
+                    "membersCount" to 1,
+                    "stats" to mapOf(
+                        "sumAges" to data["studentAge"]!!,
+                        "sumBudgets" to data["studentMaxBudget"]!!,
+                        "sumCommutes" to data["studentMaxCommute"]!!
+                    )
+                )
+
+                batch.set(groupRef, groupData)
+            }
 
             batch.commit()
                 .addOnSuccessListener { cont.resume(true) }
