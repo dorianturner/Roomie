@@ -1,4 +1,4 @@
-import { StudentProfile } from './student.js';
+import {StudentProfile} from "./student.js";
 
 export interface GroupStats {
   size: number;

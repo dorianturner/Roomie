@@ -1,4 +1,4 @@
-import { Storage } from "@google-cloud/storage";
+import {Storage} from "@google-cloud/storage";
 
 const storage = new Storage();
 const BUCKET_NAME = "roomie-9f45c.firebasestorage.app";
@@ -47,7 +47,10 @@ export const FIELD_INDEX = {
 };
 
 
-// Load blob from Cloud Storage
+/**
+ * Loads the blob from Cloud Storage and parses it into a map.
+ * @return {void} Map of group ID to Float64Array of stats
+ */
 export async function loadBlob(): Promise<Map<string, Float64Array>> {
   const map = new Map<string, Float64Array>();
   const file = storage.bucket(BUCKET_NAME).file(BLOB_FILE);
@@ -77,7 +80,10 @@ export async function loadBlob(): Promise<Map<string, Float64Array>> {
   return map;
 }
 
-// Save map to blob in Cloud Storage
+/**
+ * Saves the map to Cloud Storage as a binary blob.
+ * @param {Map<string, Float64Array>} map Map of group ID to Float64Array of stats
+ */
 export async function saveBlob(map: Map<string, Float64Array>) {
   const buffers: Buffer[] = [];
 

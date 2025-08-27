@@ -1,7 +1,7 @@
-import { onCall } from "firebase-functions/v2/https";
-import { GroupProfile } from "../types/group";
-import { loadBlob, saveBlob, FIELDS_PER_GROUP, FIELD_INDEX } from "../utils/blob";
-import { releaseLock, tryAcquireLock } from "../utils/lock";
+import {onCall} from "firebase-functions/v2/https";
+import {GroupProfile} from "../types/group";
+import {loadBlob, saveBlob, FIELDS_PER_GROUP, FIELD_INDEX} from "../utils/blob";
+import {releaseLock, tryAcquireLock} from "../utils/lock";
 
 export const upsertGroupProfileWithLock = onCall(async (req) => {
   try {
@@ -59,7 +59,7 @@ export const upsertGroupProfileWithLock = onCall(async (req) => {
       await releaseLock();
     }
 
-    return { success: true, message: "Group stats updated successfully" };
+    return {success: true, message: "Group stats updated successfully"};
   } catch (err: any) {
     console.error(err);
     throw new Error(err.message || "Internal server error");

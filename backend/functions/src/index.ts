@@ -11,9 +11,9 @@ import * as admin from "firebase-admin";
 admin.initializeApp();
 
 import {setGlobalOptions} from "firebase-functions";
-import { upsertGroupProfileWithLock } from "./handlers/upsertGroup";
-import { deleteGroupFromBlob } from "./handlers/deleteGroup";
-import { findMatchesForGroup } from "./handlers/findMatchesForGroup";
+import {upsertGroupProfileWithLock} from "./handlers/upsertGroup";
+import {deleteGroupFromBlob} from "./handlers/deleteGroup";
+import {findMatchesForGroup} from "./handlers/findMatchesForGroup";
 
 export const upsertGroupProfile = upsertGroupProfileWithLock;
 export const deleteGroup = deleteGroupFromBlob;
@@ -32,7 +32,7 @@ export const getGroupMatches = findMatchesForGroup;
 // functions should each use functions.runWith({ maxInstances: 10 }) instead.
 // In the v1 API, each function can only serve one request per container, so
 // this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+setGlobalOptions({maxInstances: 10});
 
 // export const helloWorld = onRequest((request, response) => {
 //   logger.info("Hello logs!", {structuredData: true});
