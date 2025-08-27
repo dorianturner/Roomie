@@ -13,6 +13,7 @@ import com.example.roomie.screens.MainContentScreen
 import com.example.roomie.screens.ProfileEditorScreen
 import com.example.roomie.screens.ProfileTypeScreen
 import com.example.roomie.screens.SplashScreen
+import com.example.roomie.screens.TellMoreScreen
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -30,6 +31,8 @@ object Routes {
     const val BASIC_INFO = "basic_info" // name, age, phone number
     const val PROFILE_TYPE = "profile_type" // student or landlord
     const val EXTRA_INFO = "extra_info" // specific student/landlord info
+
+    const val TELL_MORE = "tell_more"
 }
 
 /**
@@ -126,9 +129,29 @@ fun OnboardingFlow(
             )
         }
         composable(Routes.EXTRA_INFO) {
+            // IMPORTANT: pass an onFinish that routes to TELL_MORE for students,
+            // otherwise calls the final onFinish (which goes to main content).
             ExtraInfoScreen(
                 profileState = profileState.value,
-                onFinish = onFinish,
+                onFinish = {
+                    // if student, continue to TellMore; if landlord, finish onboarding
+                    if (!profileState.value.isLandlord) {
+                        navController.navigate(Routes.TELL_MORE)
+                    } else {
+                        onFinish()
+                    }
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.TELL_MORE) {
+            TellMoreScreen(
+                profileState = profileState.value,
+                onNext = {
+                    // finished onboarding after TellMore
+                    onFinish()
+                },
                 onBack = { navController.popBackStack() }
             )
         }

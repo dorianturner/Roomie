@@ -1,0 +1,168 @@
+package com.example.roomie.components
+
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LifestyleSection(
+    smokingStatus: MutableState<String>,
+    bedtime: MutableState<String>,
+    alcoholLevel: MutableState<Int>,
+    pet: MutableState<String>,
+    musicField: MutableState<ProfileTextField>,
+    petPeeve: MutableState<ProfileTextField>,
+    addicted: MutableState<ProfileTextField>,
+    ideal: MutableState<ProfileTextField>,
+    passionate: MutableState<ProfileTextField>,
+) {
+    Spacer(modifier = Modifier.height(16.dp))
+    Text("Lifestyle", style = MaterialTheme.typography.titleLarge)
+    Spacer(modifier = Modifier.height(12.dp))
+
+    // Smoking / vaping segmented control
+    Text("Do you smoke or vape?", style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        listOf("Smoke", "Vape", "Neither").forEach { option ->
+            SegmentedButton(
+                selected = smokingStatus.value == option,
+                onClick = { smokingStatus.value = option },
+                shape = SegmentedButtonDefaults.baseShape
+            ) { Text(option) }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Bedtime dropdown
+    Text("Typical bedtime", style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(8.dp))
+    var expanded by remember { mutableStateOf(false) }
+    val bedtimeOptions = listOf("<10pm", "10–11pm", "11pm–12am", "12–1am", ">1am")
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
+        TextField(
+            value = bedtime.value,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Select bedtime") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            bedtimeOptions.forEach { option ->
+                DropdownMenuItem(text = { Text(option) }, onClick = {
+                    bedtime.value = option
+                    expanded = false
+                })
+            }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Alcohol slider 1..5
+    Text("How often do you drink alcohol? (1 = never, 5 = daily)", style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Text("1")
+        Spacer(modifier = Modifier.width(8.dp))
+        Slider(
+            value = alcoholLevel.value.toFloat(),
+            onValueChange = { alcoholLevel.value = it.roundToInt().coerceIn(1,5) },
+            valueRange = 1f..5f,
+            steps = 3, // 4 steps gives discrete 1..5
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(alcoholLevel.value.toString())
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // pets
+    Text("Do you own a pet?", style = MaterialTheme.typography.titleMedium)
+    Spacer(modifier = Modifier.height(8.dp))
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        listOf("Yes", "No").forEach { option ->
+            SegmentedButton(
+                selected = pet.value == option,
+                onClick = { pet.value = option },
+                shape = SegmentedButtonDefaults.baseShape
+            ) { Text(option) }
+        }
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Music preference text
+    ProfileTextFieldView(
+        field = musicField.value,
+        onValueChange = {
+            musicField.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // pet peeve preference text
+    ProfileTextFieldView(
+        field = petPeeve.value,
+        onValueChange = {
+            petPeeve.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // addicted preference text
+    ProfileTextFieldView(
+        field = addicted.value,
+        onValueChange = {
+            addicted.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // ideal preference text
+    ProfileTextFieldView(
+        field = ideal.value,
+        onValueChange = {
+            ideal.value.value = it
+        }
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // passionate preference text
+    ProfileTextFieldView(
+        field = passionate.value,
+        onValueChange = {
+            passionate.value.value = it
+        }
+    )
+}
