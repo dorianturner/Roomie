@@ -38,7 +38,7 @@ fun TellMoreScreen(
 
     // local UI state initialised from profileState
     val smoking = remember { mutableStateOf(profileState.smokingStatus) }
-    val bedtime = remember { mutableStateOf(profileState.bedtime) }
+    val bedtime = remember { mutableIntStateOf(profileState.bedtime) }
     val alcohol = remember { mutableIntStateOf(profileState.alcoholLevel) } // MutableState<Int>
     val pet = remember { mutableStateOf(profileState.pet) }
     val music = remember { mutableStateOf(profileState.musicPref) }
@@ -66,15 +66,15 @@ fun TellMoreScreen(
                     if (isSaving.value) return@Button
 
                     // Validate mandatory lifestyle fields
-                    if (smoking.value.isBlank() || bedtime.value.isBlank() || alcohol.value !in 1..5) {
+                    if (smoking.value.isBlank() || bedtime.intValue !in 1..5 || alcohol.intValue !in 1..5) {
                         Toast.makeText(context, "Please fill smoking, bedtime and drinking preferences", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
                     // copy local selections into the shared profile state
                     profileState.smokingStatus = smoking.value
-                    profileState.bedtime = bedtime.value
-                    profileState.alcoholLevel = alcohol.value
+                    profileState.bedtime = bedtime.intValue
+                    profileState.alcoholLevel = alcohol.intValue
                     profileState.pet = pet.value
                     profileState.musicPref = music.value
                     profileState.petPeeve = petPeeve.value

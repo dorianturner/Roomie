@@ -1,5 +1,6 @@
 package com.example.roomie.components
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -38,7 +39,7 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             val budget = state.maxBudget.value.toIntOrNull()
 
             // mandatory lifestyle checks
-            if (state.smokingStatus.isBlank() || state.bedtime.isBlank()) return false
+            if (state.smokingStatus.isBlank() || state.bedtime !in 1..5) return false
             if (state.alcoholLevel !in 1..5) return false
 
             data["studentAge"] = age
@@ -79,16 +80,49 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             if (!state.isLandlord) {
                 val groupRef = db.collection("groups").document(currentUser.uid)
 
-                val groupData = mutableMapOf<String, Any>(
-                    "membersCount" to 1,
-                    "stats" to mapOf(
-                        "sumAges" to data["studentAge"]!!,
-                        "sumBudgets" to data["studentMaxBudget"]!!,
-                        "sumCommutes" to data["studentMaxCommute"]!!
-                    )
+                val members: List<StudentProfile> = listOf(StudentProfile(
+                    id = currentUser.uid,
+                    name = data["name"] as String,
+                    studentAge = data["studentAge"] as Int?,
+                    photos = listOf(),
+                    profilePictureUrl = data["profilePictureUrl"] as String?,
+                    studentPet = data["studentPet"] as String?,
+                    studentBedtime = data["studentBedtime"] as Int?,
+                    studentAlcohol = data["studentAlcohol"] as Int?,
+                    studentSmokingStatus = data["studentSmokingStatus"] as String?,
+                    groupMin = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(0),
+                    groupMax = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(1),
+                    studentMaxCommute = data["studentMaxCommute"] as Int?,
+                    studentMaxBudget = data["studentMaxBudget"] as Int?,
+                    studentUniversity = data["studentUniversity"] as String?,
+                    bio = data["bio"] as String?,
+                    studentAddicted = data["studentAddicted"] as String?,
+                    studentPetPeeve = data["studentPetPeeve"] as String?,
+                    passionate = data["studentPassionate"] as String?,
+                    studentIdeal = data["studentIdeal"] as String?,
+                    studentMusic = data["studentMusic"] as String?,
+                    phoneNumber = data["phoneNumber"] as String?,
+                )) // just the new user
+                val stats = generateGroupStats(members)
+
+                val groupProfile = GroupProfile(
+                    id = currentUser.uid,
+                    name = data["name"] as String,
+                    members = members,
+                    stats = stats
                 )
 
-                batch.set(groupRef, groupData)
+                batch.set(groupRef, groupProfile.toMap())
+
+                FunctionsProvider.instance
+                    .getHttpsCallable("upsertGroupProfile")
+                    .call(groupProfile.toMap())
+                    .addOnSuccessListener { result ->
+                        Log.d("SaveProfile","Group upsert success: ${result.data}")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("SaveProfile","Group upsert failure", e)
+                    }
             }
 
             batch.commit()

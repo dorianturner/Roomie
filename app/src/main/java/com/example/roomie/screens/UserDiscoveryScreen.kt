@@ -210,8 +210,8 @@ fun MatchCard(profile: StudentProfile) {
                     .padding(top = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ProfileChip(Icons.Default.School, profile.studentUniversity)
-                ProfileChip(Icons.Default.Group, "Group Size: ${profile.studentDesiredGroupSize.joinToString(" - ")}")
+                ProfileChip(Icons.Default.School, profile.studentUniversity ?: "")
+                ProfileChip(Icons.Default.Group, "Group Size: ${profile.groupMin} - ${profile.groupMax}")
                 ProfileChip(Icons.Default.Commute, "${profile.studentMaxCommute} mins")
                 ProfileChip(Icons.Default.AttachMoney, "$${profile.studentMaxBudget}")
             }
@@ -387,9 +387,9 @@ fun MemberMiniCard(profile: StudentProfile) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(profile.name, style = MaterialTheme.typography.titleMedium)
-            Text(profile.bio, style = MaterialTheme.typography.bodyMedium)
+            Text(profile.bio ?: "", style = MaterialTheme.typography.bodyMedium)
             ProfileChip(Icons.Default.Cake, profile.studentAge.toString())
-            ProfileChip(Icons.Default.School, profile.studentUniversity)
+            ProfileChip(Icons.Default.School, profile.studentUniversity ?: "")
             ProfileChip(Icons.Default.Commute, "${profile.studentMaxCommute} mins")
             ProfileChip(Icons.Default.AttachMoney, "$${profile.studentMaxBudget}")
 
@@ -422,8 +422,8 @@ fun FilterDialog(
         title = { Text("Set Match Importance") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                WeightSlider("University", localWeights.university) {
-                    localWeights = localWeights.copy(university = it)
+                WeightSlider("Age", localWeights.age) {
+                    localWeights = localWeights.copy(age = it)
                 }
                 WeightSlider("Budget", localWeights.budget) {
                     localWeights = localWeights.copy(budget = it)
@@ -434,8 +434,11 @@ fun FilterDialog(
                 WeightSlider("Group Size", localWeights.groupSize) {
                     localWeights = localWeights.copy(groupSize = it)
                 }
-                WeightSlider("Preferences", localWeights.preferences) {
-                    localWeights = localWeights.copy(preferences = it)
+                WeightSlider("Alcohol", localWeights.alcohol) {
+                    localWeights = localWeights.copy(alcohol = it)
+                }
+                WeightSlider("Has Profile Picture", localWeights.profilePicture) {
+                    localWeights = localWeights.copy(profilePicture = it)
                 }
             }
         }

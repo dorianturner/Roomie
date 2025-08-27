@@ -15,6 +15,7 @@ import androidx.navigation.NavController
 import com.example.roomie.ui.theme.Spacing
 import com.example.roomie.components.PhotoItem
 import com.example.roomie.components.ProfileCard
+import com.example.roomie.components.StudentProfile
 import com.example.roomie.components.fetchUserPhotos
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -133,31 +134,28 @@ fun ProfileScreen(
                 // Profile card itself
                 profileData?.let { data ->
                     ProfileCard(
-                        photos = photos.map { it.url },
-                        name = name,
-                        profilePictureUrl = pfpUrl,
-
-                        // icon-row fields
-                        age = (data["studentAge"] as? Long)?.toInt(),
-                        pets = data["studentPet"] as? String,
-                        bedtime = data["studentBedtime"] as? String,
-                        smokingStatus = data["studentSmokingStatus"] as? String,
-
-                        // group size stored as list [min, max]
-                        groupMin = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(0) as? Long)?.toInt(),
-                        groupMax = ((data["studentDesiredGroupSize"] as? List<*>)?.getOrNull(1) as? Long)?.toInt(),
-
-                        maxCommute = (data["studentMaxCommute"] as? Long)?.toInt(),
-                        maxBudget = (data["studentMaxBudget"] as? Long)?.toInt(),
-                        university = data["studentUniversity"] as? String,
-
-                        // rest
-                        bio = data["bio"] as? String,
-                        addicted = data["studentAddicted"] as? String,
-                        petPeeve = data["studentPetPeeve"] as? String,
-                        passionate = data["studentPassionate"] as? String,
-                        idealNight = data["studentIdeal"] as? String,
-                        listening = data["studentMusic"] as? String
+                        StudentProfile(
+                            id = uid ?: "",
+                            name = name,
+                            photos = photos.map { it.url },
+                            studentAge = (data["studentAge"] as? Long)?.toInt(),
+                            profilePictureUrl = pfpUrl,
+                            studentPet = data["studentPet"] as? String,
+                            studentBedtime = data["studentBedtime"] as? Int,
+                            studentAlcohol = data["studentAlcohol"] as? Int,
+                            studentSmokingStatus = data["studentSmokingStatus"] as? String,
+                            groupMin = data["groupMin"] as? Int,
+                            groupMax = data["groupMax"] as? Int,
+                            studentMaxCommute = data["studentMaxCommute"] as? Int,
+                            studentMaxBudget = data["studentMaxBudget"] as? Int,
+                            studentUniversity = data["studentUniversity"] as? String,
+                            bio = data["bio"] as? String,
+                            studentAddicted = data["studentAddicted"] as? String,
+                            studentPetPeeve = data["studentPetPeeve"] as? String,
+                            passionate = data["studentPassionate"] as? String,
+                            studentIdeal = data["studentIdeal"] as? String,
+                            studentMusic = data["studentMusic"] as? String,
+                        )
                     )
                 } ?: run {
                     Box(

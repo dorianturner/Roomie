@@ -72,7 +72,7 @@ fun ProfileEditorScreen(
     var isPartOfGroup by remember { mutableStateOf(false) }
 
     val smokingStatusState = remember { mutableStateOf("Neither") }
-    val bedtimeState = remember { mutableStateOf("") }
+    val bedtimeState = remember { mutableIntStateOf(1) }
     val alcoholState = remember { mutableIntStateOf(1) }
     val petState = remember {mutableStateOf("No")}
     val musicField = remember { mutableStateOf(ProfileTextField("The type of music I like the most is...", "", required = false)) }
@@ -133,7 +133,12 @@ fun ProfileEditorScreen(
                             isPartOfGroup = doc.getString("groupId") != null
                             // load lifestyle fields
                             smokingStatusState.value = doc.getString("studentSmokingStatus") ?: "Neither"
-                            bedtimeState.value = doc.getString("studentBedtime") ?: ""
+                            val bedtimeAny = doc.get("studentBedtime")
+                            bedtimeState.intValue = when (bedtimeAny) {
+                                is Number -> bedtimeAny.toInt()
+                                is String -> bedtimeAny.toIntOrNull() ?: 1
+                                else -> 1
+                            }
                             alcoholState.intValue = (doc.getLong("studentAlcohol")?.toInt() ?: 1)
                             petState.value = doc.getString("studentPet") ?: "No"
                             musicField.value.value = doc.getString("studentMusic").orEmpty()
@@ -312,20 +317,44 @@ fun ProfileEditorScreen(
                         data["studentMaxCommute"] = commute ?: 0
                         data["studentMaxBudget"] = budget ?: 0
 
-                        if (smokingStatusState.value.isBlank() || bedtimeState.value.isBlank() || alcoholState.value !in 1..5) {
+                        if (smokingStatusState.value.isBlank() || bedtimeState.intValue !in 1..5 || alcoholState.intValue !in 1..5) {
                             Toast.makeText(context, "Please fill smoking, bedtime and drinking preferences.", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
 
                         data["studentSmokingStatus"] = smokingStatusState.value
-                        data["studentBedtime"] = bedtimeState.value
-                        data["studentAlcohol"] = alcoholState.value
+                        data["studentBedtime"] = bedtimeState.intValue
+                        data["studentAlcohol"] = alcoholState.intValue
                         data["studentPet"] = petState.value
                         data["studentMusic"] = musicField.value.value
                         data["studentPetPeeve"] = petPeeveField.value.value
                         data["studentAddicted"] = addictedField.value.value
                         data["studentIdeal"] = idealField.value.value
                         data["studentPassionate"] = passionateField.value.value
+
+                        val currentStudent = StudentProfile(
+                            id = currentUser.uid,
+                            name = data["name"] as String,
+                            studentAge = data["studentAge"] as Int?,
+                            photos = listOf(),
+                            profilePictureUrl = data["profilePictureUrl"] as String?,
+                            studentPet = data["studentPet"] as String?,
+                            studentBedtime = data["studentBedtime"] as Int?,
+                            studentAlcohol = data["studentAlcohol"] as Int?,
+                            studentSmokingStatus = data["studentSmokingStatus"] as String?,
+                            groupMin = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(0),
+                            groupMax = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(1),
+                            studentMaxCommute = data["studentMaxCommute"] as Int?,
+                            studentMaxBudget = data["studentMaxBudget"] as Int?,
+                            studentUniversity = data["studentUniversity"] as String?,
+                            bio = data["bio"] as String?,
+                            studentAddicted = data["studentAddicted"] as String?,
+                            studentPetPeeve = data["studentPetPeeve"] as String?,
+                            passionate = data["studentPassionate"] as String?,
+                            studentIdeal = data["studentIdeal"] as String?,
+                            studentMusic = data["studentMusic"] as String?,
+                            phoneNumber = data["phoneNumber"] as String?,
+                        )
 
                         if (name.isBlank() || age == null ||
                             universityField.value.value.isBlank() ||
@@ -334,18 +363,71 @@ fun ProfileEditorScreen(
                         ) isMinProfileSet = false
 
                         if (!isPartOfGroup) {
-                            Log.d("ProfileEditorScreen", "Setting groupId for user ${currentUser.uid}")
-                            data["groupId"] = currentUser.uid
-                            val groupData = mutableMapOf<String, Any>(
-                                "membersCount" to 1,
-                                "stats" to mapOf(
-                                    "sumAges" to data["studentAge"]!!,
-                                    "sumBudgets" to data["studentMaxBudget"]!!,
-                                    "sumCommutes" to data["studentMaxCommute"]!!
-                                )
+                            // Case 1: user not in a group → create one
+                            Log.d("ProfileEditorScreen", "Creating group for user ${currentUser.uid}")
+                            val groupId = currentUser.uid
+                            data["groupId"] = groupId
+                            val members: List<StudentProfile> = listOf(currentStudent)
+                            val stats = generateGroupStats(members)
+
+                            val groupProfile = GroupProfile(
+                                id = currentUser.uid,
+                                name = data["name"] as String,
+                                members = members,
+                                stats = stats
                             )
-                            batch.set(db.collection("groups").document(currentUser.uid), groupData)
+
+                            FunctionsProvider.instance
+                                .getHttpsCallable("upsertGroupProfile")
+                                .call(groupProfile.toMap())
+                                .addOnSuccessListener { result ->
+                                    Log.d("SaveProfile","Group upsert success: ${result.data}")
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.e("SaveProfile","Group upsert failure", e)
+                                }
+
+                            batch.set(db.collection("groups").document(groupId), groupProfile.toMap())
+                        } else {
+                            // Case 2: user already has a groupId → check stats.size
+                            val groupId = data["groupId"] as? String ?: currentUser.uid
+                            val groupRef = db.collection("groups").document(groupId)
+
+                            groupRef.get().addOnSuccessListener { groupDoc ->
+                                val stats = groupDoc.get("stats") as? Map<*, *>
+                                val size = (stats?.get("size") as? Long) ?: 0L
+
+                                if (size <= 1) {
+                                    Log.d("ProfileEditorScreen", "Group has size <= 1, updating stats.")
+                                    // Upsert stats because the group only has them
+                                    val members: List<StudentProfile> = listOf(currentStudent)
+                                    val stats = generateGroupStats(members)
+
+                                    val groupProfile = GroupProfile(
+                                        id = currentUser.uid,
+                                        name = data["name"] as String,
+                                        members = members,
+                                        stats = stats
+                                    )
+
+
+                                    FunctionsProvider.instance
+                                        .getHttpsCallable("upsertGroupProfile")
+                                        .call(groupProfile.toMap())
+                                        .addOnSuccessListener { result ->
+                                            Log.d("SaveProfile","Group upsert success: ${result.data}")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.e("SaveProfile","Group upsert failure", e)
+                                        }
+
+                                    groupRef.set(groupProfile.toMap())
+                                } else {
+                                    Log.d("ProfileEditorScreen", "Group has size > 1, not updating stats.")
+                                }
+                            }
                         }
+
                     }
 
                     data["minimumRequiredProfileSet"] = isMinProfileSet

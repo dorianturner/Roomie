@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-functions:22.0.0")
     implementation(libs.androidx.activity.compose.v1101)
     implementation(libs.material)
 

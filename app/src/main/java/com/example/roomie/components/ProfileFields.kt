@@ -89,7 +89,7 @@ fun StudentProfileSection(
     maxCommuteField: MutableState<ProfileTextField>,
     maxBudgetField: MutableState<ProfileTextField>,
     smokingStatus: MutableState<String>,
-    bedtime: MutableState<String>,
+    bedtime: MutableState<Int>,
     alcoholLevel: MutableState<Int>,
     pet: MutableState<String>,
     musicField: MutableState<ProfileTextField>,

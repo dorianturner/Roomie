@@ -2,7 +2,6 @@ package com.example.roomie.components
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -28,7 +27,7 @@ import kotlin.math.roundToInt
 @Composable
 fun LifestyleSection(
     smokingStatus: MutableState<String>,
-    bedtime: MutableState<String>,
+    bedtime: MutableState<Int>,
     alcoholLevel: MutableState<Int>,
     pet: MutableState<String>,
     musicField: MutableState<ProfileTextField>,
@@ -63,7 +62,7 @@ fun LifestyleSection(
     val bedtimeOptions = listOf("<10pm", "10–11pm", "11pm–12am", "12–1am", ">1am")
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
         TextField(
-            value = bedtime.value,
+            value = bedtimeOptions.getOrNull(bedtime.value - 1) ?: "",
             onValueChange = {},
             readOnly = true,
             label = { Text("Select bedtime") },
@@ -73,11 +72,15 @@ fun LifestyleSection(
                 .menuAnchor()
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            bedtimeOptions.forEach { option ->
-                DropdownMenuItem(text = { Text(option) }, onClick = {
-                    bedtime.value = option
-                    expanded = false
-                })
+            bedtimeOptions.indices.forEach { index ->
+                val option = bedtimeOptions[index]
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        bedtime.value = index + 1
+                        expanded = false
+                    }
+                )
             }
         }
     }

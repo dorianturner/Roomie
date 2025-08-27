@@ -22,7 +22,7 @@ data class OnboardingProfileState(
 
     // Lifestyle / extra info
     var smokingStatus: String = "Neither",    // "Smoke" | "Vape" | "Neither"
-    var bedtime: String = "",                 // e.g. "11pm–12am"
+    var bedtime: Int = 1,                 // e.g. "11pm–12am"
     var alcoholLevel: Int = 1,                // 1..5
     var pet: String = "No",
     var musicPref: ProfileTextField = ProfileTextField("The type of music I like the most is...", "", required = false),
