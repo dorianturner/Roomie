@@ -13,9 +13,11 @@ admin.initializeApp();
 import {setGlobalOptions} from "firebase-functions";
 import { upsertGroupProfileWithLock } from "./handlers/upsertGroup";
 import { deleteGroupFromBlob } from "./handlers/deleteGroup";
+import { findMatchesForGroup } from "./handlers/findMatchesForGroup";
 
 export const upsertGroupProfile = upsertGroupProfileWithLock;
 export const deleteGroup = deleteGroupFromBlob;
+export const getGroupMatches = findMatchesForGroup;
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
