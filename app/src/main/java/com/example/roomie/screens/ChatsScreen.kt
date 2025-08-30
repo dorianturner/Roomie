@@ -83,21 +83,23 @@ fun ChatsScreen(
                 item {
                     val chatManager = remember { ChatManager(group.id) }
 
-                    val title by produceState(initialValue = "Loading...", group.participants) {
+                    val participants by produceState(initialValue = "Loading...", group.participants) {
                         value = chatManager.getConversationTitle(currentUserId)
                     }
 
                     ChatItem(
-                        name = title,
+                        name = "MY GROUP",
                         lastMessage = group.lastMessage.orEmpty(),
                         time = group.lastMessageAt,
                         onClick = {
-                            navController.navigate("chat/${group.id}/$title")
-                        }
+                            navController.navigate("chat/${group.id}/$participants")
+                        },
+                        isGroup = true,
+                        groupParticipants = participants,
+                        lastMessenger = "I will fix this later"
                     )
                 }
             }
-
 
             items(conversations) { convo ->
                 val chatManager = remember { ChatManager(convo.id) }
