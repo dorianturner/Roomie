@@ -7,6 +7,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("C:\\Users\\timko\\.android\\debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
     namespace = "com.example.roomie"
     compileSdk = 35
 
@@ -57,6 +65,8 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.foundation)
     implementation(libs.ui)
+    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.appcheck.debug)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

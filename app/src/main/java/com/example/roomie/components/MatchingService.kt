@@ -105,6 +105,16 @@ object MatchingService {
 
         if (currentUser == null) return emptyList()
 
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            user.getIdToken(false).addOnSuccessListener { result ->
+                Log.d("FunctionsDebug", "User UID: ${user.uid}")
+                Log.d("FunctionsDebug", "Token: ${result.token?.take(40)}...") // print first chars
+            }
+        } else {
+            Log.e("FunctionsDebug", "No user logged in!")
+        }
+
         val rawResults = FunctionsProvider.instance
             .getHttpsCallable("getGroupMatches")
             .call(

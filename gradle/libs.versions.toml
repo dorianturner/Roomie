@@ -8,7 +8,6 @@ junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 kotlinxCoroutinesPlayServices = "1.10.2"
-ktorClientOkhttp = "3.2.3"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.07.00"
@@ -21,11 +20,11 @@ runtime = "1.8.3"
 material3 = "1.3.2"
 foundationLayout = "1.8.3"
 foundation = "1.8.3"
-storageKt = "3.2.2"
 activityComposeVersion = "1.10.1"
 material = "1.12.0"
-accompanist = "0.34.0"
 ui = "1.8.3"
+firebaseAppcheckPlayintegrity = "19.0.0"
+firebaseAppcheckDebug = "19.0.0"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -57,14 +56,13 @@ androidx-navigation-runtime-android = { group = "androidx.navigation", name = "n
 androidx-navigation-compose-android = { group = "androidx.navigation", name = "navigation-compose-android", version.ref = "navigationComposeAndroid" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
-ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktorClientOkhttp" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
-storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "storageKt" }
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
+firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity", version.ref = "firebaseAppcheckPlayintegrity" }
+firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug", version.ref = "firebaseAppcheckDebug" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
