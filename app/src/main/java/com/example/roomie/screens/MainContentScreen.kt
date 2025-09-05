@@ -33,6 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.roomie.components.chat.ChatManager
+import com.example.roomie.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +75,7 @@ fun MainContentScreen(
         "search" -> 3
         "profile" -> 4
         "profile_editor" -> 4
+        Routes.ADD_LISTING -> 4
         else -> 0
     }
 
@@ -236,6 +238,9 @@ fun MainContentScreen(
                 }
                 composable("profile_editor") {
                     ProfileEditorScreen(onProfileSaved = {})
+                }
+                composable(Routes.ADD_LISTING) {
+                    EditListingScreen(navController = childNavController)
                 }
                 composable(
                     "chat/{chatId}/{chatName}",

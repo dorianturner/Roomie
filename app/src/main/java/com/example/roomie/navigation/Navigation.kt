@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.roomie.components.OnboardingProfileState
 import com.example.roomie.screens.BasicInfoScreen
+import com.example.roomie.screens.EditListingScreen
 import com.example.roomie.screens.ExtraInfoScreen
 import com.example.roomie.screens.MainContentScreen
 import com.example.roomie.screens.ProfileEditorScreen
@@ -33,6 +34,8 @@ object Routes {
     const val EXTRA_INFO = "extra_info" // specific student/landlord info
 
     const val TELL_MORE = "tell_more"
+
+    const val ADD_LISTING = "add_listing"
 }
 
 /**
@@ -103,6 +106,8 @@ fun RoomieNavHost(
                 }
             )
         }
+
+        composable(Routes.ADD_LISTING) { EditListingScreen(navController = navController) }
     }
 }
 

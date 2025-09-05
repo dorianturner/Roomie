@@ -17,6 +17,7 @@ import com.example.roomie.components.PhotoItem
 import com.example.roomie.components.ProfileCard
 import com.example.roomie.components.StudentProfile
 import com.example.roomie.components.fetchUserPhotos
+import com.example.roomie.navigation.Routes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -128,6 +129,20 @@ fun ProfileScreen(
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
                             color = MaterialTheme.colorScheme.onBackground
                         )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.short),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = { navController.navigate(Routes.ADD_LISTING) },
+                        modifier = Modifier.padding(Spacing.extraShort)
+                    ) {
+                        Text("Add listing")
                     }
                 }
             } else {
