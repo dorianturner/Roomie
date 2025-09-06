@@ -99,17 +99,14 @@ object MatchingService {
     suspend fun findMatchesForCurrentUser(
         weights: PreferenceWeights
     ): List<GroupProfile> {
-        // fetch current user's group
-        val curUser = auth.currentUser?.uid?.let {db.collection("users").document(it).get().await()} ?: return emptyList()
-        val currentUser = docToStudentProfileSafe(curUser)
-
-        if (currentUser == null) return emptyList()
+        val curUser = auth.currentUser?.uid?.let { db.collection("users").document(it).get().await() } ?: return emptyList()
+        val currentUser = docToStudentProfileSafe(curUser) ?: return emptyList()
 
         val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
             user.getIdToken(false).addOnSuccessListener { result ->
                 Log.d("FunctionsDebug", "User UID: ${user.uid}")
-                Log.d("FunctionsDebug", "Token: ${result.token?.take(40)}...") // print first chars
+                Log.d("FunctionsDebug", "Token: ${result.token?.take(40)}...")
             }
         } else {
             Log.e("FunctionsDebug", "No user logged in!")
@@ -121,7 +118,7 @@ object MatchingService {
                 mapOf(
                     "groupId" to curUser.getString("groupId"),
                     "lastSeenTimestamps" to currentUser.seenUsersTimestamps,
-                    "n" to 10, // default
+                    "n" to 10,
                     "weights" to weights.toMap()
                 )
             )
@@ -131,11 +128,12 @@ object MatchingService {
         if (rawResults.isEmpty()) return emptyList()
 
         val matches = rawResults.map { map ->
-            MatchResult(
-                id = map["id"] as String,
-                score = (map["score"] as Number).toDouble()
-            )
+            val id = map["id"] as String
+            val rawScore = (map["score"] as Number).toDouble()
+            val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) rawScore * 0.7 else rawScore
+            MatchResult(id = id, score = adjustedScore)
         }
+
         for (match in matches) {
             Log.d("MatchingService", "Match: ${match.id} with score ${match.score}")
         }
@@ -143,7 +141,6 @@ object MatchingService {
         if (matches.isEmpty()) return emptyList()
 
         val ids = matches.map { it.id }
-
         val snapshot = db.collection("groups")
             .whereIn(FieldPath.documentId(), ids)
             .get()
