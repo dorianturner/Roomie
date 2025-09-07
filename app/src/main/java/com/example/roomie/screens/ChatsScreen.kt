@@ -30,7 +30,6 @@ fun ChatsScreen(
     navController: NavController
 ) {
 
-    // To be updated to reflect the firestore database
     val conversations = remember { mutableStateListOf<Conversation>() }
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid ?: return

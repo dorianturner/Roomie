@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 fun ListingItem(
     address: String,
     // displayImage: type?,
-    price: Int,
+    rent: Int,
     bedrooms: Int,
     bathrooms: Int,
     onClick: () -> Unit
@@ -57,7 +57,7 @@ fun ListingItem(
                 )
                 // may want to add icons here instead of words
                 Text(
-                    text = "$$price per week | $bedrooms bedrooms | $bathrooms bathrooms",
+                    text = "$$rent per week | $bedrooms bedrooms | $bathrooms bathrooms",
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

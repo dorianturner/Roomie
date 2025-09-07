@@ -9,16 +9,34 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.roomie.components.chat.ChatItem
-import com.example.roomie.components.chat.ChatManager
-import com.example.roomie.components.chat.Conversation
+import com.example.roomie.components.listings.Listing
 import com.example.roomie.components.listings.ListingItem
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import kotlin.Boolean
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PropertySearchScreen(modifier: Modifier = Modifier) {
 
-    val listings = remember { List(5) { 1 } }
+    val listings = remember { mutableStateListOf<Listing>() }
+    val db = FirebaseFirestore.getInstance()
+    // val currentUserId = Firebase.auth.currentUser?.uid ?: return
+
+    LaunchedEffect(Unit) {
+        db.collection("listings")
+            .orderBy("rent", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+                listings.clear()
+                listings.addAll(snapshot.documents.mapNotNull {
+                    val listing = it.toObject(Listing::class.java)
+                    listing?.copy(id = it.id)
+                })
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -36,11 +54,12 @@ fun PropertySearchScreen(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(listings) { listing ->
+
                 ListingItem(
-                    address = "123 Justrene Street",
-                    price = 200,
-                    bedrooms = 4,
-                    bathrooms = 4,
+                    address = listing.address,
+                    rent = listing.rent,
+                    bedrooms = listing.bedrooms,
+                    bathrooms = listing.bathrooms,
                     onClick = { }
                 )
             }
