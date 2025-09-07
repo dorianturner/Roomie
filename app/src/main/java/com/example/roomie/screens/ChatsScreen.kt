@@ -45,7 +45,7 @@ fun ChatsScreen(
                 conversations.addAll(snapshot.documents.mapNotNull {
                     val convo = it.toObject(Conversation::class.java)
                     convo?.copy(id = it.id)
-                })
+                }.sortedByDescending { it.participants.size })
             }
     }
 

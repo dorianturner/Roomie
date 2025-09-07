@@ -130,7 +130,14 @@ object MatchingService {
         val matches = rawResults.map { map ->
             val id = map["id"] as String
             val rawScore = (map["score"] as Number).toDouble()
-            val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) rawScore * 0.7 else rawScore
+            val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) {
+                val now = System.currentTimeMillis()
+                val lastSeen = currentUser.seenUsersTimestamps[id] ?: 0L
+                val daysSinceSeen = (now - lastSeen) / (1000 * 60 * 60 * 24)
+                val decayDays = 7.0
+                val factor = (0.7 + (daysSinceSeen / decayDays) * (1.0 - 0.7)).coerceIn(0.7, 1.0)
+                rawScore * factor
+            } else rawScore
             MatchResult(id = id, score = adjustedScore)
         }
 
