@@ -11,15 +11,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.example.roomie.components.listings.Listing
 import com.example.roomie.components.listings.ListingItem
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import kotlin.Boolean
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PropertySearchScreen(modifier: Modifier = Modifier) {
+fun PropertySearchScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+) {
 
     val listings = remember { mutableStateListOf<Listing>() }
     val db = FirebaseFirestore.getInstance()
@@ -54,13 +55,14 @@ fun PropertySearchScreen(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(listings) { listing ->
-
                 ListingItem(
                     address = listing.address,
                     rent = listing.rent,
                     bedrooms = listing.bedrooms,
                     bathrooms = listing.bathrooms,
-                    onClick = { }
+                    onClick = {
+                        navController.navigate("single_listing/${listing.id}")
+                    }
                 )
             }
         }

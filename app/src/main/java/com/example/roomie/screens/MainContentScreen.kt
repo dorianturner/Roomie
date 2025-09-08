@@ -228,7 +228,7 @@ fun MainContentScreen(
                     UserDiscoveryScreen(childNavController)
                 }
                 composable("search") {
-                    PropertySearchScreen()
+                    PropertySearchScreen(navController = childNavController)
                 }
                 composable("profile") {
                     ProfileScreen(navController = childNavController)
@@ -254,6 +254,18 @@ fun MainContentScreen(
                     SingleChatScreen(
                         chatManager = ChatManager(chatId),
                         chatName = chatName,
+                        onBack = { childNavController.popBackStack() }
+                    )
+                }
+                composable(
+                    "single_listing/{listingId}",
+                    arguments = listOf(
+                        navArgument("listingId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+                    SingleListingScreen(
+                        listingId = listingId,
                         onBack = { childNavController.popBackStack() }
                     )
                 }
