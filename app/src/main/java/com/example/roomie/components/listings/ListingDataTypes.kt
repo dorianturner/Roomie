@@ -11,3 +11,8 @@ data class Listing(
     val availableFrom: Long? = null,
     val isActive: Boolean = true
 )
+
+// may be possible to extract this for general use with user discovery
+data class Group(
+    val id: String = ""
+)

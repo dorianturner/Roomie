@@ -14,6 +14,9 @@ import com.example.roomie.components.listings.ListingItem
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import androidx.navigation.NavController
+import com.example.roomie.components.listings.Group
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,8 +26,9 @@ fun PropertySearchScreen(
 ) {
 
     val listings = remember { mutableStateListOf<Listing>() }
+    val group = remember { mutableStateOf<Group?>(null) }
     val db = FirebaseFirestore.getInstance()
-    // val currentUserId = Firebase.auth.currentUser?.uid ?: return
+    val currentUserId = Firebase.auth.currentUser?.uid ?: return
 
     LaunchedEffect(Unit) {
         db.collection("listings")
@@ -36,6 +40,20 @@ fun PropertySearchScreen(
                     val listing = it.toObject(Listing::class.java)
                     listing?.copy(id = it.id)
                 })
+            }
+        db.collection("group")
+            // this members field may not be exactly how data is structured in the database
+            .whereArrayContains("members", currentUserId)
+            .limit(1) // Only fetch one document
+            .addSnapshotListener { snapshot, e ->
+                if (e != null || snapshot == null) return@addSnapshotListener
+
+                if (!snapshot.isEmpty) {
+                    val document = snapshot.documents[0]
+                    group.value = document.toObject(Group::class.java)?.copy(id = document.id)
+                } else {
+                    group.value = null // user not in a group
+                }
             }
     }
 
@@ -67,4 +85,4 @@ fun PropertySearchScreen(
             }
         }
     }
-    }
+}
