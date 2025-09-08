@@ -2,10 +2,17 @@ package com.example.roomie.components.chat
 
 import android.net.Uri
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.PropertyName
+
+const val ABOVE_NANOSECOND_DIGITS = 10000000000
+
+typealias Uid = Long
 
 data class Conversation(
     val id: String = "",
-    val isGroup: Boolean = false,
+    @get:PropertyName("isGroup")
+    @set:PropertyName("isGroup")
+    var isGroup: Boolean = false,
     val participants: List<String> = emptyList(),
     val createdAt: Timestamp? = null,
     val lastMessage: String? = null,
@@ -24,6 +31,7 @@ data class Message(
 
 data class AttachedFile(
     val uri: Uri,
+    val uid: Long,
     val name: String,
     val type: String, // "image", "video", "pdf", etc.
     val size: Long? = null

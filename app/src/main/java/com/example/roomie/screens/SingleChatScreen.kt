@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.roomie.components.chat.ABOVE_NANOSECOND_DIGITS
 
 import com.example.roomie.components.chat.AttachedFile
 import com.example.roomie.components.chat.ChatManager
@@ -51,6 +52,7 @@ import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.AttachmentPreviewSection
 
 import com.google.firebase.Firebase
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -160,7 +162,10 @@ fun SingleChatScreen(
                 else -> "file"
             }
 
-            AttachedFile(uri, fileName, type, fileSize)
+            // used because if the same image is uploaded twice, both are removed when the uri is filtered
+            val uid: Long = (uri.toString().length * ABOVE_NANOSECOND_DIGITS) + Timestamp.now().nanoseconds
+
+            AttachedFile(uri, uid, fileName, type, fileSize)
         }
     }
 
@@ -214,8 +219,8 @@ fun SingleChatScreen(
             if (attachedFiles.isNotEmpty() && !isUploading) {
                 AttachmentPreviewSection(
                     attachedFiles = attachedFiles,
-                    onRemoveFile = { uriToRemove ->
-                        attachedFiles = attachedFiles.filter { it.uri != uriToRemove }
+                    onRemoveFile = { uidToRemove ->
+                        attachedFiles = attachedFiles.filter { it.uid != uidToRemove }
                     },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
