@@ -17,6 +17,7 @@ import androidx.navigation.NavController
 import com.example.roomie.components.listings.Group
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,8 +30,18 @@ fun PropertySearchScreen(
     val group = remember { mutableStateOf<Group?>(null) }
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid ?: return
+    var groupId: String? = null
 
     LaunchedEffect(Unit) {
+        try {
+            val document = db.collection("users").document(currentUserId).get().await()
+            if (document.exists()) {
+                groupId = document.getString("groupId")
+            }
+        } catch (e: Exception) {
+            // exception (shouldn't happen if data formatted correctly)
+        }
+
         db.collection("listings")
             .orderBy("rent", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, e ->
@@ -42,20 +53,29 @@ fun PropertySearchScreen(
                 })
             }
         db.collection("group")
-            // this members field may not be exactly how data is structured in the database
-            .whereArrayContains("members", currentUserId)
+            .whereEqualTo("GroupId", groupId)
             .limit(1) // Only fetch one document
             .addSnapshotListener { snapshot, e ->
                 if (e != null || snapshot == null) return@addSnapshotListener
 
                 if (!snapshot.isEmpty) {
                     val document = snapshot.documents[0]
-                    group.value = document.toObject(Group::class.java)?.copy(id = document.id)
+                    val stats = document.get("stats") as? Map<String, Any>
+
+                    group.value = Group(
+                        id = document.id,
+                        size = stats?.get("size") as Long,
+                        minBudget = stats["minBudget"] as Long,
+                        maxBudget = stats["maxBudget"] as Long,
+                        minCommute = stats["minCommute"] as Long,
+                        maxCommute = stats["maxCommute"] as Long,
+                    )
                 } else {
                     group.value = null // user not in a group
                 }
             }
     }
+
 
     Scaffold(
         topBar = {
@@ -72,16 +92,32 @@ fun PropertySearchScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            var filtered = false
             items(listings) { listing ->
-                ListingItem(
-                    address = listing.address,
-                    rent = listing.rent,
-                    bedrooms = listing.bedrooms,
-                    bathrooms = listing.bathrooms,
-                    onClick = {
-                        navController.navigate("single_listing/${listing.id}")
+                if (group.value != null) {
+                    // compiler gets upset without the !!'s
+                    // maybe because it's technically a value that can change concurrently even though it won't)
+                    // using 1.3 as a buffer to show slightly more
+                    if (listing.rent < group.value!!.minBudget * group.value!!.size * 1.3) {
+                        if (listing.bedrooms > group.value!!.size) {
+                            filtered = true
+                        }
                     }
-                )
+                } else {
+                    filtered = true
+                }
+                if (filtered) {
+                    ListingItem(
+                        address = listing.address,
+                        rent = listing.rent,
+                        bedrooms = listing.bedrooms,
+                        bathrooms = listing.bathrooms,
+                        onClick = {
+                            navController.navigate("single_listing/${listing.id}")
+                        }
+                    )
+                }
+                filtered = false
             }
         }
     }
