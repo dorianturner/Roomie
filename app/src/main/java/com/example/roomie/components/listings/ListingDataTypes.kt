@@ -1,10 +1,13 @@
 package com.example.roomie.components.listings
 
+import com.google.firebase.firestore.PropertyName
+
 data class Listing(
     val id: String = "",
     val title: String = "",
     val address: String = "",
     val description: String = "",
+    @get:PropertyName("rent")
     val rent: Int = 0,
     val bedrooms: Int = 0,
     val bathrooms: Int = 0,
@@ -16,9 +19,9 @@ data class Listing(
 // this isn't storing every field of the group, only the ones relevant for filtering the listings
 data class Group(
     val id: String = "",
-    val minBudget: Long = 0,
-    val maxBudget: Long = 0,
-    val size: Long = 0,
-    val minCommute: Long = 0,
-    val maxCommute: Long = 0,
+    val minBudget: Int = 0,
+    val maxBudget: Int = 0,
+    val size: Int = 0,
+    val minCommute: Int = 0,
+    val maxCommute: Int = 0,
 )

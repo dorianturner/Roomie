@@ -40,7 +40,7 @@ fun ListingDetailsContent(
 
         // rent
         Text(
-            text = "$${listing.rent}/month",
+            text = "$${listing.rent} per week",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary

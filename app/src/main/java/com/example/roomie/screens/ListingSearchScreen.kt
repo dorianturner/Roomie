@@ -28,54 +28,71 @@ fun PropertySearchScreen(
 
     val listings = remember { mutableStateListOf<Listing>() }
     val group = remember { mutableStateOf<Group?>(null) }
+    // loading state for filtering listings
+    val isLoading = remember { mutableStateOf(true) }
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid ?: return
-    var groupId: String? = null
 
     LaunchedEffect(Unit) {
         try {
             val document = db.collection("users").document(currentUserId).get().await()
-            if (document.exists()) {
-                groupId = document.getString("groupId")
+            val groupId = if (document.exists()) {
+                document.getString("groupId")
+            } else {
+                null
+            }
+
+            val studentMaxBudget = document.getLong("StudentMaxBudget")?.toInt() ?: 0
+
+            db.collection("listings")
+                .orderBy("rent", Query.Direction.DESCENDING)
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null || snapshot == null) return@addSnapshotListener
+                    listings.clear()
+                    listings.addAll(snapshot.documents.mapNotNull {
+                        val listing = it.toObject(Listing::class.java)
+                        listing?.copy(id = it.id)
+                    })
+                }
+            if (groupId != null) {
+                db.collection("groups")
+                    .whereEqualTo("id", groupId)
+                    .limit(1) // Only fetch one document
+                    .addSnapshotListener { snapshot, e ->
+                        if (e != null || snapshot == null) return@addSnapshotListener
+
+                        if (!snapshot.isEmpty) {
+                            val document = snapshot.documents[0]
+                            val stats = document.get("stats") as? Map<String, Any>
+
+                            group.value = Group(
+                                id = document.id,
+                                size = (stats?.get("size") as? Long)?.toInt() ?: 0,
+                                minBudget = (stats?.get("minBudget") as? Long)?.toInt() ?: 0,
+                                maxBudget = (stats?.get("maxBudget") as? Long)?.toInt() ?: 0,
+                                minCommute = (stats?.get("minCommute") as? Long)?.toInt() ?: 0,
+                                maxCommute = (stats?.get("maxCommute") as? Long)?.toInt() ?: 0,
+                            )
+                        }
+                        isLoading.value = false
+                    }
+            } else {
+                // dummy group if they are not in a group
+                group.value = Group(
+                    id = "",
+                    size = 1,
+                    minBudget = studentMaxBudget,
+                    maxBudget = studentMaxBudget,
+                    // will need to be updated later
+                    minCommute = 0,
+                    maxCommute = 0,
+                )
+                isLoading.value = false
             }
         } catch (e: Exception) {
-            // exception (shouldn't happen if data formatted correctly)
+            isLoading.value = false
         }
-
-        db.collection("listings")
-            .orderBy("rent", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null || snapshot == null) return@addSnapshotListener
-                listings.clear()
-                listings.addAll(snapshot.documents.mapNotNull {
-                    val listing = it.toObject(Listing::class.java)
-                    listing?.copy(id = it.id)
-                })
-            }
-        db.collection("group")
-            .whereEqualTo("GroupId", groupId)
-            .limit(1) // Only fetch one document
-            .addSnapshotListener { snapshot, e ->
-                if (e != null || snapshot == null) return@addSnapshotListener
-
-                if (!snapshot.isEmpty) {
-                    val document = snapshot.documents[0]
-                    val stats = document.get("stats") as? Map<String, Any>
-
-                    group.value = Group(
-                        id = document.id,
-                        size = stats?.get("size") as Long,
-                        minBudget = stats["minBudget"] as Long,
-                        maxBudget = stats["maxBudget"] as Long,
-                        minCommute = stats["minCommute"] as Long,
-                        maxCommute = stats["maxCommute"] as Long,
-                    )
-                } else {
-                    group.value = null // user not in a group
-                }
-            }
     }
-
 
     Scaffold(
         topBar = {
@@ -84,29 +101,26 @@ fun PropertySearchScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(color = MaterialTheme.colorScheme.background),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            var filtered = false
-            items(listings) { listing ->
-                if (group.value != null) {
-                    // compiler gets upset without the !!'s
-                    // maybe because it's technically a value that can change concurrently even though it won't)
-                    // using 1.3 as a buffer to show slightly more
-                    if (listing.rent < group.value!!.minBudget * group.value!!.size * 1.3) {
-                        if (listing.bedrooms > group.value!!.size) {
-                            filtered = true
-                        }
-                    }
-                } else {
-                    filtered = true
-                }
-                if (filtered) {
+        if (isLoading.value) {
+            CircularProgressIndicator()
+        } else {
+            val filteredListings = listings.filter { listing ->
+                group.value?.let { currentGroup ->
+                    val maxAllowed = currentGroup.maxBudget * currentGroup.size * 1.3
+                    val budgetOk = listing.rent < maxAllowed
+                    val bedroomsOk = listing.bedrooms >= currentGroup.size
+                    budgetOk && bedroomsOk
+                } ?: true
+            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(color = MaterialTheme.colorScheme.background),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                items(filteredListings) { listing ->
                     ListingItem(
                         address = listing.address,
                         rent = listing.rent,
@@ -117,7 +131,6 @@ fun PropertySearchScreen(
                         }
                     )
                 }
-                filtered = false
             }
         }
     }
