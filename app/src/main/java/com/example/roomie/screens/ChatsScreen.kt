@@ -72,7 +72,6 @@ fun ChatsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                // Temporarily red so i can see whats going on
                 .background(color = MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -96,7 +95,6 @@ fun ChatsScreen(
                         },
                         isGroup = true,
                         groupParticipants = participants,
-                        lastMessenger = "I will fix this later"
                     )
                 }
             }

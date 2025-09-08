@@ -22,7 +22,7 @@ fun ChatItem(
     onClick: () -> Unit,
     isGroup: Boolean = false,
     groupParticipants: String? = null, // potentially could list participants
-    lastMessenger: String? = null, // to show who sent latest message
+    // lastMessenger: String? = null, // to show who sent latest message
 ) {
     Card(
         onClick = onClick,
@@ -77,11 +77,13 @@ fun ChatItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = if (isGroup) {
-                        "${lastMessenger}: $lastMessage"
-                    } else {
-                        lastMessage
-                    },
+                    text = lastMessage,
+                    // need to slightly change design to implement this
+//                    text = if (isGroup) {
+//                        "${lastMessenger}: $lastMessage"
+//                    } else {
+//                        lastMessage
+//                    },
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
