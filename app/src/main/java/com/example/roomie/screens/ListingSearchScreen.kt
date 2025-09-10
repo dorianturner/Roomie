@@ -14,10 +14,13 @@ import com.example.roomie.components.listings.ListingItem
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import androidx.navigation.NavController
+import com.example.roomie.BuildConfig
 import com.example.roomie.components.listings.Group
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.tasks.await
+
+val tflApiKey = BuildConfig.TFL_API_KEY
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
