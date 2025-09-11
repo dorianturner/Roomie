@@ -20,8 +20,8 @@ class ChatManager(
 ) {
     var conversationId: String? = conversationID
         private set
-    private val db = FirebaseFirestore.getInstance()
-    private val convoRef = FirebaseFirestore.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val convoRef = FirebaseFirestore.getInstance()
         .collection("conversations")
         .let { col ->
             if (conversationId.isNullOrEmpty()) col.document() else col.document(conversationId!!)
@@ -276,82 +276,5 @@ class ChatManager(
                     conversation?.let { onConversationUpdated(it) }
                 }
             }
-    }
-
-    suspend fun createPoll(question: String) {
-        val poll = Poll(question = question)
-        convoRef.update("activePoll", poll)
-            .await()
-    }
-
-    suspend fun castVote(context: Context, userId: String, choice: String) {
-        var systemMessage: Message? = null
-
-        db.runTransaction { transaction ->
-            val snap = transaction.get(convoRef)
-            val poll = snap.toObject(Conversation::class.java)?.activePoll
-                ?: throw IllegalStateException("No active poll")
-
-            if (poll.closed) return@runTransaction
-
-            val updatedVotes = poll.votes.toMutableMap()
-            updatedVotes[userId] = choice
-
-            var isClosed = poll.closed
-            var resolution = poll.resolution
-
-            val participants = snap.get("participants") as? List<*> ?: emptyList<String>()
-
-            if (updatedVotes.keys.containsAll(participants)) {
-                val yesCount = updatedVotes.values.count { it == "yes" }
-                val noCount = updatedVotes.values.count { it == "no" }
-                val undecidedCount = updatedVotes.values.count { it == "undecided" }
-
-                if (undecidedCount > 0) return@runTransaction
-
-                isClosed = true
-                resolution = if (yesCount > noCount) {
-                    if (noCount == 0) {
-                        "Unanimous Yes"
-                    } else {
-                        "Majority Yes"
-                    }
-                }
-                else if (noCount > yesCount) {
-                    if (yesCount == 0) {
-                        "Unanimous No"
-                    } else {
-                        "Majority No"
-                    }
-                }
-                else "Draw"
-
-                systemMessage = Message(
-                    id = "system-${System.currentTimeMillis()}",
-                    senderId = "system",
-                    text = "Poll: ${poll.question}\nResolution: $resolution",
-                    type = "system",
-                    timestamp = Timestamp.now()
-                )
-            }
-
-            val newPollMap = mapOf(
-                "question" to poll.question,
-                "votes" to updatedVotes.toMap(),
-                "closed" to isClosed,
-                "resolution" to resolution
-            )
-
-            transaction.update(convoRef, "activePoll", newPollMap)
-        }.await()
-
-        systemMessage?.let {
-            sendMessage(context, "system", it.text, it.type)
-            clearPoll()
-        }
-    }
-
-    suspend fun clearPoll() {
-        convoRef.update("activePoll", null).await()
     }
 }

@@ -52,6 +52,7 @@ import com.example.roomie.components.chat.Message
 import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.AttachmentPreviewSection
 import com.example.roomie.components.chat.Poll
+import com.example.roomie.components.chat.PollManager
 import com.example.roomie.components.chat.PollSection
 
 import com.google.firebase.Firebase
@@ -69,6 +70,7 @@ fun SingleChatScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val pollManager = PollManager(chatManager)
     val messagesState = remember { mutableStateListOf<Message>() }
 
     var attachedFiles by remember { mutableStateOf<List<AttachedFile>>(emptyList()) }
@@ -229,7 +231,7 @@ fun SingleChatScreen(
                     poll = poll,
                     onVote = { choice ->
                         coroutineScope.launch {
-                            chatManager.castVote(context, userId = userID, choice)
+                            pollManager.castVote(context, userId = userID, choice)
                         }
                     },
                     userId = userID!!
@@ -254,7 +256,7 @@ fun SingleChatScreen(
                             Button(
                                 onClick = {
                                     coroutineScope.launch {
-                                        chatManager.createPoll("Finalise Group?")
+                                        pollManager.createPoll("Finalise Group?", "finalise")
                                         showConfirmDialog = false
                                     }
                                 }
