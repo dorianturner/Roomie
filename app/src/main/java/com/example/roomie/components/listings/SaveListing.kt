@@ -1,6 +1,7 @@
 package com.example.roomie.components.listings
 
 import android.util.Log
+import com.example.roomie.components.PhotoItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -15,7 +16,8 @@ data class ListingData(
     val bedrooms: Int?,
     val bathrooms: Int?,
     val availableFromEpoch: Long? = null,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val photos: List<PhotoItem> = emptyList()
 ) {
     fun toMap(ownerId: String, ownerName: String?): Map<String, Any?> = mapOf(
         "title" to title,
@@ -28,7 +30,8 @@ data class ListingData(
         "isActive" to isActive,
         "ownerId" to ownerId,
         "ownerName" to ownerName,
-        "lastUpdated" to System.currentTimeMillis()
+        "lastUpdated" to System.currentTimeMillis(),
+        "photos" to photos.map { mapOf("url" to it.url, "path" to it.path) }
     )
 }
 
