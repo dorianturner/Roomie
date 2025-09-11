@@ -1,20 +1,22 @@
 package com.example.roomie.components.listings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.roomie.R
+import com.example.roomie.components.PhotoItem
 
 @Composable
 fun ListingItem(
     address: String,
-    // displayImage: type?,
+    displayImages: List<PhotoItem>?,
     rent: Int,
     bedrooms: Int,
     bathrooms: Int,
@@ -31,17 +33,15 @@ fun ListingItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Profile picture
-            Box(
+            AsyncImage(
+                model = displayImages?.firstOrNull()?.url ?: R.drawable.image_not_found, // fallback
+                contentDescription = "Listing image",
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                // image here?
-            }
+                    .size(64.dp)
+                    .aspectRatio(1f) // square
+                    .then(Modifier),
+                contentScale = ContentScale.Crop
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 

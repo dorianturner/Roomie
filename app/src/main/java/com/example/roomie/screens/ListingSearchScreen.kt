@@ -151,6 +151,7 @@ fun PropertySearchScreen(
                 items(filteredListings) { listing ->
                     ListingItem(
                         address = listing.address,
+                        displayImages = listing.photos,
                         rent = listing.rent,
                         bedrooms = listing.bedrooms,
                         bathrooms = listing.bathrooms,

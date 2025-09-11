@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -185,6 +183,7 @@ fun ProfileScreen(
                     items(landlordListings) { listing ->
                         ListingItem(
                             address = listing.address,
+                            displayImages = listing.photos,
                             rent = listing.rent,
                             bedrooms = listing.bedrooms,
                             bathrooms = listing.bathrooms,
