@@ -54,7 +54,10 @@ fun ListingPhotosEdit(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // image picker
+    // Determine if this is a "new" listing (temp ID)
+    val isTempListing = listingId.startsWith("temp-")
+
+    // Image picker launcher
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -66,11 +69,14 @@ fun ListingPhotosEdit(
                     photos = photos + newPhoto
                     onPhotosChanged(photos)
 
-                    FirebaseFirestore.getInstance()
-                        .collection("listings")
-                        .document(listingId)
-                        .update("photos", photos.map { p -> mapOf("url" to p.url, "path" to p.path) })
-                        .await()
+                    // Only update Firestore if this is an existing listing
+                    if (!isTempListing) {
+                        FirebaseFirestore.getInstance()
+                            .collection("listings")
+                            .document(listingId)
+                            .update("photos", photos.map { p -> mapOf("url" to p.url, "path" to p.path) })
+                            .await()
+                    }
                 } catch (e: Exception) {
                     Toast.makeText(context, "Failed to upload image", Toast.LENGTH_SHORT).show()
                 }
@@ -78,10 +84,12 @@ fun ListingPhotosEdit(
         }
     }
 
-    // load photos initially
+    // Load existing photos (only for real listings)
     LaunchedEffect(listingId) {
-        photos = fetchListingPhotos(listingId)
-        onPhotosChanged(photos)
+        if (!isTempListing) {
+            photos = fetchListingPhotos(listingId)
+            onPhotosChanged(photos)
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -97,12 +105,19 @@ fun ListingPhotosEdit(
                         model = photo.url,
                         contentDescription = "Listing photo",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp))
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(8.dp))
                     )
                     IconButton(
                         onClick = {
                             coroutineScope.launch {
-                                val success = deleteListingPhoto(listingId, photo.path)
+                                val success = if (isTempListing) {
+                                    // For new listings, just remove locally
+                                    true
+                                } else {
+                                    deleteListingPhoto(listingId, photo.path)
+                                }
                                 if (success) {
                                     photos = photos.filterNot { it.path == photo.path }
                                     onPhotosChanged(photos)
@@ -141,54 +156,71 @@ fun ListingPhotosEdit(
     }
 }
 
+
 @Composable
 fun ListingPhotoGallery(
     photos: List<PhotoItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    pageHeight: Dp = 250.dp
 ) {
-    var showDialog by remember { mutableStateOf(false) }
-    var selectedPhoto by remember { mutableStateOf<String?>(null) }
-
-    if (photos.isNotEmpty()) {
-        LazyRow(
+    if (photos.isEmpty()) {
+        Box(
             modifier = modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .height(pageHeight)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
         ) {
-            items(photos) { photo ->
+            Text("No photos yet")
+        }
+        return
+    }
+
+    val listState = rememberLazyListState()
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+
+    Column(modifier = modifier) {
+        LazyRow(
+            state = listState,
+            flingBehavior = flingBehavior,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(pageHeight)
+        ) {
+            itemsIndexed(photos) { _, item ->
                 AsyncImage(
-                    model = photo.url,
-                    contentDescription = "Listing photo",
+                    model = item.url,
+                    contentDescription = "Profile photo",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(120.dp)
+                        .fillParentMaxWidth()
+                        .fillMaxHeight()
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            selectedPhoto = photo.url
-                            showDialog = true
-                        }
                 )
             }
         }
-    }
 
-    if (showDialog && selectedPhoto != null) {
-        Dialog(onDismissRequest = { showDialog = false }) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-                    .clickable { showDialog = false },
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = selectedPhoto,
-                    contentDescription = "Full screen listing photo",
-                    contentScale = ContentScale.Fit,
+        val currentPage by remember {
+            derivedStateOf { listState.firstVisibleItemIndex.coerceIn(0, photos.lastIndex) }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            repeat(photos.size) { i ->
+                val selected = i == currentPage
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .padding(2.dp)
+                        .size(if (selected) 10.dp else 8.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (selected) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
                 )
             }
         }
