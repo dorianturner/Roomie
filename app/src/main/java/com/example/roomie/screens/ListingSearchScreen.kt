@@ -29,10 +29,15 @@ fun PropertySearchScreen(
 
     val listings = remember { mutableStateListOf<Listing>() }
     val group = remember { mutableStateOf<Group?>(null) }
-    // loading state for filtering listings
+
+    // states for filtering listings
+    val filteredListings = remember { mutableStateListOf<Listing>() }
+    val isFiltering = remember { mutableStateOf(false) }
     val isLoading = remember { mutableStateOf(true) }
+
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid ?: return
+
 
     LaunchedEffect(Unit) {
         try {
@@ -94,6 +99,37 @@ fun PropertySearchScreen(
         }
     }
 
+    // filtering listings
+    LaunchedEffect(listings, group.value) {
+        if (listings.isNotEmpty() && group.value != null && !isLoading.value) {
+            isFiltering.value = true
+            filteredListings.clear()
+
+            val currentGroup = group.value!!
+            val maxAllowed = currentGroup.minBudget * currentGroup.size * 1.3
+
+            // first filter by params that don't need async calls
+            val preFilteredListings = listings.filter { listing ->
+                val budgetOk = listing.rent < maxAllowed
+                val bedroomsOk = listing.bedrooms >= currentGroup.size
+                budgetOk && bedroomsOk
+            }
+
+            // filter by commute time
+            for (listing in preFilteredListings) {
+                try {
+                    val commuteTime = getMassCommuteTime(currentGroup.universities, listing.address)
+                    if (commuteTime <= currentGroup.minCommute) {
+                        filteredListings.add(listing)
+                    }
+                } catch (e: Exception) {
+                    println("Error calculating commute time for ${listing.address}: ${e.message}")
+                }
+            }
+            isFiltering.value = false
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -101,18 +137,9 @@ fun PropertySearchScreen(
             )
         }
     ) { innerPadding ->
-        if (isLoading.value) {
+        if (isLoading.value || isFiltering.value) {
             CircularProgressIndicator()
         } else {
-            val filteredListings = listings.filter { listing ->
-                group.value?.let { currentGroup ->
-                    val maxAllowed = currentGroup.minBudget * currentGroup.size * 1.3
-                    val budgetOk = listing.rent < maxAllowed
-                    val bedroomsOk = listing.bedrooms >= currentGroup.size
-                    val commuteOk = getMassCommuteTime(currentGroup.universities, listing.address) <= currentGroup.minCommute
-                    budgetOk && bedroomsOk && commuteOk
-                } ?: true
-            }
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
