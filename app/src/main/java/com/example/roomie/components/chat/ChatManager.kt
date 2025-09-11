@@ -83,7 +83,7 @@ class ChatManager(
     }
 
     /**
-     * Upload media to Supabase private bucket and return the relative path.
+     * Upload media to Firebase private bucket and return the relative path.
      */
     private suspend fun uploadMediaToFirebase(
         mediaUri: Uri,
