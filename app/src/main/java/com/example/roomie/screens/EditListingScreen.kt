@@ -12,10 +12,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavController
+import com.example.roomie.components.PhotoItem
 import com.example.roomie.components.listings.ListingData
+import com.example.roomie.components.listings.ListingPhotosEdit
 import com.example.roomie.components.listings.saveListing
 import com.example.roomie.ui.theme.Spacing
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,9 +35,9 @@ fun EditListingScreen(
     var bedroomsText by remember { mutableStateOf("") }
     var bathroomsText by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    //var photosText by remember { mutableStateOf("") } // comma-separated URLs for now
     var isSaving by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
 
     Scaffold(
         topBar = {
@@ -102,12 +105,10 @@ fun EditListingScreen(
                         .height(160.dp)
                 )
 
-//                OutlinedTextField(
-//                    value = photosText,
-//                    onValueChange = { photosText = it },
-//                    label = { Text("Photos (comma-separated URLs) — optional") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
+                ListingPhotosEdit(
+                    listingId = "temp-${UUID.randomUUID()}", // or assign early
+                    onPhotosChanged = { updated -> photos = updated }
+                )
 
                 Spacer(Modifier.height(8.dp))
 
@@ -126,7 +127,7 @@ fun EditListingScreen(
                             rent = rent,
                             bedrooms = bedrooms,
                             bathrooms = bathrooms,
-                            //photos = photos
+                            photos = photos
                         )
 
                         scope.launch {
