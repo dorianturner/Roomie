@@ -4,6 +4,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -34,12 +35,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
+import androidx.compose.foundation.gestures.TransformableState
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.ui.input.pointer.pointerInput
 
 // contains a composable for editing the profile photos and one for viewing the profile photos.
 
@@ -54,22 +62,23 @@ fun ListingPhotosEdit(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Determine if this is a "new" listing (temp ID)
     val isTempListing = listingId.startsWith("temp-")
 
-    // Image picker launcher
+    // Track uploading state per image
+    var uploading by remember { mutableStateOf(false) }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             coroutineScope.launch {
+                uploading = true
                 try {
                     val (url, path) = uploadListingImage(it, listingId)
                     val newPhoto = PhotoItem(url, path)
                     photos = photos + newPhoto
                     onPhotosChanged(photos)
 
-                    // Only update Firestore if this is an existing listing
                     if (!isTempListing) {
                         FirebaseFirestore.getInstance()
                             .collection("listings")
@@ -80,11 +89,11 @@ fun ListingPhotosEdit(
                 } catch (e: Exception) {
                     Toast.makeText(context, "Failed to upload image", Toast.LENGTH_SHORT).show()
                 }
+                uploading = false
             }
         }
     }
 
-    // Load existing photos (only for real listings)
     LaunchedEffect(listingId) {
         if (!isTempListing) {
             photos = fetchListingPhotos(listingId)
@@ -108,16 +117,12 @@ fun ListingPhotosEdit(
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(8.dp))
+                            .clickable { /* handled in Gallery */ }
                     )
                     IconButton(
                         onClick = {
                             coroutineScope.launch {
-                                val success = if (isTempListing) {
-                                    // For new listings, just remove locally
-                                    true
-                                } else {
-                                    deleteListingPhoto(listingId, photo.path)
-                                }
+                                val success = if (isTempListing) true else deleteListingPhoto(listingId, photo.path)
                                 if (success) {
                                     photos = photos.filterNot { it.path == photo.path }
                                     onPhotosChanged(photos)
@@ -148,7 +153,11 @@ fun ListingPhotosEdit(
                             .clickable { imagePickerLauncher.launch("image/*") },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add photo")
+                        if (uploading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Add, contentDescription = "Add photo")
+                        }
                     }
                 }
             }
@@ -156,13 +165,15 @@ fun ListingPhotosEdit(
     }
 }
 
-
 @Composable
 fun ListingPhotoGallery(
     photos: List<PhotoItem>,
     modifier: Modifier = Modifier,
     pageHeight: Dp = 250.dp
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedPhoto by remember { mutableStateOf<String?>(null) }
+
     if (photos.isEmpty()) {
         Box(
             modifier = modifier
@@ -187,15 +198,19 @@ fun ListingPhotoGallery(
                 .fillMaxWidth()
                 .height(pageHeight)
         ) {
-            itemsIndexed(photos) { _, item ->
+            itemsIndexed(photos) { _, photo ->
                 AsyncImage(
-                    model = item.url,
-                    contentDescription = "Profile photo",
+                    model = photo.url,
+                    contentDescription = "Listing photo",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(8.dp))
+                        .clickable {
+                            selectedPhoto = photo.url
+                            showDialog = true
+                        }
                 )
             }
         }
@@ -222,6 +237,67 @@ fun ListingPhotoGallery(
                             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                         )
                 )
+            }
+        }
+    }
+
+    if (showDialog && selectedPhoto != null) {
+        Dialog(onDismissRequest = { showDialog = false }) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures { showDialog = false } // tap outside
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                var rawScale by remember { mutableStateOf(1f) }
+                var rawOffsetX by remember { mutableStateOf(0f) }
+                var rawOffsetY by remember { mutableStateOf(0f) }
+
+                val animatedScale by animateFloatAsState(targetValue = rawScale)
+                val animatedOffsetX by animateFloatAsState(targetValue = rawOffsetX)
+                val animatedOffsetY by animateFloatAsState(targetValue = rawOffsetY)
+
+                val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
+                    rawScale = (rawScale * zoomChange).coerceIn(1f, 5f)
+                    rawOffsetX += panChange.x
+                    rawOffsetY += panChange.y
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .fillMaxHeight(0.95f)
+                        .transformable(state = transformableState)
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    // If no pointers are down, snap back
+                                    if (event.changes.all { !it.pressed }) {
+                                        rawScale = 1f
+                                        rawOffsetX = 0f
+                                        rawOffsetY = 0f
+                                    }
+                                }
+                            }
+                        }
+                ) {
+                    AsyncImage(
+                        model = selectedPhoto,
+                        contentDescription = "Full screen listing photo",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(
+                                scaleX = animatedScale,
+                                scaleY = animatedScale,
+                                translationX = animatedOffsetX,
+                                translationY = animatedOffsetY
+                            )
+                    )
+                }
             }
         }
     }

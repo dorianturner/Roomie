@@ -73,6 +73,7 @@ fun MainContentScreen(
         "bookmarks" -> 1
         "discover" -> 2
         "search" -> 3
+        "single_listing/{listingId}" -> 3
         "profile" -> 4
         "profile_editor" -> 4
         Routes.ADD_LISTING -> 4
