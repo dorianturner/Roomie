@@ -15,10 +15,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-fun getMimeType(context: Context, uri: Uri): String? {
-    return context.contentResolver.getType(uri)
-}
-
 class ChatManager(
     conversationID: String? = null
 ) {
@@ -268,4 +264,87 @@ class ChatManager(
         }
     }
 
+    fun listenConversation(
+        onConversationUpdated: (Conversation) -> Unit
+    ): ListenerRegistration {
+        check(conversationId != null) { "Conversation does not exist" }
+
+        return convoRef
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChatManager", "Listen conversation failed: ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    val conversation = snapshot.toObject(Conversation::class.java)
+                    conversation?.let { onConversationUpdated(it) }
+                }
+            }
+    }
+
+    suspend fun createPoll(question: String) {
+        val poll = Poll(question = question)
+        convoRef.update("activePoll", poll)
+            .await()
+    }
+
+    suspend fun castVote(userId: String, choice: String) {
+        db.runTransaction { transaction ->
+            val snap = transaction.get(convoRef)
+            val poll = snap.toObject(Conversation::class.java)?.activePoll
+                ?: throw IllegalStateException("No active poll")
+
+            if (poll.closed) return@runTransaction
+
+            val updatedVotes = poll.votes.toMutableMap()
+            updatedVotes[userId] = choice
+
+            var isClosed = poll.closed
+            var resolution = poll.resolution
+
+            val participants = snap.get("participants") as? List<*> ?: emptyList<String>()
+
+            if (updatedVotes.keys.containsAll(participants)) {
+                val yesCount = updatedVotes.values.count { it == "yes" }
+                val noCount = updatedVotes.values.count { it == "no" }
+                val undecidedCount = updatedVotes.values.count { it == "undecided" }
+
+                if (undecidedCount > 0) return@runTransaction
+
+                isClosed = true
+                resolution = if (yesCount > noCount) {
+                    if (noCount == 0) {
+                        "Consensus yes"
+                    } else {
+                        "Majority yes"
+                    }
+                }
+                else if (noCount > yesCount) {
+                    if (yesCount == 0) {
+                        "Consensus no"
+                    } else {
+                        "Majority no"
+                    }
+                }
+                else "Tie"
+            }
+            Log.d("ChatManager", "IsClosed: $isClosed, Resolution: $resolution")
+            val newPollMap = mapOf(
+                "question" to poll.question,
+                "votes" to updatedVotes.toMap(),
+                "closed" to isClosed,
+                "resolution" to resolution
+            )
+
+            transaction.update(convoRef, "activePoll", newPollMap)
+        }.await()
+
+        val snap = convoRef.get().await()
+        val conversation = snap.toObject(Conversation::class.java)
+        Log.d("ChatManager", "Updated poll: $conversation")
+    }
+
+    suspend fun clearPoll() {
+        convoRef.update("activePoll", null).await()
+    }
 }

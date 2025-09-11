@@ -49,6 +49,8 @@ import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.chat.Message
 import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.AttachmentPreviewSection
+import com.example.roomie.components.chat.Poll
+import com.example.roomie.components.chat.PollSection
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -78,14 +80,23 @@ fun SingleChatScreen(
     var isUploading by remember { mutableStateOf(false) }
     var uploadProgress by remember { mutableStateOf(0f) }
 
+    var activePoll by remember { mutableStateOf<Poll?>(null) }
+
     // Listen for messages
     DisposableEffect(chatManager) {
-        val registration = chatManager.listenMessages { messages ->
+        val msgRegistration = chatManager.listenMessages { messages ->
             messagesState.clear()
             messagesState.addAll(messages)
         }
+
+        val convoRegistration = chatManager.listenConversation { convo ->
+            Log.d("SingleChatScreen", "Conversation updated: $convo")
+            activePoll = convo.activePoll?.copy()
+        }
+
         onDispose {
-            registration.remove()
+            msgRegistration.remove()
+            convoRegistration.remove()
         }
     }
 
@@ -209,6 +220,18 @@ fun SingleChatScreen(
                         userNameCache
                     )
                 }
+            }
+
+            activePoll?.let { poll ->
+                PollSection(
+                    poll = poll,
+                    onVote = { choice ->
+                        coroutineScope.launch {
+                            chatManager.castVote(userId = userID, choice)
+                        }
+                    },
+                    userId = userID!!
+                )
             }
 
             if (attachedFiles.isNotEmpty() && !isUploading) {

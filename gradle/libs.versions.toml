@@ -25,6 +25,7 @@ material = "1.12.0"
 ui = "1.8.3"
 firebaseAppcheckPlayintegrity = "19.0.0"
 firebaseAppcheckDebug = "19.0.0"
+foundationVersion = "1.9.1"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -63,6 +64,7 @@ ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity", version.ref = "firebaseAppcheckPlayintegrity" }
 firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug", version.ref = "firebaseAppcheckDebug" }
+foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
