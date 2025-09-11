@@ -9,7 +9,8 @@ data class Conversation(
     val participants: List<String> = emptyList(),
     val createdAt: Timestamp? = null,
     val lastMessage: String? = null,
-    val lastMessageAt: Timestamp? = null
+    val lastMessageAt: Timestamp? = null,
+    val activePoll: Poll? = null
 )
 
 data class Message(

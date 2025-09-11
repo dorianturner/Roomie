@@ -15,17 +15,13 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-fun getMimeType(context: Context, uri: Uri): String? {
-    return context.contentResolver.getType(uri)
-}
-
 class ChatManager(
     conversationID: String? = null
 ) {
     var conversationId: String? = conversationID
         private set
-    private val db = FirebaseFirestore.getInstance()
-    private val convoRef = FirebaseFirestore.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val convoRef = FirebaseFirestore.getInstance()
         .collection("conversations")
         .let { col ->
             if (conversationId.isNullOrEmpty()) col.document() else col.document(conversationId!!)
@@ -87,7 +83,7 @@ class ChatManager(
     }
 
     /**
-     * Upload media to Supabase private bucket and return the relative path.
+     * Upload media to Firebase private bucket and return the relative path.
      */
     private suspend fun uploadMediaToFirebase(
         mediaUri: Uri,
@@ -154,11 +150,7 @@ class ChatManager(
         mediaUri: Uri? = null,
         onProgress: ((Float) -> Unit)? = null, // optional progress callback
     ) {
-        check(conversationId != null) { "Conversation does not exist" }
-
-        val conversationRef = db.collection("conversations")
-            .document(conversationId!!)
-        val messageRef = conversationRef
+        val messageRef = convoRef
             .collection("messages")
             .document()
 
@@ -192,7 +184,7 @@ class ChatManager(
         db.runBatch { batch ->
             batch.set(messageRef, message)
 
-            batch.update(conversationRef, mapOf(
+            batch.update(convoRef, mapOf(
                 "lastMessage" to when {
                     type == "text" && !text.isNullOrBlank() -> text
                     type != "text" && mediaUrl != null -> "[${type.replaceFirstChar {it.uppercase()}}]"
@@ -268,4 +260,21 @@ class ChatManager(
         }
     }
 
+    fun listenConversation(
+        onConversationUpdated: (Conversation) -> Unit
+    ): ListenerRegistration {
+        check(conversationId != null) { "Conversation does not exist" }
+
+        return convoRef
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("ChatManager", "Listen conversation failed: ${error.message}")
+                    return@addSnapshotListener
+                }
+                if (snapshot != null && snapshot.exists()) {
+                    val conversation = snapshot.toObject(Conversation::class.java)
+                    conversation?.let { onConversationUpdated(it) }
+                }
+            }
+    }
 }
