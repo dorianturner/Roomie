@@ -21,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -81,6 +83,7 @@ fun SingleChatScreen(
     var uploadProgress by remember { mutableStateOf(0f) }
 
     var activePoll by remember { mutableStateOf<Poll?>(null) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     // Listen for messages
     DisposableEffect(chatManager) {
@@ -90,7 +93,6 @@ fun SingleChatScreen(
         }
 
         val convoRegistration = chatManager.listenConversation { convo ->
-            Log.d("SingleChatScreen", "Conversation updated: $convo")
             activePoll = convo.activePoll?.copy()
         }
 
@@ -227,11 +229,48 @@ fun SingleChatScreen(
                     poll = poll,
                     onVote = { choice ->
                         coroutineScope.launch {
-                            chatManager.castVote(userId = userID, choice)
+                            chatManager.castVote(context, userId = userID, choice)
                         }
                     },
                     userId = userID!!
                 )
+            }
+            if (activePoll == null) {
+                Button(
+                    onClick = { showConfirmDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text("Propose to Finalise Group")
+                }
+
+                if (showConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showConfirmDialog = false },
+                        title = { Text("Confirm") },
+                        text = { Text("Are you sure you want to propose finalising this group? This will create a poll.") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        chatManager.createPoll("Finalise Group?")
+                                        showConfirmDialog = false
+                                    }
+                                }
+                            ) {
+                                Text("Yes")
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = { showConfirmDialog = false }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
             }
 
             if (attachedFiles.isNotEmpty() && !isUploading) {

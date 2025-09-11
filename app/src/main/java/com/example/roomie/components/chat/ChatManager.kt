@@ -150,11 +150,7 @@ class ChatManager(
         mediaUri: Uri? = null,
         onProgress: ((Float) -> Unit)? = null, // optional progress callback
     ) {
-        check(conversationId != null) { "Conversation does not exist" }
-
-        val conversationRef = db.collection("conversations")
-            .document(conversationId!!)
-        val messageRef = conversationRef
+        val messageRef = convoRef
             .collection("messages")
             .document()
 
@@ -188,7 +184,7 @@ class ChatManager(
         db.runBatch { batch ->
             batch.set(messageRef, message)
 
-            batch.update(conversationRef, mapOf(
+            batch.update(convoRef, mapOf(
                 "lastMessage" to when {
                     type == "text" && !text.isNullOrBlank() -> text
                     type != "text" && mediaUrl != null -> "[${type.replaceFirstChar {it.uppercase()}}]"
@@ -288,7 +284,9 @@ class ChatManager(
             .await()
     }
 
-    suspend fun castVote(userId: String, choice: String) {
+    suspend fun castVote(context: Context, userId: String, choice: String) {
+        var systemMessage: Message? = null
+
         db.runTransaction { transaction ->
             val snap = transaction.get(convoRef)
             val poll = snap.toObject(Conversation::class.java)?.activePoll
@@ -314,21 +312,29 @@ class ChatManager(
                 isClosed = true
                 resolution = if (yesCount > noCount) {
                     if (noCount == 0) {
-                        "Consensus yes"
+                        "Unanimous Yes"
                     } else {
-                        "Majority yes"
+                        "Majority Yes"
                     }
                 }
                 else if (noCount > yesCount) {
                     if (yesCount == 0) {
-                        "Consensus no"
+                        "Unanimous No"
                     } else {
-                        "Majority no"
+                        "Majority No"
                     }
                 }
-                else "Tie"
+                else "Draw"
+
+                systemMessage = Message(
+                    id = "system-${System.currentTimeMillis()}",
+                    senderId = "system",
+                    text = "Poll: ${poll.question}\nResolution: $resolution",
+                    type = "system",
+                    timestamp = Timestamp.now()
+                )
             }
-            Log.d("ChatManager", "IsClosed: $isClosed, Resolution: $resolution")
+
             val newPollMap = mapOf(
                 "question" to poll.question,
                 "votes" to updatedVotes.toMap(),
@@ -339,9 +345,10 @@ class ChatManager(
             transaction.update(convoRef, "activePoll", newPollMap)
         }.await()
 
-        val snap = convoRef.get().await()
-        val conversation = snap.toObject(Conversation::class.java)
-        Log.d("ChatManager", "Updated poll: $conversation")
+        systemMessage?.let {
+            sendMessage(context, "system", it.text, it.type)
+            clearPoll()
+        }
     }
 
     suspend fun clearPoll() {

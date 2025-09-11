@@ -20,6 +20,9 @@ import com.google.firebase.auth.FirebaseAuth
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
@@ -37,8 +40,11 @@ fun MessageItem(
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val isCurrentUser = message.senderId == currentUserId
 
-    val bubbleColor = if (isCurrentUser) MaterialTheme.colorScheme.primaryContainer
-    else MaterialTheme.colorScheme.surfaceVariant
+    val bubbleColor = when (message.type) {
+        "system" -> MaterialTheme.colorScheme.primary
+        else -> if (isCurrentUser) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.surfaceVariant
+    }
 
     var senderName by remember(message.senderId) {
         mutableStateOf(userNameCache[message.senderId] ?: "Unknown")
@@ -53,108 +59,148 @@ fun MessageItem(
         }
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
-    ) {
-        Column(
+    if (message.type == "system") {
+        val backgroundColour = bubbleColor.copy(alpha = 0.3f)
+        Row(
             modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(bubbleColor, RoundedCornerShape(16.dp))
-                .padding(12.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
-            if (!isCurrentUser) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .background(backgroundColour, RoundedCornerShape(16.dp))
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(
-                    text = senderName,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    text = message.text ?: "",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic
+                    ),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    textAlign = TextAlign.Center
                 )
-                Spacer(Modifier.height(4.dp))
-            }
 
-            when (message.type) {
-                "text" -> {
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = message.timestamp?.let { formatTimestamp(it) } ?: "",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        fontStyle = FontStyle.Italic),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp),
+            horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .background(bubbleColor, RoundedCornerShape(16.dp))
+                    .padding(12.dp)
+            ) {
+                if (!isCurrentUser) {
                     Text(
-                        text = message.text ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 10,
+                        text = senderName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(Modifier.height(4.dp))
                 }
 
-                "image" -> {
-                    message.mediaUrl?.let { url ->
-                        AsyncImage(
-                            model = url,
-                            contentDescription = "Image message",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 200.dp),
-                            placeholder = painterResource(R.drawable.placeholder), // optional
-                            error = painterResource(R.drawable.image_error) // optional
+                when (message.type) {
+                    "text" -> {
+                        Text(
+                            text = message.text ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 10,
+                            overflow = TextOverflow.Ellipsis
                         )
-                    } ?: Text("Image unavailable", color = MaterialTheme.colorScheme.error)
-                }
+                    }
 
-                "video" -> {
-                    message.mediaUrl?.let { url ->
-                        AndroidView(
-                            factory = {
-                                val player = ExoPlayer.Builder(context).build().apply {
-                                    setMediaItem(MediaItem.fromUri(url))
-                                    prepare()
-                                    playWhenReady = false
-                                }
-                                PlayerView(context).apply {
-                                    this.player = player
-                                    useController = true
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
+                    "image" -> {
+                        message.mediaUrl?.let { url ->
+                            AsyncImage(
+                                model = url,
+                                contentDescription = "Image message",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 200.dp),
+                                placeholder = painterResource(R.drawable.placeholder), // optional
+                                error = painterResource(R.drawable.image_error) // optional
+                            )
+                        } ?: Text("Image unavailable", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    "video" -> {
+                        message.mediaUrl?.let { url ->
+                            AndroidView(
+                                factory = {
+                                    val player = ExoPlayer.Builder(context).build().apply {
+                                        setMediaItem(MediaItem.fromUri(url))
+                                        prepare()
+                                        playWhenReady = false
+                                    }
+                                    PlayerView(context).apply {
+                                        this.player = player
+                                        useController = true
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(220.dp)
+                            )
+                        } ?: Text("Loading video...")
+                    }
+
+                    "audio" -> {
+                        Text(
+                            text = "🔊 Audio message",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary,
                         )
-                    } ?: Text("Loading video...")
+                        // Future: Replace with audio playback
+                    }
+
+                    "file", "pdf" -> {
+                        Text(
+                            text = "📄 File: ${message.mediaUrl?.take(40)}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                        // Future: Add file open/download logic
+                    }
+
+                    else -> {
+                        Text(
+                            text = "[Unsupported type: ${message.type}]",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
 
-                "audio" -> {
-                    Text(
-                        text = "🔊 Audio message",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                    // Future: Replace with audio playback
-                }
+                Spacer(Modifier.height(4.dp))
 
-                "file", "pdf" -> {
-                    Text(
-                        text = "📄 File: ${message.mediaUrl?.take(40)}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
-                    // Future: Add file open/download logic
-                }
-
-                else -> {
-                    Text(
-                        text = "[Unsupported type: ${message.type}]",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+                Text(
+                    text = message.timestamp?.let { formatTimestamp(it) } ?: "",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    modifier = Modifier.align(Alignment.End)
+                )
             }
-
-            Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = message.timestamp?.let { formatTimestamp(it) } ?: "",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                modifier = Modifier.align(Alignment.End)
-            )
         }
     }
+
 }
