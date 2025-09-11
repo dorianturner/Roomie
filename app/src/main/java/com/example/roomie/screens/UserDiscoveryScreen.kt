@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.soundManager.LocalSoundManager
 import kotlin.math.abs
 
 // String descriptions for each of the weights
@@ -75,6 +76,7 @@ fun UserDiscoveryScreen(
     val coroutineScope = rememberCoroutineScope()
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid
+    val sounds = LocalSoundManager.current
 
     // will reload every time weights change
     LaunchedEffect(weights, reloadKey) {
@@ -143,6 +145,9 @@ fun UserDiscoveryScreen(
                                                 return@launch
                                             }
 
+                                            // play sound
+                                            sounds.swipeRight()
+
                                             val otherUserId = currentProfile.id
 
                                             val snapshot = db.collection("conversations")
@@ -173,6 +178,10 @@ fun UserDiscoveryScreen(
                                         }
                                     }
                                     SwipeDirection.LEFT -> {
+
+                                        // play sound
+                                        sounds.swipeLeft()
+
                                         if (currentIndex < matches!!.lastIndex) {
                                             currentIndex++
                                         } else {

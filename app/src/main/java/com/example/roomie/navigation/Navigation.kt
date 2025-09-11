@@ -1,12 +1,15 @@
 package com.example.roomie.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.roomie.components.OnboardingProfileState
+import com.example.roomie.components.soundManager.LocalSoundManager
+import com.example.roomie.components.soundManager.rememberSoundManager
 import com.example.roomie.screens.BasicInfoScreen
 import com.example.roomie.screens.ExtraInfoScreen
 import com.example.roomie.screens.MainContentScreen
@@ -46,62 +49,67 @@ fun RoomieNavHost(
     startDestination: String
 ) {
     val navController = rememberNavController()
-    NavHost(
-        navController = navController,
-        startDestination = startDestination
-    ) {
-        composable(Routes.SPLASH_SCREEN) {
-            SplashScreen(
-                onLoginSuccess = {
-                    navController.navigate(Routes.MAIN_CONTENT) {
-                        popUpTo(Routes.SPLASH_SCREEN) { inclusive = true }
+    val soundManager = rememberSoundManager()
+    CompositionLocalProvider(LocalSoundManager provides soundManager) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination
+        ) {
+            composable(Routes.SPLASH_SCREEN) {
+                SplashScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Routes.MAIN_CONTENT) {
+                            popUpTo(Routes.SPLASH_SCREEN) { inclusive = true }
+                        }
+                    },
+                    onCreateAccountSuccess = {
+                        navController.navigate(Routes.ONBOARDING_FLOW) {
+                            popUpTo(Routes.SPLASH_SCREEN) { inclusive = true }
+                        }
                     }
-                },
-                onCreateAccountSuccess = {
-                    navController.navigate(Routes.ONBOARDING_FLOW) {
-                        popUpTo(Routes.SPLASH_SCREEN) { inclusive = true }
-                    }
-                }
-            )
-        }
+                )
+            }
 
-        composable(Routes.ONBOARDING_FLOW) {
-            OnboardingFlow(
-                onFinish = {
-                    navController.navigate(Routes.MAIN_CONTENT) {
-                        popUpTo(Routes.ONBOARDING_FLOW) { inclusive = true }
+            composable(Routes.ONBOARDING_FLOW) {
+                OnboardingFlow(
+                    onFinish = {
+                        navController.navigate(Routes.MAIN_CONTENT) {
+                            popUpTo(Routes.ONBOARDING_FLOW) { inclusive = true }
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        composable(Routes.MAIN_CONTENT) {
-            MainContentScreen(
-                onEditProfile = {
-                    // Navigate to the profile editor screen when the button is clicked
-                    navController.navigate(Routes.PROFILE_EDITOR)
-                },
-                onNavigateToChat = {
-                    navController.navigate(Routes.CHAT_SCREEN) {
-                        popUpTo("chatScreen") { inclusive = true }
+            composable(Routes.MAIN_CONTENT) {
+                MainContentScreen(
+                    onEditProfile = {
+                        // Navigate to the profile editor screen when the button is clicked
+                        navController.navigate(Routes.PROFILE_EDITOR)
+                    },
+                    onNavigateToChat = {
+                        navController.navigate(Routes.CHAT_SCREEN) {
+                            popUpTo("chatScreen") { inclusive = true }
+                        }
+                    },
+                    onLogout = {
+                        Firebase.auth.signOut()
+                        navController.navigate(Routes.SPLASH_SCREEN) {
+                            popUpTo("mainContent") { inclusive = true }
+                        }
+                    },
+                )
+            }
+            composable(Routes.PROFILE_EDITOR) {
+                ProfileEditorScreen(
+                    onProfileSaved = {
+                        navController.navigate(Routes.MAIN_CONTENT) {
+                            popUpTo(Routes.MAIN_CONTENT) {
+                                inclusive = true
+                            } // Clear back stack up to main content
+                        }
                     }
-                },
-                onLogout = {
-                    Firebase.auth.signOut()
-                    navController.navigate(Routes.SPLASH_SCREEN) {
-                        popUpTo("mainContent") { inclusive = true }
-                    }
-                },
-            )
-        }
-        composable(Routes.PROFILE_EDITOR) {
-            ProfileEditorScreen(
-                onProfileSaved = {
-                    navController.navigate(Routes.MAIN_CONTENT) {
-                        popUpTo(Routes.MAIN_CONTENT) { inclusive = true } // Clear back stack up to main content
-                    }
-                }
-            )
+                )
+            }
         }
     }
 }
