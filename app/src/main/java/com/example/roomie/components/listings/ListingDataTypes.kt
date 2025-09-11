@@ -14,7 +14,7 @@ data class Listing(
     val bathrooms: Int = 0,
     val availableFrom: Long? = null,
     val isActive: Boolean = true,
-    val photos: List<PhotoItem> = emptyList<>()
+    val photos: List<PhotoItem> = emptyList()
 )
 
 // may be possible to extract this for general use with user discovery
