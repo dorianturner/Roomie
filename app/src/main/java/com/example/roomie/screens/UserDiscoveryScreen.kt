@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -283,15 +284,15 @@ fun SwipeableMatchCard(
         else -> Color.Transparent
     }
 
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .background(bgColor)
             .anchoredDraggable(
                 state = state,
                 orientation = Orientation.Horizontal,
-            )
+            ),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
     ) {
         Box(
             modifier = Modifier
@@ -314,7 +315,7 @@ fun GroupMatchCard(group: GroupProfile) {
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
