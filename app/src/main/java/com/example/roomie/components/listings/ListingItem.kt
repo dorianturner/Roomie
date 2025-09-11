@@ -1,6 +1,9 @@
 package com.example.roomie.components.listings
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bathtub
+import androidx.compose.material.icons.filled.Bed
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,36 +35,65 @@ fun ListingItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile picture
             AsyncImage(
-                model = displayImages?.firstOrNull()?.url ?: R.drawable.image_not_found, // fallback
+                model = displayImages?.firstOrNull()?.url ?: R.drawable.image_not_found,
                 contentDescription = "Listing image",
                 modifier = Modifier
                     .size(64.dp)
-                    .aspectRatio(1f) // square
-                    .then(Modifier),
+                    .aspectRatio(1f),
                 contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Main content column (name + lastMessage)
-            Column(
-                modifier = Modifier.weight(1f) // take all remaining space except date column
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = address,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2, // allow wrapping for long names
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                // may want to add icons here instead of words
-                Text(
-                    text = "$$rent per week | $bedrooms bedrooms | $bathrooms bathrooms",
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Rent (text only)
+                    Text(
+                        text = "£$rent pw",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    // Bedrooms
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Bed,
+                            contentDescription = "Bedrooms",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "$bedrooms",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    // Bathrooms
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Bathtub,
+                            contentDescription = "Bathrooms",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "$bathrooms",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         }
     }
