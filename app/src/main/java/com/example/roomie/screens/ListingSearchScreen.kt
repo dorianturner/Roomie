@@ -14,13 +14,11 @@ import com.example.roomie.components.listings.ListingItem
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import androidx.navigation.NavController
-import com.example.roomie.BuildConfig
 import com.example.roomie.components.listings.Group
+import com.example.roomie.components.listings.getMassCommuteTime
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import kotlinx.coroutines.tasks.await
-
-val tflApiKey = BuildConfig.TFL_API_KEY
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +43,9 @@ fun PropertySearchScreen(
                 null
             }
 
-            val studentMaxBudget = document.getLong("StudentMaxBudget")?.toInt() ?: 0
+            val studentMaxBudget = document.getLong("studentMaxBudget")?.toInt() ?: 0
+            val studentMaxCommute = document.getLong("studentMaxCommute")?.toInt() ?: 0
+            val studentUniversity = document.getString("studentUniversity") ?: ""
 
             db.collection("listings")
                 .orderBy("rent", Query.Direction.DESCENDING)
@@ -72,9 +72,8 @@ fun PropertySearchScreen(
                                 id = document.id,
                                 size = (stats?.get("size") as? Long)?.toInt() ?: 0,
                                 minBudget = (stats?.get("minBudget") as? Long)?.toInt() ?: 0,
-                                maxBudget = (stats?.get("maxBudget") as? Long)?.toInt() ?: 0,
                                 minCommute = (stats?.get("minCommute") as? Long)?.toInt() ?: 0,
-                                maxCommute = (stats?.get("maxCommute") as? Long)?.toInt() ?: 0,
+                                universities = (stats?.get("universities") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                             )
                         }
                         isLoading.value = false
@@ -85,10 +84,8 @@ fun PropertySearchScreen(
                     id = "",
                     size = 1,
                     minBudget = studentMaxBudget,
-                    maxBudget = studentMaxBudget,
-                    // will need to be updated later
-                    minCommute = 0,
-                    maxCommute = 0,
+                    minCommute = studentMaxCommute,
+                    universities = List(1) { studentUniversity },
                 )
                 isLoading.value = false
             }
@@ -109,10 +106,11 @@ fun PropertySearchScreen(
         } else {
             val filteredListings = listings.filter { listing ->
                 group.value?.let { currentGroup ->
-                    val maxAllowed = currentGroup.maxBudget * currentGroup.size * 1.3
+                    val maxAllowed = currentGroup.minBudget * currentGroup.size * 1.3
                     val budgetOk = listing.rent < maxAllowed
                     val bedroomsOk = listing.bedrooms >= currentGroup.size
-                    budgetOk && bedroomsOk
+                    val commuteOk = getMassCommuteTime(currentGroup.universities, listing.address) <= currentGroup.minCommute
+                    budgetOk && bedroomsOk && commuteOk
                 } ?: true
             }
             LazyColumn(

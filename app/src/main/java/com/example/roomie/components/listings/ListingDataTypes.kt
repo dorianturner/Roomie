@@ -20,8 +20,7 @@ data class Listing(
 data class Group(
     val id: String = "",
     val minBudget: Int = 0,
-    val maxBudget: Int = 0,
     val size: Int = 0,
     val minCommute: Int = 0,
-    val maxCommute: Int = 0,
+    val universities: List<String> = emptyList()
 )
