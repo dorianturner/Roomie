@@ -38,6 +38,9 @@ fun EditListingScreen(
     var isSaving by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
+    var availableFrom by remember { mutableStateOf<Long?>(null) }
+
+    val openDialog = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -96,6 +99,36 @@ fun EditListingScreen(
                     )
                 }
 
+                val dateFormatter = remember { java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault()) }
+                val dateState = rememberDatePickerState(initialSelectedDateMillis = availableFrom)
+
+                TextButton(onClick = { openDialog.value = true }) {
+                    Text(
+                        text = availableFrom?.let { millis ->
+                            "Available from: ${dateFormatter.format(java.util.Date(millis))}"
+                        } ?: "Select available from date"
+                    )
+                }
+
+                if (openDialog.value) {
+                    DatePickerDialog(
+                        onDismissRequest = { openDialog.value = false },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    openDialog.value = false
+                                    availableFrom = dateState.selectedDateMillis
+                                }
+                            ) { Text("OK") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { openDialog.value = false }) { Text("Cancel") }
+                        }
+                    ) {
+                        DatePicker(state = dateState)
+                    }
+                }
+
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
@@ -118,7 +151,6 @@ fun EditListingScreen(
                         val rent = rentText.toIntOrNull()
                         val bedrooms = bedroomsText.toIntOrNull()
                         val bathrooms = bathroomsText.toIntOrNull()
-                        //val photos = photosText.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
                         val listing = ListingData(
                             title = title.trim(),
@@ -127,7 +159,8 @@ fun EditListingScreen(
                             rent = rent,
                             bedrooms = bedrooms,
                             bathrooms = bathrooms,
-                            photos = photos
+                            photos = photos,
+                            availableFromEpoch = availableFrom
                         )
 
                         scope.launch {
