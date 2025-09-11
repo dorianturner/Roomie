@@ -4,6 +4,7 @@ import com.example.roomie.components.PhotoItem
 import com.google.firebase.firestore.PropertyName
 
 data class Listing(
+    val ownerId: String = "",
     val id: String = "",
     val title: String = "",
     val address: String = "",

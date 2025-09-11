@@ -63,7 +63,7 @@ fun ListingDetailsContent(
         // available from date
         listing.availableFrom?.let { timestamp ->
             val date = Date(timestamp)
-            val dateString = "${(date.month) + 1}/${date.date}/${date.year + 1900}"
+            val dateString = "${date.date}/${(date.month) + 1}/${date.year + 1900}"
 
             Text(
                 text = "Available from: $dateString",

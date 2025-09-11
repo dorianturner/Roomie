@@ -76,6 +76,7 @@ fun MainContentScreen(
         "profile" -> 4
         "profile_editor" -> 4
         Routes.ADD_LISTING -> 4
+        "edit_listing/{listingId}" -> 4
         else -> 0
     }
 
@@ -266,7 +267,20 @@ fun MainContentScreen(
                     val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
                     SingleListingScreen(
                         listingId = listingId,
-                        onBack = { childNavController.popBackStack() }
+                        onBack = { childNavController.popBackStack() },
+                        navController = childNavController
+                    )
+                }
+                composable(
+                    "edit_listing/{listingId}",
+                    arguments = listOf(
+                        navArgument("listingId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+                    EditListingScreen(
+                        navController = childNavController,
+                        listingId = listingId
                     )
                 }
             }

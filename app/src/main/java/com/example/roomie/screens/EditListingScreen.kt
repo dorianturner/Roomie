@@ -13,21 +13,30 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.navigation.NavController
 import com.example.roomie.components.PhotoItem
+import com.example.roomie.components.listings.Listing
 import com.example.roomie.components.listings.ListingData
 import com.example.roomie.components.listings.ListingPhotosEdit
 import com.example.roomie.components.listings.saveListing
 import com.example.roomie.ui.theme.Spacing
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditListingScreen(
     modifier: Modifier = Modifier,
+    listingId: String? = null,
     navController: NavController
 ) {
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val db = FirebaseFirestore.getInstance()
+    val auth = FirebaseAuth.getInstance()
+    val currentUser = auth.currentUser
 
     var title by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
@@ -35,17 +44,44 @@ fun EditListingScreen(
     var bedroomsText by remember { mutableStateOf("") }
     var bathroomsText by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var isSaving by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf<String?>(null) }
     var photos by remember { mutableStateOf<List<PhotoItem>>(emptyList()) }
     var availableFrom by remember { mutableStateOf<Long?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
 
     val openDialog = remember { mutableStateOf(false) }
+
+    val isNew = listingId == null
+
+    // --- Load listing if editing ---
+    LaunchedEffect(listingId) {
+        if (!isNew && listingId != null) {
+            try {
+                val snapshot = db.collection("listings").document(listingId).get().await()
+                val data = snapshot.toObject(ListingData::class.java)
+                if (data != null) {
+                    title = data.title
+                    address = data.address
+                    rentText = data.rent?.toString() ?: ""
+                    bedroomsText = data.bedrooms?.toString() ?: ""
+                    bathroomsText = data.bathrooms?.toString() ?: ""
+                    description = data.description ?: ""
+                    photos = data.photos
+                    availableFrom = data.availableFromEpoch
+                }
+            } catch (e: Exception) {
+                message = "Failed to load listing."
+            }
+        }
+    }
+
+    val dateFormatter = remember { java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault()) }
+    val dateState = rememberDatePickerState(initialSelectedDateMillis = availableFrom)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add listing") },
+                title = { Text(if (isNew) "Add Listing" else "Edit Listing") },
                 colors = TopAppBarDefaults.topAppBarColors()
             )
         },
@@ -99,9 +135,6 @@ fun EditListingScreen(
                     )
                 }
 
-                val dateFormatter = remember { java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault()) }
-                val dateState = rememberDatePickerState(initialSelectedDateMillis = availableFrom)
-
                 TextButton(onClick = { openDialog.value = true }) {
                     Text(
                         text = availableFrom?.let { millis ->
@@ -139,7 +172,7 @@ fun EditListingScreen(
                 )
 
                 ListingPhotosEdit(
-                    listingId = "temp-${UUID.randomUUID()}", // or assign early
+                    listingId = listingId ?: "temp-${UUID.randomUUID()}",
                     onPhotosChanged = { updated -> photos = updated }
                 )
 
@@ -167,13 +200,22 @@ fun EditListingScreen(
                             isSaving = true
                             message = null
                             val ok = try {
-                                saveListing(listing)
+                                if (isNew) {
+                                    saveListing(listing)
+                                } else {
+                                    val ownerName = currentUser?.let {
+                                        db.collection("users").document(it.uid).get().await().getString("name")
+                                    }
+                                    db.collection("listings").document(listingId!!).set(
+                                        listing.toMap(currentUser?.uid ?: "", ownerName)
+                                    ).await()
+                                    true
+                                }
                             } catch (e: Exception) {
                                 false
                             }
                             isSaving = false
                             if (ok) {
-                                // navigate back (or to listing details)
                                 navController.popBackStack()
                             } else {
                                 message = "Failed to save listing. Check fields / network."
@@ -188,7 +230,7 @@ fun EditListingScreen(
                         Spacer(Modifier.width(8.dp))
                         Text("Saving...")
                     } else {
-                        Text("Publish listing")
+                        Text(if (isNew) "Publish Listing" else "Save Changes")
                     }
                 }
 

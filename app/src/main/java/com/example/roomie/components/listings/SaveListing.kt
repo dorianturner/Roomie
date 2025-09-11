@@ -9,12 +9,12 @@ import kotlin.coroutines.suspendCoroutine
 import kotlin.coroutines.resume
 
 data class ListingData(
-    val title: String,
-    val description: String?,
-    val address: String,
-    val rent: Int?,
-    val bedrooms: Int?,
-    val bathrooms: Int?,
+    val title: String = "",
+    val description: String? = null,
+    val address: String = "",
+    val rent: Int? = null,
+    val bedrooms: Int? = null,
+    val bathrooms: Int? = null,
     val availableFromEpoch: Long? = null,
     val isActive: Boolean = true,
     val photos: List<PhotoItem> = emptyList()
@@ -51,6 +51,7 @@ suspend fun saveListing(listing: ListingData): Boolean {
     if (listing.address.isBlank()) return false
     if (listing.rent == null || listing.rent < 0) return false
     if (listing.bedrooms == null || listing.bedrooms < 0) return false
+    if (listing.availableFromEpoch == null) return false
 
     val ownerName = try {
         db.collection("users").document(currentUser.uid).get().await().getString("name")
