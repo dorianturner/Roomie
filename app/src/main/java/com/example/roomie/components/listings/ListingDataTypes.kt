@@ -1,5 +1,6 @@
 package com.example.roomie.components.listings
 
+import com.example.roomie.components.PhotoItem
 import com.google.firebase.firestore.PropertyName
 
 data class Listing(
@@ -12,7 +13,8 @@ data class Listing(
     val bedrooms: Int = 0,
     val bathrooms: Int = 0,
     val availableFrom: Long? = null,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val photos: List<PhotoItem> = emptyList<>()
 )
 
 // may be possible to extract this for general use with user discovery

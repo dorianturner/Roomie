@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import com.example.roomie.components.listings.ListingDetailsContent
+import com.example.roomie.components.listings.ListingPhotoGallery
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,12 +50,23 @@ fun SingleListingScreen(
         }
     ) { innerPadding ->
         listing?.let { currentListing ->
-            ListingDetailsContent(
-                listing = currentListing,
+            Column(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize()
-            )
+            ) {
+                if (currentListing.photos.isNotEmpty()) {
+                    ListingPhotoGallery(
+                        photos = currentListing.photos,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                ListingDetailsContent(
+                    listing = currentListing,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         } ?: run {
             Box(
                 modifier = Modifier
