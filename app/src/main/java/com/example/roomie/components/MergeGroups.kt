@@ -186,7 +186,9 @@ suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
             id = survivorId,
             name = survivorName ?: "",
             members = mergedUsers,
-            stats = groupStats
+            stats = groupStats,
+            // TODO
+            profilePicture = ""
         )
 
         FunctionsProvider.instance

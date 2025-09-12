@@ -374,7 +374,9 @@ fun ProfileEditorScreen(
                                 id = currentUser.uid,
                                 name = data["name"] as String,
                                 members = members,
-                                stats = stats
+                                stats = stats,
+                                // TODO
+                                profilePicture = ""
                             )
 
                             FunctionsProvider.instance
@@ -407,7 +409,9 @@ fun ProfileEditorScreen(
                                         id = currentUser.uid,
                                         name = data["name"] as String,
                                         members = members,
-                                        stats = stats
+                                        stats = stats,
+                                        // TODO
+                                        profilePicture = ""
                                     )
 
 

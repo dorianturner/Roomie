@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import com.example.roomie.components.GroupProfile
 import com.example.roomie.components.soundManager.LocalSoundManager
+import com.example.roomie.components.userDiscovery.ProfileCard
 import kotlin.math.abs
 
 // String descriptions for each of the weights

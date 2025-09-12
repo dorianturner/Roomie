@@ -87,7 +87,8 @@ object MatchingService {
             id = id,
             name = doc.getString("name") ?: "",
             members = members,
-            stats = generateGroupStats(members)
+            stats = generateGroupStats(members),
+            profilePicture = doc.getString("profilePictureUrl") ?: ""
         )
     }
 
