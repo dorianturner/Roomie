@@ -21,6 +21,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Attachment
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,6 +52,9 @@ import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.chat.Message
 import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.AttachmentPreviewSection
+import com.example.roomie.components.chat.Poll
+import com.example.roomie.components.chat.PollManager
+import com.example.roomie.components.chat.PollSection
 
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
@@ -67,6 +72,7 @@ fun SingleChatScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val pollManager = PollManager(chatManager)
     val messagesState = remember { mutableStateListOf<Message>() }
 
     var attachedFiles by remember { mutableStateOf<List<AttachedFile>>(emptyList()) }
@@ -80,14 +86,23 @@ fun SingleChatScreen(
     var isUploading by remember { mutableStateOf(false) }
     var uploadProgress by remember { mutableStateOf(0f) }
 
+    var activePoll by remember { mutableStateOf<Poll?>(null) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+
     // Listen for messages
     DisposableEffect(chatManager) {
-        val registration = chatManager.listenMessages { messages ->
+        val msgRegistration = chatManager.listenMessages { messages ->
             messagesState.clear()
             messagesState.addAll(messages)
         }
+
+        val convoRegistration = chatManager.listenConversation { convo ->
+            activePoll = convo.activePoll?.copy()
+        }
+
         onDispose {
-            registration.remove()
+            msgRegistration.remove()
+            convoRegistration.remove()
         }
     }
 
@@ -212,6 +227,55 @@ fun SingleChatScreen(
                     MessageItem(
                         msg,
                         userNameCache
+                    )
+                }
+            }
+
+            activePoll?.let { poll ->
+                PollSection(
+                    poll = poll,
+                    onVote = { choice ->
+                        coroutineScope.launch {
+                            pollManager.castVote(context, userId = userID, choice)
+                        }
+                    },
+                    userId = userID!!
+                )
+            }
+            if (activePoll == null) {
+                Button(
+                    onClick = { showConfirmDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text("Propose to Finalise Group")
+                }
+
+                if (showConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showConfirmDialog = false },
+                        title = { Text("Confirm") },
+                        text = { Text("Are you sure you want to propose finalising this group? This will create a poll.") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pollManager.createPoll("Finalise Group?", "finalise")
+                                        showConfirmDialog = false
+                                    }
+                                }
+                            ) {
+                                Text("Yes")
+                            }
+                        },
+                        dismissButton = {
+                            Button(
+                                onClick = { showConfirmDialog = false }
+                            ) {
+                                Text("Cancel")
+                            }
+                        }
                     )
                 }
             }

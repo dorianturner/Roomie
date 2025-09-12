@@ -37,14 +37,17 @@ import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.soundManager.LocalSoundManager
+import com.example.roomie.components.userDiscovery.ProfileCard
 import kotlin.math.abs
 
 // String descriptions for each of the weights
@@ -75,6 +78,7 @@ fun UserDiscoveryScreen(
     val coroutineScope = rememberCoroutineScope()
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid
+    val sounds = LocalSoundManager.current
 
     // will reload every time weights change
     LaunchedEffect(weights, reloadKey) {
@@ -97,7 +101,22 @@ fun UserDiscoveryScreen(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("User Discovery", style = MaterialTheme.typography.headlineMedium)
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("User Discovery", style = MaterialTheme.typography.headlineMedium)
+
+            IconButton(onClick = { showFilterDialog = true }) {
+                Icon(
+                    imageVector = Icons.Default.FilterList,
+                    contentDescription = "Filters",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -127,6 +146,9 @@ fun UserDiscoveryScreen(
                                                 Log.e("UserDiscovery", "No current user id - cannot create chat")
                                                 return@launch
                                             }
+
+                                            // play sound
+                                            sounds.swipeRight()
 
                                             val otherUserId = currentProfile.id
 
@@ -158,6 +180,10 @@ fun UserDiscoveryScreen(
                                         }
                                     }
                                     SwipeDirection.LEFT -> {
+
+                                        // play sound
+                                        sounds.swipeLeft()
+
                                         if (currentIndex < matches!!.lastIndex) {
                                             currentIndex++
                                         } else {
@@ -184,42 +210,6 @@ fun UserDiscoveryScreen(
                     weights = it
                     showFilterDialog = false
                 }
-            )
-        }
-    }
-}
-
-
-@Composable
-fun MatchCard(profile: StudentProfile) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = profile.name,
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            Column(
-                modifier = Modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ProfileChip(Icons.Default.School, profile.studentUniversity ?: "")
-                ProfileChip(Icons.Default.Group, "Group Size: ${profile.groupMin} - ${profile.groupMax}")
-                ProfileChip(Icons.Default.Commute, "${profile.studentMaxCommute} mins")
-                ProfileChip(Icons.Default.AttachMoney, "$${profile.studentMaxBudget}")
-            }
-
-            Text(
-                text = "Bio: ${profile.bio}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(top = 12.dp)
             )
         }
     }
@@ -295,15 +285,15 @@ fun SwipeableMatchCard(
         else -> Color.Transparent
     }
 
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .background(bgColor)
             .anchoredDraggable(
                 state = state,
                 orientation = Orientation.Horizontal,
-            )
+            ),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
     ) {
         Box(
             modifier = Modifier
@@ -326,7 +316,7 @@ fun GroupMatchCard(group: GroupProfile) {
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

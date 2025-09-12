@@ -87,7 +87,8 @@ object MatchingService {
             id = id,
             name = doc.getString("name") ?: "",
             members = members,
-            stats = generateGroupStats(members)
+            stats = generateGroupStats(members),
+            profilePicture = doc.getString("profilePictureUrl") ?: ""
         )
     }
 
@@ -99,11 +100,18 @@ object MatchingService {
     suspend fun findMatchesForCurrentUser(
         weights: PreferenceWeights
     ): List<GroupProfile> {
-        // fetch current user's group
-        val curUser = auth.currentUser?.uid?.let {db.collection("users").document(it).get().await()} ?: return emptyList()
-        val currentUser = docToStudentProfileSafe(curUser)
+        val curUser = auth.currentUser?.uid?.let { db.collection("users").document(it).get().await() } ?: return emptyList()
+        val currentUser = docToStudentProfileSafe(curUser) ?: return emptyList()
 
-        if (currentUser == null) return emptyList()
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            user.getIdToken(false).addOnSuccessListener { result ->
+                Log.d("FunctionsDebug", "User UID: ${user.uid}")
+                Log.d("FunctionsDebug", "Token: ${result.token?.take(40)}...")
+            }
+        } else {
+            Log.e("FunctionsDebug", "No user logged in!")
+        }
 
         val rawResults = FunctionsProvider.instance
             .getHttpsCallable("getGroupMatches")
@@ -111,7 +119,7 @@ object MatchingService {
                 mapOf(
                     "groupId" to curUser.getString("groupId"),
                     "lastSeenTimestamps" to currentUser.seenUsersTimestamps,
-                    "n" to 10, // default
+                    "n" to 10,
                     "weights" to weights.toMap()
                 )
             )
@@ -121,11 +129,19 @@ object MatchingService {
         if (rawResults.isEmpty()) return emptyList()
 
         val matches = rawResults.map { map ->
-            MatchResult(
-                id = map["id"] as String,
-                score = (map["score"] as Number).toDouble()
-            )
+            val id = map["id"] as String
+            val rawScore = (map["score"] as Number).toDouble()
+            val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) {
+                val now = System.currentTimeMillis()
+                val lastSeen = currentUser.seenUsersTimestamps[id] ?: 0L
+                val daysSinceSeen = (now - lastSeen) / (1000 * 60 * 60 * 24)
+                val decayDays = 7.0
+                val factor = (0.7 + (daysSinceSeen / decayDays) * (1.0 - 0.7)).coerceIn(0.7, 1.0)
+                rawScore * factor
+            } else rawScore
+            MatchResult(id = id, score = adjustedScore)
         }
+
         for (match in matches) {
             Log.d("MatchingService", "Match: ${match.id} with score ${match.score}")
         }
@@ -133,7 +149,6 @@ object MatchingService {
         if (matches.isEmpty()) return emptyList()
 
         val ids = matches.map { it.id }
-
         val snapshot = db.collection("groups")
             .whereIn(FieldPath.documentId(), ids)
             .get()

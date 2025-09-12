@@ -10,7 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -19,15 +25,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import com.example.roomie.ui.theme.Spacing
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * This Composable represents the initial splash/authentication screen where users can log in or create an account.
@@ -49,6 +63,14 @@ fun SplashScreen(
     var showLoginFields by remember { mutableStateOf(false) }
     var showCreateAccountFields by remember { mutableStateOf(false) }
     var showVerificationScreen by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var lastCharTime by remember { mutableStateOf(0L) }
+    val coroutineScope = rememberCoroutineScope()
+
+    val visualTransformation = remember(password, passwordVisible) {
+        if (passwordVisible) VisualTransformation.None
+        else LastCharVisibleTransformation(passwordLength = password.length, lastCharTime)
+    }
 
     Column(
         modifier = Modifier
@@ -83,9 +105,27 @@ fun SplashScreen(
             Spacer(modifier = Modifier.height(Spacing.extraShort))
             TextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { new ->
+                    password = new
+                    lastCharTime = System.currentTimeMillis()
+
+                    // launch coroutine to hide last char after 1 second
+                    coroutineScope.launch {
+                        delay(1000)
+                        lastCharTime = 0L
+                    }
+                },
                 label = { Text("Password") },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.long)
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.long),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                visualTransformation = visualTransformation,
+                trailingIcon = {
+                    val image = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(imageVector = image, contentDescription = if (passwordVisible) "Hide password" else "Show password")
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(Spacing.short))
 
@@ -243,4 +283,24 @@ fun performCreateAccount(auth: FirebaseAuth, context: Context, email: String, pa
                 onComplete(false)
             }
         }
+}
+
+class LastCharVisibleTransformation(
+    private val passwordLength: Int,
+    private val lastCharTime: Long
+) : VisualTransformation {
+
+    override fun filter(text: AnnotatedString): TransformedText {
+        if (text.isEmpty()) return TransformedText(AnnotatedString(""), OffsetMapping.Identity)
+
+        val currentTime = System.currentTimeMillis()
+        val showLast = lastCharTime != 0L && currentTime - lastCharTime < 1000
+
+        val masked = buildString {
+            repeat(text.length - if (showLast) 1 else 0) { append('\u2022') } // bullet char
+            if (showLast) append(text.last())
+        }
+
+        return TransformedText(AnnotatedString(masked), OffsetMapping.Identity)
+    }
 }

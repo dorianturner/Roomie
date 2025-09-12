@@ -45,7 +45,7 @@ fun ChatsScreen(
                 val allConversations = snapshot.documents.mapNotNull {
                     val convo = it.toObject(Conversation::class.java)
                     convo?.copy(id = it.id)
-                }
+                }.sortedByDescending { it.participants.size })
 
                 val (groups, individualConversations) = allConversations.partition { it.isGroup }
 

@@ -109,7 +109,9 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
                     id = currentUser.uid,
                     name = data["name"] as String,
                     members = members,
-                    stats = stats
+                    stats = stats,
+                    // TODO
+                    profilePicture = ""
                 )
 
                 batch.set(groupRef, groupProfile.toMap())

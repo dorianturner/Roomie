@@ -6,7 +6,8 @@ data class GroupProfile(
     val id: String,
     val name: String,
     val members: List<StudentProfile>,
-    val stats: GroupStats
+    val stats: GroupStats,
+    val profilePicture: String
 ) {
     fun toMap(): Map<String, Any> {
         return mapOf(
