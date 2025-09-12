@@ -154,18 +154,13 @@ fun ProfileScreen(
 
                 // add listing button
                 item {
-                    Row(
+                    Button(
+                        onClick = { navController.navigate(Routes.ADD_LISTING) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = Spacing.short),
-                        horizontalArrangement = Arrangement.End
+                            .padding(vertical = Spacing.short, horizontal = Spacing.extraShort)
                     ) {
-                        Button(
-                            onClick = { navController.navigate(Routes.ADD_LISTING) },
-                            modifier = Modifier.padding(Spacing.extraShort)
-                        ) {
-                            Text("Add listing")
-                        }
+                        Text("Add listing")
                     }
                 }
 
