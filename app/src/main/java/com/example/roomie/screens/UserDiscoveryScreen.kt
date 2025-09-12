@@ -129,7 +129,13 @@ fun UserDiscoveryScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         when {
-            matches == null -> CircularProgressIndicator()
+            matches == null -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
             errorMessage != null -> Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
             matches!!.isEmpty() -> Text("No matches found")
             else -> {

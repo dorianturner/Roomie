@@ -13,19 +13,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.Commute
-import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,9 +49,10 @@ import com.example.roomie.R
 import com.example.roomie.components.GroupProfile
 import com.example.roomie.screens.ProfileChip
 import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.MontserratFontFamily
 import com.example.roomie.ui.theme.Spacing
-
-// TODO
+import com.example.roomie.ui.theme.ZainFontFamily
+import kotlin.math.roundToInt
 
 @Composable
 fun ProfileCard(group: GroupProfile) {
@@ -84,7 +85,7 @@ fun IndividualProfileCard(group: GroupProfile) {
                 .fillMaxWidth()
         ) {
 
-            ProfilePictureDisplay(group.profilePicture, true, size = 100.dp)
+            ProfilePictureDisplay(group.members.first().profilePictureUrl, true, size = 100.dp)
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -117,9 +118,16 @@ fun IndividualProfileCard(group: GroupProfile) {
             modifier = Modifier.padding(4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ProfileSegment(Icons.Default.Cake, "Age: ${group.stats.avgAge}")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
+            ) {
+                ProfileSegment(Icons.Default.Cake, "Age: ${group.stats.avgAge?.roundToInt() ?: 0}")
+                ProfileSegment(Icons.Default.AttachMoney, "Budget: $${group.stats.avgBudget?.roundToInt() ?: 0}")
+            }
             ProfileSegment(Icons.Default.School, "School: ${group.stats.universities.first()}")
-            ProfileSegment(Icons.Default.AttachMoney, "Budget: $${group.stats.avgBudget}")
+            ProfileSegment(Icons.Default.DirectionsCar, "Max Commute Time: ${group.stats.avgCommute?.roundToInt() ?: 0} mins")
         }
 
         Spacer(Modifier.height(Spacing.slightlyShort))
@@ -130,6 +138,8 @@ fun IndividualProfileCard(group: GroupProfile) {
         )
 
         Spacer(Modifier.height(Spacing.slightlyShort))
+
+        AboutMeSection(group.members.first().bio?: "")
     }
 }
 
@@ -240,6 +250,48 @@ fun ProfileSegment(icon: ImageVector, text: String) {
                 text = text,
                 color = MaterialTheme.colorScheme.inverseSurface,
                 style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Composable
+fun AboutMeSection(
+    bio: String,
+    modifier: Modifier = Modifier
+) {
+    val scroll = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(Spacing.extraShort)
+    ) {
+        Text(
+            text = "About Me:",
+            color = MaterialTheme.colorScheme.inverseSurface,
+            fontFamily = MontserratFontFamily,
+            fontSize = FontSize.subHeader
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(scroll)
+                .padding(Spacing.extremelyShort)
+                .background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            Text(
+                text = bio,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.inverseSurface,
+                fontFamily = ZainFontFamily,
+                fontSize = FontSize.body,
+                modifier = Modifier.padding(Spacing.extraShort)
             )
         }
     }

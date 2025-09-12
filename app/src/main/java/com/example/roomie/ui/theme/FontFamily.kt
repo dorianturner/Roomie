@@ -9,9 +9,7 @@ val MontserratFontFamily = FontFamily(
     Font(R.font.montserrat)
 )
 
-val NunitoSansFontFamily = FontFamily(
-    Font(R.font.nunito_sans, weight = FontWeight.W400), // Regular
-    Font(R.font.nunito_sans, weight = FontWeight.W500), // Medium
-    Font(R.font.nunito_sans, weight = FontWeight.W600), // SemiBold
-    Font(R.font.nunito_sans, weight = FontWeight.W700), // Bold
+val ZainFontFamily = FontFamily(
+    Font(R.font.zain_regular),
+    Font(R.font.zain_bold)
 )
