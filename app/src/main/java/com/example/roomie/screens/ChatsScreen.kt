@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.ui.graphics.Color
 
 import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.chat.Conversation
@@ -45,7 +44,7 @@ fun ChatsScreen(
                 val allConversations = snapshot.documents.mapNotNull {
                     val convo = it.toObject(Conversation::class.java)
                     convo?.copy(id = it.id)
-                }.sortedByDescending { it.participants.size })
+                }.sortedByDescending { it.participants.size }
 
                 val (groups, individualConversations) = allConversations.partition { it.isGroup }
 

@@ -113,9 +113,13 @@ fun RoomieNavHost(
                     }
                 )
             }
+
+            composable(Routes.ADD_LISTING) {
+                EditListingScreen(navController = navController)
+            }
         }
 
-        composable(Routes.ADD_LISTING) { EditListingScreen(navController = navController) }
+
     }
 }
 

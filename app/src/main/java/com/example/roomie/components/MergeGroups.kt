@@ -2,6 +2,7 @@ package com.example.roomie.components
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Transaction
 import kotlinx.coroutines.tasks.await
 
 fun computeStats(values: List<Int>): Quadruple<Double, Int, Int, Double> {
@@ -204,4 +205,61 @@ suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
         Log.e("Merging Groups", "Error finalising merge", e)
         false
     }
+}
+
+suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
+    val db = FirebaseFirestore.getInstance()
+
+    return try {
+        db.runTransaction { transaction ->
+            val groupARef = db.collection("groups").document(groupAID)
+            val groupBRef = db.collection("groups").document(groupBID)
+
+            val groupASnap = transaction.get(groupARef)
+            val groupBSnap = transaction.get(groupBRef)
+
+            if (!groupASnap.exists() || !groupBSnap.exists()) {
+                throw Exception("One or both groups do not exist")
+            }
+
+            val mergingA = groupASnap.getString("mergingWith")
+            val mergingB = groupBSnap.getString("mergingWith")
+
+            if (mergingA != groupBID || mergingB != groupAID) {
+                throw Exception("Groups are not mutually merging")
+            }
+
+            transaction.update(groupARef, "mergingWith", null)
+            transaction.update(groupBRef, "mergingWith", null)
+
+            true
+        }.await()
+    } catch (e: Exception) {
+        Log.e("MergeGroups", "Error cancelling merge", e)
+        false
+    }
+}
+
+fun cancelMergeTransaction(groupAID: String, groupBID: String, transaction: Transaction) {
+    val db = FirebaseFirestore.getInstance()
+
+    val groupARef = db.collection("groups").document(groupAID)
+    val groupBRef = db.collection("groups").document(groupBID)
+
+    val groupASnap = transaction.get(groupARef)
+    val groupBSnap = transaction.get(groupBRef)
+
+    if (!groupASnap.exists() || !groupBSnap.exists()) {
+        throw Exception("One or both groups do not exist")
+    }
+
+    val mergingA = groupASnap.getString("mergingWith")
+    val mergingB = groupBSnap.getString("mergingWith")
+
+    if (mergingA != groupBID || mergingB != groupAID) {
+        throw Exception("Groups are not mutually merging")
+    }
+
+    transaction.update(groupARef, "mergingWith", null)
+    transaction.update(groupBRef, "mergingWith", null)
 }

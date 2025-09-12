@@ -2,17 +2,52 @@ package com.example.roomie.components.chat
 
 import android.content.Context
 import android.util.Log
+import com.example.roomie.components.cancelMerge
+import com.example.roomie.components.cancelMergeTransaction
+import com.example.roomie.components.finaliseMergeGroups
 import kotlinx.coroutines.tasks.await
 import kotlin.collections.containsAll
 
 class PollManager(private val chatManager: ChatManager) {
 
-    private val effectsRegistry: MutableMap<String, suspend (Poll) -> Unit> = mutableMapOf(
+    private val endEffectsRegistry: MutableMap<String, suspend (Poll) -> Unit> = mutableMapOf(
         "merge" to { poll ->
             if (poll.resolution == "Unanimous Yes") {
                 Log.d("PollManager", "Unanimous Yes detected, merging conversations")
+                val convoSnap = chatManager.convoRef.get().await()
+                val participantUids =
+                    convoSnap.get("participants") as? List<String> ?: emptyList()
+                val groupIds = participantUids.mapNotNull { uid ->
+                    val userSnap =
+                        chatManager.db.collection("users").document(uid).get().await()
+                    userSnap.getString("groupId")
+                }.toSet()
+                if (groupIds.size == 2) {
+                    val success = finaliseMergeGroups(groupIds.first(), groupIds.last())
+                    if (success) {
+                        Log.d("PollManager", "Merged groups ${groupIds.first()} and ${groupIds.last()}")
+                    } else {
+                        Log.e("PollManager", "Failed to merge groups ${groupIds.first()} and ${groupIds.last()}")
+                    }
+                } else {
+                    Log.d("PollManager", "Not enough groups to merge, expected 2, got ${groupIds.size}")
+                }
+                // TODO: delete subgroup convos
+
             } else {
                 Log.d("PollManager", "Unanimous Yes not detected, not merging conversations")
+                val convoSnap = chatManager.convoRef.get().await()
+                val participantUids =
+                    convoSnap.get("participants") as? List<String> ?: emptyList()
+                val groupIds = participantUids.mapNotNull { uid ->
+                    val userSnap =
+                        chatManager.db.collection("users").document(uid).get().await()
+                    userSnap.getString("groupId")
+                }.toSet()
+                if (groupIds.size == 2) {
+                    cancelMerge(groupIds.first(), groupIds.last())
+                }
+                // TODO: delete convo
             }
         },
         "finalise" to { poll ->
@@ -24,6 +59,57 @@ class PollManager(private val chatManager: ChatManager) {
         },
         "generic" to { poll ->
             Log.d("PollManager", "Generic poll effect triggered with result ${poll.resolution}")
+        }
+    )
+
+    private val voteEffectsRegistry: MutableMap<String, suspend (Context, String, Poll) -> Unit> = mutableMapOf(
+        "merge" to { context, uid, poll ->
+            if (poll.votes[uid] == "no") {
+                val cancelled = try {
+                    chatManager.db.runTransaction { transaction ->
+                        Log.d("PollManager", "User $uid voted no, vetoing merge")
+                        val convoSnap = transaction.get(chatManager.convoRef)
+                        val participantUids =
+                            convoSnap.get("participants") as? List<String> ?: emptyList()
+                        val groupIds = participantUids.mapNotNull { uid ->
+                            val userSnap =
+                                transaction.get(chatManager.db.collection("users").document(uid))
+                            userSnap.getString("groupId")
+                        }.toSet()
+                        if (groupIds.size == 2) {
+                            cancelMergeTransaction(groupIds.first(), groupIds.last(), transaction)
+                        }
+
+                        transaction.update(chatManager.convoRef, "activePoll", null)
+                    }.await()
+                    true
+                } catch (e: Throwable) {
+                    Log.e("PollManager", "Error cancelling merge", e)
+                    false
+                }
+                if (cancelled) {
+                    chatManager.sendMessage(
+                        context = context,
+                        senderId = "system",
+                        type = "system",
+                        text = "Poll: ${poll.question}\nResolution: Vetoed"
+                    )
+                }
+            }
+        },
+        "finalise" to { context, uid, poll ->
+            if (poll.votes[uid] == "no") {
+                Log.d("PollManager", "User $uid voted no, vetoing finalisation")
+
+                chatManager.convoRef.update("activePoll", null).await()
+
+                chatManager.sendMessage(
+                    context = context,
+                    senderId = "system",
+                    type = "system",
+                    text = "Poll: ${poll.question}\nResolution: Vetoed"
+                )
+            }
         }
     )
 
@@ -74,7 +160,9 @@ class PollManager(private val chatManager: ChatManager) {
                     type = "system",
                     text = "Poll: ${poll.question}\nResolution: ${poll.resolution}"
                 )
-                effectsRegistry[poll.type]?.invoke(poll)
+                endEffectsRegistry[poll.type]?.invoke(poll)
+            } else {
+                voteEffectsRegistry[poll.type]?.invoke(context, userId, poll)
             }
         }
     }

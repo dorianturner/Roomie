@@ -23,11 +23,10 @@ foundation = "1.8.3"
 activityComposeVersion = "1.10.1"
 material = "1.12.0"
 ui = "1.8.3"
-foundationVersion = "1.9.0"
+foundationVersion = "1.9.1"
 androidxFoundation = "1.9.1"
 firebaseAppcheckPlayintegrity = "19.0.0"
 firebaseAppcheckDebug = "19.0.0"
-foundationVersion = "1.9.1"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -65,7 +64,6 @@ androidx-foundation-layout = { group = "androidx.compose.foundation", name = "fo
 androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
-accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
 foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
 androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidxFoundation" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity", version.ref = "firebaseAppcheckPlayintegrity" }
