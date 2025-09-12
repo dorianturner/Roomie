@@ -10,12 +10,14 @@ import androidx.compose.ui.Modifier
 import com.example.roomie.components.listings.Listing
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.roomie.components.listings.ListingDetailsContent
 import com.example.roomie.components.listings.ListingPhotoGallery
@@ -55,9 +57,7 @@ fun SingleListingScreen(
                     val currentListing = listing
                     if (currentListing != null && currentListing.ownerId == currentUserId) {
                         IconButton(
-                            onClick = {
-                                navController.navigate("edit_listing/${currentListing.id}")
-                            }
+                            onClick = { navController.navigate("edit_listing/${currentListing.id}") }
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit listing")
                         }
@@ -66,32 +66,49 @@ fun SingleListingScreen(
             )
         }
     ) { innerPadding ->
-        listing?.let { currentListing ->
-            Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-            ) {
+        // single vertical scroller for the whole page
+        LazyColumn(
+            modifier = Modifier
+                .padding(innerPadding) // ensures content sits below TopAppBar
+                .fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp),
+            verticalArrangement = Arrangement.Top
+        ) {
+            // loading state
+            if (listing == null) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillParentMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else {
+                val currentListing = listing!!
+
+                // photo gallery header (fixed height)
                 if (currentListing.photos.isNotEmpty()) {
-                    ListingPhotoGallery(
-                        photos = currentListing.photos,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    item {
+                        ListingPhotoGallery(
+                            photos = currentListing.photos,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(270.dp)
+                        )
+                    }
                 }
 
-                ListingDetailsContent(
-                    listing = currentListing,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        } ?: run {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
+                // details as a normal item (no weight)
+                item {
+                    ListingDetailsContent(
+                        listing = currentListing,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
+                }
             }
         }
     }

@@ -27,6 +27,7 @@ material = "1.12.0"
 accompanist = "0.34.0"
 ui = "1.8.3"
 foundationVersion = "1.9.0"
+androidxFoundation = "1.9.1"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -68,6 +69,7 @@ ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 accompanist-systemuicontroller = { module = "com.google.accompanist:accompanist-systemuicontroller", version.ref = "accompanist" }
 foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundationVersion" }
+androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidxFoundation" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

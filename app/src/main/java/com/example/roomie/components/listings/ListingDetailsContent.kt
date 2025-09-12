@@ -18,8 +18,7 @@ fun ListingDetailsContent(
 ) {
     Column(
         modifier = modifier
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // title
