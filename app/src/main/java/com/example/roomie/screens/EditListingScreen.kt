@@ -234,6 +234,53 @@ fun EditListingScreen(
                     }
                 }
 
+
+                // Delete listing button
+                var showDeleteDialog by remember { mutableStateOf(false) }
+
+                if (!isNew && listingId != null) {
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { showDeleteDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Delete Listing", color = MaterialTheme.colorScheme.onError)
+                    }
+                }
+
+                // Confirmation Dialog
+                if (showDeleteDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteDialog = false },
+                        title = { Text("Confirm Deletion") },
+                        text = { Text("Are you sure you want to delete this listing? This action cannot be undone.") },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    showDeleteDialog = false
+                                    scope.launch {
+                                        try {
+                                            db.collection("listings").document(listingId!!).delete().await()
+                                            kotlinx.coroutines.delay(500)
+                                            navController.navigate("profile") {
+                                                popUpTo("profile") { inclusive = true }
+                                            }
+                                        } catch (e: Exception) {
+                                            message = "Failed to delete listing."
+                                        }
+                                    }
+                                }
+                            ) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
                 message?.let {
                     Text(it, color = MaterialTheme.colorScheme.error)
                 }
