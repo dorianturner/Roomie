@@ -102,6 +102,12 @@ fun ListingPhotosEdit(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Images:",
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
