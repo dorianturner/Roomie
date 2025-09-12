@@ -1,8 +1,9 @@
-package com.example.roomie.components
+package com.example.roomie.components.chat
 
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -20,11 +21,16 @@ import com.google.firebase.auth.FirebaseAuth
 import coil.compose.AsyncImage
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-
+import com.example.roomie.R
+import com.example.roomie.components.fetchUserNameFromFirestore
+import com.example.roomie.components.formatTimestamp
 @Composable
 fun MessageItem(
     message: Message,
@@ -34,8 +40,15 @@ fun MessageItem(
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
     val isCurrentUser = message.senderId == currentUserId
 
-    val bubbleColor = if (isCurrentUser) MaterialTheme.colorScheme.primaryContainer
-    else MaterialTheme.colorScheme.surfaceVariant
+    val isSystem = message.type == "system"
+    val bubbleColor = when {
+        isSystem -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+        isCurrentUser -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val timestampColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     var senderName by remember(message.senderId) {
         mutableStateOf(userNameCache[message.senderId] ?: "Unknown")
@@ -54,15 +67,20 @@ fun MessageItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp),
-        horizontalArrangement = if (isCurrentUser) Arrangement.End else Arrangement.Start
+        horizontalArrangement = when {
+            isSystem -> Arrangement.Center
+            isCurrentUser -> Arrangement.End
+            else -> Arrangement.Start
+        }
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 280.dp)
+                .fillMaxWidth(if (isSystem) 0.9f else 0.5f)
                 .background(bubbleColor, RoundedCornerShape(16.dp))
-                .padding(12.dp)
+                .padding(12.dp),
+            horizontalAlignment = if (isSystem) Alignment.CenterHorizontally else Alignment.Start
         ) {
-            if (!isCurrentUser) {
+            if (!isSystem && !isCurrentUser) {
                 Text(
                     text = senderName,
                     style = MaterialTheme.typography.labelMedium,
@@ -74,12 +92,17 @@ fun MessageItem(
             }
 
             when (message.type) {
-                "text" -> {
+                "text", "system" -> {
                     Text(
                         text = message.text ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 10,
-                        overflow = TextOverflow.Ellipsis
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = if (isSystem) FontWeight.Bold else FontWeight.Normal,
+                            fontStyle = if (isSystem) FontStyle.Italic else FontStyle.Normal
+                        ),
+                        color = textColor,
+                        textAlign = if (isSystem) TextAlign.Center else TextAlign.Start,
+                        maxLines = if (isSystem) Int.MAX_VALUE else 10,
+                        overflow = if (isSystem) TextOverflow.Visible else TextOverflow.Ellipsis
                     )
                 }
 
@@ -91,8 +114,8 @@ fun MessageItem(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 200.dp),
-                            placeholder = painterResource(com.example.roomie.R.drawable.placeholder), // optional
-                            error = painterResource(com.example.roomie.R.drawable.image_error) // optional
+                            placeholder = painterResource(R.drawable.placeholder), // optional
+                            error = painterResource(R.drawable.image_error) // optional
                         )
                     } ?: Text("Image unavailable", color = MaterialTheme.colorScheme.error)
                 }
@@ -149,9 +172,15 @@ fun MessageItem(
 
             Text(
                 text = message.timestamp?.let { formatTimestamp(it) } ?: "",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                modifier = Modifier.align(Alignment.End)
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    fontStyle = if (isSystem) FontStyle.Italic else FontStyle.Normal
+                ),
+                color = timestampColor,
+                textAlign = if (isSystem) TextAlign.Center else TextAlign.Start,
+                modifier = if (!isSystem) Modifier.align(Alignment.End) else Modifier
             )
         }
     }
+
 }

@@ -1,0 +1,130 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "participants",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "lastMessageAt",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profileType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxBudget",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profileType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxBudget",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxCommute",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profileType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxCommute",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profileType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentUniversity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxBudget",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profileType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentUniversity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxBudget",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxCommute",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "profileType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentUniversity",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "studentMaxCommute",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    }
+  ],
+  "fieldOverrides": []
+}

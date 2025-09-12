@@ -1,13 +1,12 @@
 package com.example.roomie.screens
 
-import android.provider.ContactsContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -22,13 +21,10 @@ import com.google.firebase.auth.auth
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpOffset
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import com.example.roomie.components.NavigationBarItem
 import com.example.roomie.components.LogoutAlertDialog
 import com.example.roomie.components.RoomieNameLogo
-import com.example.roomie.navigation.Routes
 import com.example.roomie.ui.theme.Spacing
 
 import androidx.navigation.compose.NavHost
@@ -36,7 +32,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.roomie.components.ChatManager
+import com.example.roomie.components.chat.ChatManager
+import com.example.roomie.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +54,7 @@ fun MainContentScreen(
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
         NavigationBarItem("Bookmarks", Icons.Default.Favorite),
+        NavigationBarItem("Discover", Icons.Default.People),
         NavigationBarItem("Search", Icons.Default.Search),
         NavigationBarItem("Profile", Icons.Default.Person),
     )
@@ -64,19 +62,22 @@ fun MainContentScreen(
     val navigationMap: Map<Int, () -> Unit> = mapOf(
         0 to { childNavController.navigate("chats") },
         1 to { childNavController.navigate("bookmarks") },
-        2 to { childNavController.navigate("search") },
-        3 to { childNavController.navigate("profile") },
-        4 to { childNavController.navigate("options") },
+        2 to { childNavController.navigate("discover") },
+        3 to { childNavController.navigate("search") },
+        4 to { childNavController.navigate("profile") },
     )
 
     // To indicate which icon to highlight at the navBar
     val selectedPage = when (currentRoute) {
         "chats" -> 0
         "bookmarks" -> 1
-        "search" -> 2
-        "profile" -> 3
-        "options" -> 4
-        "profile_editor" -> 3
+        "discover" -> 2
+        "search" -> 3
+        "single_listing/{listingId}" -> 3
+        "profile" -> 4
+        "profile_editor" -> 4
+        Routes.ADD_LISTING -> 4
+        "edit_listing/{listingId}" -> 4
         else -> 0
     }
 
@@ -225,8 +226,11 @@ fun MainContentScreen(
                 composable("bookmarks") {
                     BookmarksScreen()
                 }
+                composable("discover") {
+                    UserDiscoveryScreen(childNavController)
+                }
                 composable("search") {
-                    PropertySearchScreen()
+                    PropertySearchScreen(navController = childNavController)
                 }
                 composable("profile") {
                     ProfileScreen(navController = childNavController)
@@ -236,6 +240,9 @@ fun MainContentScreen(
                 }
                 composable("profile_editor") {
                     ProfileEditorScreen(onProfileSaved = {})
+                }
+                composable(Routes.ADD_LISTING) {
+                    EditListingScreen(navController = childNavController)
                 }
                 composable(
                     "chat/{chatId}/{chatName}",
@@ -250,6 +257,31 @@ fun MainContentScreen(
                         chatManager = ChatManager(chatId),
                         chatName = chatName,
                         onBack = { childNavController.popBackStack() }
+                    )
+                }
+                composable(
+                    "single_listing/{listingId}",
+                    arguments = listOf(
+                        navArgument("listingId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+                    SingleListingScreen(
+                        listingId = listingId,
+                        onBack = { childNavController.popBackStack() },
+                        navController = childNavController
+                    )
+                }
+                composable(
+                    "edit_listing/{listingId}",
+                    arguments = listOf(
+                        navArgument("listingId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+                    EditListingScreen(
+                        navController = childNavController,
+                        listingId = listingId
                     )
                 }
             }

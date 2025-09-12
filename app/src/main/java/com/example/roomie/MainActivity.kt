@@ -22,12 +22,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import androidx.core.view.WindowCompat
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-      
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         // enable caching

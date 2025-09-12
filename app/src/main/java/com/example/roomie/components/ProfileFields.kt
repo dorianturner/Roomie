@@ -12,6 +12,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 
 // Simple reusable field model
 class ProfileTextField(
@@ -39,7 +40,8 @@ class ProfileTextField(
 @Composable
 fun ProfileTextFieldView(
     field: ProfileTextField,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     TextField(
         value = field.value,
@@ -49,7 +51,7 @@ fun ProfileTextFieldView(
                 if (!field.required) "${field.label} (optional)" else field.label
             )
         },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
@@ -82,83 +84,84 @@ fun LandlordProfileSection(
 fun StudentProfileSection(
     ageField: MutableState<ProfileTextField>,
     universityField: MutableState<ProfileTextField>,
-    preferencesField: MutableState<ProfileTextField>,
     groupSizeMinField: MutableState<ProfileTextField>,
     groupSizeMaxField: MutableState<ProfileTextField>,
     maxCommuteField: MutableState<ProfileTextField>,
-    maxBudgetField: MutableState<ProfileTextField>
+    maxBudgetField: MutableState<ProfileTextField>,
+    smokingStatus: MutableState<String>,
+    bedtime: MutableState<Int>,
+    alcoholLevel: MutableState<Int>,
+    pet: MutableState<String>,
+    musicField: MutableState<ProfileTextField>,
+    petPeeve: MutableState<ProfileTextField>,
+    addicted: MutableState<ProfileTextField>,
+    ideal: MutableState<ProfileTextField>,
+    passionate: MutableState<ProfileTextField>,
+
 ) {
     Column {
         Text("Student Profile", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(
-            field = ageField.value,
-            onValueChange = { newValue ->
-                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    ageField.value.value = newValue
-                }
-            }
-        )
+        // ... existing fields (age/university/group size/commute/budget) - unchanged ...
+        ProfileTextFieldView(field = ageField.value, onValueChange = { newValue ->
+            if (newValue.all { it.isDigit() } || newValue.isEmpty()) ageField.value.value = newValue
+        })
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(
-            field = universityField.value,
-            onValueChange = {
-                universityField.value.value = it
-            }
-        )
+        ProfileTextFieldView(field = universityField.value, onValueChange = { universityField.value.value = it })
         Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(
-            field = preferencesField.value,
-            onValueChange = {
-                preferencesField.value.value = it
-            }
+        // group size row...
+        Text(
+            "Desired Group Size (Min-Max):",
+            style = MaterialTheme.typography.labelLarge
         )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Desired Group Size (Min-Max):", style = MaterialTheme.typography.labelLarge)
         Spacer(modifier = Modifier.height(8.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically, // ensures the dash is centered with text fields
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
             ProfileTextFieldView(
                 field = groupSizeMinField.value,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                        groupSizeMinField.value.value = newValue
-                    }
-                }
+                onValueChange = { v ->
+                    if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMinField.value.value = v
+                },
+                modifier = Modifier.weight(1f)
             )
-            Text("-", modifier = Modifier.alignByBaseline())
+
+            Text("-", style = MaterialTheme.typography.bodyLarge) // optional style for consistency
+
             ProfileTextFieldView(
                 field = groupSizeMaxField.value,
-                onValueChange = { newValue ->
-                    if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                        groupSizeMaxField.value.value = newValue
-                    }
-                }
+                onValueChange = { v ->
+                    if (v.all { it.isDigit() } || v.isEmpty()) groupSizeMaxField.value.value = v
+                },
+                modifier = Modifier.weight(1f)
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
 
-        ProfileTextFieldView(
-            field = maxCommuteField.value,
-            onValueChange = { newValue ->
-                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    maxCommuteField.value.value = newValue
-                }
-            }
-        )
         Spacer(modifier = Modifier.height(16.dp))
+        ProfileTextFieldView(field = maxCommuteField.value, onValueChange = { v ->
+            if (v.all { it.isDigit() } || v.isEmpty()) maxCommuteField.value.value = v
+        })
+        Spacer(modifier = Modifier.height(16.dp))
+        ProfileTextFieldView(field = maxBudgetField.value, onValueChange = { v ->
+            if (v.all { it.isDigit() } || v.isEmpty()) maxBudgetField.value.value = v
+        })
 
-        ProfileTextFieldView(
-            field = maxBudgetField.value,
-            onValueChange = { newValue ->
-                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                    maxBudgetField.value.value = newValue
-                }
-            }
+        // Lifestyle section (smoking/bedtime/alcohol/music)
+        LifestyleSection(
+            smokingStatus = smokingStatus,
+            bedtime = bedtime,
+            alcoholLevel = alcoholLevel,
+            pet = pet,
+            musicField = musicField,
+            petPeeve = petPeeve,
+            addicted = addicted,
+            ideal = ideal,
+            passionate = passionate
         )
     }
 }
