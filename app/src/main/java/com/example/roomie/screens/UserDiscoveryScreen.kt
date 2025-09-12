@@ -45,9 +45,12 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.sp
 import com.example.roomie.components.GroupProfile
 import com.example.roomie.components.soundManager.LocalSoundManager
 import com.example.roomie.components.userDiscovery.ProfileCard
+import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.MontserratFontFamily
 import kotlin.math.abs
 
 // String descriptions for each of the weights
@@ -107,7 +110,12 @@ fun UserDiscoveryScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("User Discovery", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "User Discovery",
+                fontFamily = MontserratFontFamily,
+                color = MaterialTheme.colorScheme.inverseSurface,
+                fontSize = FontSize.header
+            )
 
             IconButton(onClick = { showFilterDialog = true }) {
                 Icon(
@@ -305,7 +313,7 @@ fun SwipeableMatchCard(
                     transformOrigin = TransformOrigin(0.5f, 1f) // bottom center
                 }
         ) {
-            GroupMatchCard(profile)
+            ProfileCard(profile)
         }
     }
 }

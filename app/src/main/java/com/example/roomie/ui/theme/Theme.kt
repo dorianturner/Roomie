@@ -30,6 +30,7 @@ private val DarkColorScheme = darkColorScheme(
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
     scrim = DarkScrim,
+    inverseSurface = DarkContrast
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -43,6 +44,7 @@ private val LightColorScheme = lightColorScheme(
     outline = LightOutline,
     outlineVariant = LightOutlineVariant,
     scrim = LightScrim,
+    inverseSurface = LightContrast,
 
 
     /* Other default colors to override

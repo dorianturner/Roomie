@@ -3,7 +3,6 @@ package com.example.roomie.components.soundManager
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
-import android.util.Log
 import com.example.roomie.R
 
 const val MAX_STREAMS = 4
