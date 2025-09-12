@@ -39,8 +39,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -123,11 +126,27 @@ fun IndividualProfileCard(group: GroupProfile) {
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
             ) {
-                ProfileSegment(Icons.Default.Cake, "Age: ${group.stats.avgAge?.roundToInt() ?: 0}")
-                ProfileSegment(Icons.Default.AttachMoney, "Budget: $${group.stats.avgBudget?.roundToInt() ?: 0}")
+                ProfileSegment(
+                    Icons.Default.Cake,
+                    "Age",
+                    "${group.stats.avgAge?.roundToInt() ?: 0}"
+                )
+                ProfileSegment(
+                    Icons.Default.AttachMoney,
+                    "Budget",
+                    "$${group.stats.avgBudget?.roundToInt() ?: 0}"
+                )
             }
-            ProfileSegment(Icons.Default.School, "School: ${group.stats.universities.first()}")
-            ProfileSegment(Icons.Default.DirectionsCar, "Max Commute Time: ${group.stats.avgCommute?.roundToInt() ?: 0} mins")
+            ProfileSegment(
+                Icons.Default.School,
+                "School",
+                group.stats.universities.first()
+            )
+            ProfileSegment(
+                Icons.Default.DirectionsCar,
+                "Max Commute Time",
+                "${group.stats.avgCommute?.roundToInt() ?: 0} mins"
+            )
         }
 
         Spacer(Modifier.height(Spacing.slightlyShort))
@@ -216,7 +235,7 @@ fun ProfilePictureDisplay(
         Icon(
             imageVector = statusIcon,
             contentDescription = "Individual or Group",
-            tint = Color.Yellow,
+            tint = MaterialTheme.colorScheme.surfaceTint,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .size(size / 3)
@@ -230,7 +249,7 @@ fun ProfilePictureDisplay(
 }
 
 @Composable
-fun ProfileSegment(icon: ImageVector, text: String) {
+fun ProfileSegment(icon: ImageVector, category: String, response: String) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
@@ -247,9 +266,20 @@ fun ProfileSegment(icon: ImageVector, text: String) {
                 modifier = Modifier.size(18.dp).padding(end = 6.dp)
             )
             Text(
-                text = text,
-                color = MaterialTheme.colorScheme.inverseSurface,
-                style = MaterialTheme.typography.bodyMedium
+                text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(color = MaterialTheme.colorScheme.inverseSurface)
+                    ) {
+                        append("${category}: ")
+                    }
+                    withStyle(
+                        style = SpanStyle(color = MaterialTheme.colorScheme.surfaceTint)
+                    ) {
+                        append(response)
+                    }
+                },
+                fontFamily = ZainFontFamily,
+                fontSize = FontSize.subHeader
             )
         }
     }

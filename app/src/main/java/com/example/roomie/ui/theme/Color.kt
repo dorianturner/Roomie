@@ -16,6 +16,8 @@ val LightScrim = Color(0xFFC4AB56) // light gold
 
 val LightContrast = Color.Black
 
+val LightAccent = Color(0xFFFB923C)
+
 
 // Dark theme — deeper, higher-contrast dark surfaces with green accents
 val DarkPrimary = Color(0xFFB8D18A)       // lighter olive for emphasis on dark
@@ -30,3 +32,5 @@ val DarkOutlineVariant = Color(0xFFA8883E) // dark faint yellow
 val DarkScrim = Color(0xFF9F7420) // light musty gold
 
 val DarkContrast = Color.White
+
+val DarkAccent = Color(0xFFFB923C)
