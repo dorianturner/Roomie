@@ -2,8 +2,8 @@ package com.example.roomie.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +17,9 @@ import com.example.roomie.components.PhotoItem
 import com.example.roomie.components.ProfileCard
 import com.example.roomie.components.StudentProfile
 import com.example.roomie.components.fetchUserPhotos
+import com.example.roomie.components.listings.Listing
+import com.example.roomie.components.listings.ListingItem
+import com.example.roomie.navigation.Routes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -34,6 +37,9 @@ fun ProfileScreen(
     var name by remember {mutableStateOf("")}
     var companyName by remember {mutableStateOf("")}
     var pfpUrl by remember {mutableStateOf("")}
+
+    // landlord
+    val landlordListings = remember { mutableStateListOf<Listing>() }
 
     LaunchedEffect(uid) {
         if (uid == null) {
@@ -53,9 +59,22 @@ fun ProfileScreen(
             name = userDoc?.getString("name") ?: "Unknown User"
             companyName = userDoc?.getString("landlordCompany") ?: "companyless"
             pfpUrl = userDoc?.getString("profilePictureUrl") ?: ""
-            photos = if (!isLandlord) {
-                try { fetchUserPhotos(uid) } catch (_: Exception) { emptyList() }
-            } else emptyList()
+
+            if (isLandlord) {
+                FirebaseFirestore.getInstance()
+                    .collection("listings")
+                    .whereEqualTo("ownerId", uid)
+                    .addSnapshotListener { snapshot, e ->
+                        if (e != null || snapshot == null) return@addSnapshotListener
+                        landlordListings.clear()
+                        landlordListings.addAll(snapshot.documents.mapNotNull {
+                            val listing = it.toObject(Listing::class.java)
+                            listing?.copy(id = it.id)
+                        })
+                    }
+            } else {
+                photos = try { fetchUserPhotos(uid) } catch (_: Exception) { emptyList() }
+            }
 
             isLoading = false
         }
@@ -71,98 +90,148 @@ fun ProfileScreen(
             CircularProgressIndicator()
         }
     } else {
-        Column(
+        LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = Spacing.short, vertical = Spacing.extraShort),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(Spacing.short)
+            verticalArrangement = Arrangement.spacedBy(Spacing.short),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header row with title + edit button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Profile",
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Left,
-                    fontSize = 40.sp,
-                )
-
-                Spacer(Modifier.weight(1f))
-
-                Button(
-                    onClick = { navController.navigate("profile_editor") },
-                    modifier = Modifier.padding(Spacing.extraShort)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Edit")
+                    Text(
+                        text = "Profile",
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Left,
+                        fontSize = 40.sp,
+                    )
+
+                    Spacer(Modifier.weight(1f))
+
+                    Button(
+                        onClick = { navController.navigate("profile_editor") },
+                        modifier = Modifier.padding(Spacing.extraShort)
+                    ) {
+                        Text("Edit")
+                    }
                 }
             }
 
             if (isLandlord) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = Spacing.short),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.short)
-                ) {
-                    // Smaller profile pic, left aligned
-                    ProfilePictureDisplay(url = pfpUrl, size = 80.dp)
-
-                    // Name + age to the right
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.Start
+                // landlord header
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = Spacing.short),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.short)
                     ) {
+                        ProfilePictureDisplay(url = pfpUrl, size = 80.dp)
+
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = companyName,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                }
+
+                // add listing button
+                item {
+                    Button(
+                        onClick = { navController.navigate(Routes.ADD_LISTING) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = Spacing.short, horizontal = Spacing.extraShort)
+                    ) {
+                        Text("Add listing")
+                    }
+                }
+
+                if (landlordListings.isNotEmpty()) {
+                    item {
                         Text(
-                            text = name,
-                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 22.sp),
-                            color = MaterialTheme.colorScheme.onBackground
+                            text = "My Listings",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = Spacing.short)
                         )
+                    }
+
+                    items(landlordListings) { listing ->
+                        ListingItem(
+                            address = listing.address,
+                            displayImages = listing.photos,
+                            rent = listing.rent,
+                            bedrooms = listing.bedrooms,
+                            bathrooms = listing.bathrooms,
+                            onClick = {
+                                navController.navigate("single_listing/${listing.id}")
+                            }
+                        )
+                    }
+                } else {
+                    item {
                         Text(
-                            text = companyName,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 18.sp),
-                            color = MaterialTheme.colorScheme.onBackground
+                            text = "No listings yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = Spacing.short)
                         )
                     }
                 }
             } else {
-                // Profile card itself
-                profileData?.let { data ->
-                    ProfileCard(
-                        StudentProfile(
-                            id = uid ?: "",
-                            name = name,
-                            photos = photos.map { it.url },
-                            studentAge = (data["studentAge"] as? Long)?.toInt(),
-                            profilePictureUrl = pfpUrl,
-                            studentPet = data["studentPet"] as? String,
-                            studentBedtime = data["studentBedtime"] as? Int,
-                            studentAlcohol = data["studentAlcohol"] as? Int,
-                            studentSmokingStatus = data["studentSmokingStatus"] as? String,
-                            groupMin = data["groupMin"] as? Int,
-                            groupMax = data["groupMax"] as? Int,
-                            studentMaxCommute = data["studentMaxCommute"] as? Int,
-                            studentMaxBudget = data["studentMaxBudget"] as? Int,
-                            studentUniversity = data["studentUniversity"] as? String,
-                            bio = data["bio"] as? String,
-                            studentAddicted = data["studentAddicted"] as? String,
-                            studentPetPeeve = data["studentPetPeeve"] as? String,
-                            passionate = data["studentPassionate"] as? String,
-                            studentIdeal = data["studentIdeal"] as? String,
-                            studentMusic = data["studentMusic"] as? String,
+                // student profile
+                item {
+                    profileData?.let { data ->
+                        ProfileCard(
+                            StudentProfile(
+                                id = uid ?: "",
+                                name = name,
+                                photos = photos.map { it.url },
+                                studentAge = (data["studentAge"] as? Long)?.toInt(),
+                                profilePictureUrl = pfpUrl,
+                                studentPet = data["studentPet"] as? String,
+                                studentBedtime = data["studentBedtime"] as? Int,
+                                studentAlcohol = data["studentAlcohol"] as? Int,
+                                studentSmokingStatus = data["studentSmokingStatus"] as? String,
+                                groupMin = data["groupMin"] as? Int,
+                                groupMax = data["groupMax"] as? Int,
+                                studentMaxCommute = data["studentMaxCommute"] as? Int,
+                                studentMaxBudget = data["studentMaxBudget"] as? Int,
+                                studentUniversity = data["studentUniversity"] as? String,
+                                bio = data["bio"] as? String,
+                                studentAddicted = data["studentAddicted"] as? String,
+                                studentPetPeeve = data["studentPetPeeve"] as? String,
+                                passionate = data["studentPassionate"] as? String,
+                                studentIdeal = data["studentIdeal"] as? String,
+                                studentMusic = data["studentMusic"] as? String,
+                            )
                         )
-                    )
-                } ?: run {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Profile not found", color = MaterialTheme.colorScheme.onSurface)
+                    } ?: run {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("Profile not found", color = MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                 }
             }

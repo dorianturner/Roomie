@@ -8,7 +8,7 @@ import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-data class PhotoItem(val url: String, val path: String)
+data class PhotoItem(val url: String = "", val path: String = "")
 
 /** Uploads image uri to Storage and returns Pair(downloadUrl, storagePath) */
 suspend fun uploadProfileImage(uri: Uri, uid: String): Pair<String, String> =

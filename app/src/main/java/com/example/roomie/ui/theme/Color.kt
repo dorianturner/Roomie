@@ -10,6 +10,9 @@ val LightTertiary = Color(0xFF3C8A7F)     // subtle teal
 val LightBackground = Color(0xFFF3F6F0)   // warm off-white
 val LightSurface = Color(0xFFFFFFFF)      // card / surface
 val LightInactive = Color(0xFF9EAF86)     // muted/disabled state
+val LightOutline = Color(0xFFD3BC65) // gold
+val LightOutlineVariant = Color(0xFFFFFFC0) // light yellow
+val LightScrim = Color(0xFFC4AB56) // light gold
 
 // Dark theme — deeper, higher-contrast dark surfaces with green accents
 val DarkPrimary = Color(0xFFB8D18A)       // lighter olive for emphasis on dark
@@ -19,3 +22,6 @@ val DarkTertiary = Color(0xFF7AC8BB)
 val DarkBackground = Color(0xFF0E1110)    // near-black with a tiny green tint
 val DarkSurface = Color(0xFF151716)       // deep surface for cards / sheets
 val DarkInactive = Color(0xFF49564A)      // muted dark disabled color
+val DarkOutline = Color(0xFF8F6400) // musty gold
+val DarkOutlineVariant = Color(0xFFA8883E) // dark faint yellow
+val DarkScrim = Color(0xFF9F7420) // light musty gold

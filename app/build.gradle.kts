@@ -1,3 +1,6 @@
+
+import java.util.Properties
+
 plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.android.application)
@@ -26,6 +29,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+        val tflApiKey = localProperties.getProperty("TFL_API_KEY") ?: ""
+        buildConfigField("String", "TFL_API_KEY", "\"$tflApiKey\"")
     }
 
     buildTypes {
@@ -46,6 +57,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -55,6 +67,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.text)
+    implementation("androidx.compose.ui:ui-text")
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
@@ -65,6 +79,8 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.foundation)
     implementation(libs.ui)
+    implementation(libs.foundation)
+    implementation(libs.androidx.compose.foundation.foundation)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
     testImplementation(libs.junit)

@@ -256,7 +256,7 @@ class ChatManager(
         return if (names.size == 1) {
             names.first() // Return first name only if 1-2-1 chat
         } else {
-            "Group: ${names.joinToString(", ")}"
+            names.joinToString(", ")
         }
     }
 

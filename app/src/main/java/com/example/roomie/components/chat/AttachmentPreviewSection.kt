@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun AttachmentPreviewSection(
     attachedFiles: List<AttachedFile>,
-    onRemoveFile: (Uri) -> Unit,
+    onRemoveFile: (Uid) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -26,7 +26,7 @@ fun AttachmentPreviewSection(
         attachedFiles.forEach { file ->
             AttachmentPreviewItem(
                 file = file,
-                onRemove = { onRemoveFile(file.uri) },
+                onRemove = { onRemoveFile(file.uid) },
                 modifier = Modifier.padding(vertical = 4.dp)
             )
         }

@@ -33,6 +33,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.roomie.components.chat.ChatManager
+import com.example.roomie.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,8 +73,11 @@ fun MainContentScreen(
         "bookmarks" -> 1
         "discover" -> 2
         "search" -> 3
+        "single_listing/{listingId}" -> 3
         "profile" -> 4
         "profile_editor" -> 4
+        Routes.ADD_LISTING -> 4
+        "edit_listing/{listingId}" -> 4
         else -> 0
     }
 
@@ -226,7 +230,7 @@ fun MainContentScreen(
                     UserDiscoveryScreen(childNavController)
                 }
                 composable("search") {
-                    PropertySearchScreen()
+                    PropertySearchScreen(navController = childNavController)
                 }
                 composable("profile") {
                     ProfileScreen(navController = childNavController)
@@ -236,6 +240,9 @@ fun MainContentScreen(
                 }
                 composable("profile_editor") {
                     ProfileEditorScreen(onProfileSaved = {})
+                }
+                composable(Routes.ADD_LISTING) {
+                    EditListingScreen(navController = childNavController)
                 }
                 composable(
                     "chat/{chatId}/{chatName}",
@@ -250,6 +257,31 @@ fun MainContentScreen(
                         chatManager = ChatManager(chatId),
                         chatName = chatName,
                         onBack = { childNavController.popBackStack() }
+                    )
+                }
+                composable(
+                    "single_listing/{listingId}",
+                    arguments = listOf(
+                        navArgument("listingId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+                    SingleListingScreen(
+                        listingId = listingId,
+                        onBack = { childNavController.popBackStack() },
+                        navController = childNavController
+                    )
+                }
+                composable(
+                    "edit_listing/{listingId}",
+                    arguments = listOf(
+                        navArgument("listingId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val listingId = backStackEntry.arguments?.getString("listingId") ?: ""
+                    EditListingScreen(
+                        navController = childNavController,
+                        listingId = listingId
                     )
                 }
             }

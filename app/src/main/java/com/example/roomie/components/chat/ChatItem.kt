@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
@@ -18,32 +19,49 @@ fun ChatItem(
     name: String,
     lastMessage: String,
     time: Timestamp?,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isGroup: Boolean = false,
+    groupParticipants: String? = null, // potentially could list participants
+    // lastMessenger: String? = null, // to show who sent latest message
 ) {
     Card(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(8.dp),
+        colors = if (isGroup) {
+            CardDefaults.cardColors(
+                MaterialTheme.colorScheme.outline,
+                MaterialTheme.colorScheme.outlineVariant
+            )
+        } else {
+            CardDefaults.cardColors(
+                MaterialTheme.colorScheme.secondaryContainer,
+                MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
+
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Profile picture
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = name.take(1).uppercase(),
-                    style = MaterialTheme.typography.titleLarge,
-                )
+            if (!isGroup) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = name.take(1).uppercase(),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -60,6 +78,12 @@ fun ChatItem(
                 )
                 Text(
                     text = lastMessage,
+                    // need to slightly change design to implement this
+//                    text = if (isGroup) {
+//                        "${lastMessenger}: $lastMessage"
+//                    } else {
+//                        lastMessage
+//                    },
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

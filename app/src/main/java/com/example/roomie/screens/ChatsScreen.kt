@@ -30,8 +30,8 @@ fun ChatsScreen(
     navController: NavController
 ) {
 
-    // To be updated to reflect the firestore database
     val conversations = remember { mutableStateListOf<Conversation>() }
+    val groupConversation = remember { mutableStateOf<Conversation?>(null) }
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid ?: return
 
@@ -41,11 +41,23 @@ fun ChatsScreen(
             .orderBy("lastMessageAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null || snapshot == null) return@addSnapshotListener
-                conversations.clear()
-                conversations.addAll(snapshot.documents.mapNotNull {
+
+                val allConversations = snapshot.documents.mapNotNull {
                     val convo = it.toObject(Conversation::class.java)
                     convo?.copy(id = it.id)
                 }.sortedByDescending { it.participants.size })
+
+                val (groups, individualConversations) = allConversations.partition { it.isGroup }
+
+
+                // user should only be in one group
+                for (convo in conversations) {
+                    println("ID: ${convo.id}\n isGroup: ${convo.isGroup}\n")
+                }
+
+                conversations.clear()
+                conversations.addAll(individualConversations)
+                groupConversation.value = groups.firstOrNull()
             }
     }
 
@@ -60,12 +72,33 @@ fun ChatsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                // Temporarily red so i can see whats going on
                 .background(color = MaterialTheme.colorScheme.background),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Chat content to be added here
+
+            // group conversation is displayed specially
+            groupConversation.value?.let { group ->
+                item {
+                    val chatManager = remember { ChatManager(group.id) }
+
+                    val participants by produceState(initialValue = "Loading...", group.participants) {
+                        value = chatManager.getConversationTitle(currentUserId)
+                    }
+
+                    ChatItem(
+                        name = "MY GROUP",
+                        lastMessage = group.lastMessage.orEmpty(),
+                        time = group.lastMessageAt,
+                        onClick = {
+                            navController.navigate("chat/${group.id}/$participants")
+                        },
+                        isGroup = true,
+                        groupParticipants = participants,
+                    )
+                }
+            }
+
             items(conversations) { convo ->
                 val chatManager = remember { ChatManager(convo.id) }
 
