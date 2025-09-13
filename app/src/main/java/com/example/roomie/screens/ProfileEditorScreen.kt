@@ -376,7 +376,8 @@ fun ProfileEditorScreen(
                                 members = members,
                                 stats = stats,
                                 // TODO
-                                profilePicture = ""
+                                profilePicture = "",
+                                bio = ""
                             )
 
                             FunctionsProvider.instance
@@ -411,7 +412,8 @@ fun ProfileEditorScreen(
                                         members = members,
                                         stats = stats,
                                         // TODO
-                                        profilePicture = ""
+                                        profilePicture = "",
+                                        bio = ""
                                     )
 
 

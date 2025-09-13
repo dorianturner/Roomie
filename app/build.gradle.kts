@@ -1,6 +1,8 @@
 
 import java.util.Properties
 
+
+
 plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.android.application)
@@ -92,6 +94,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.lottie.v600)
 
     // Firebase BoM
     implementation(platform(libs.firebase.bom))

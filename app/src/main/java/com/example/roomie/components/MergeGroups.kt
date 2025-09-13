@@ -189,7 +189,8 @@ suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
             members = mergedUsers,
             stats = groupStats,
             // TODO
-            profilePicture = ""
+            profilePicture = "",
+            bio = ""
         )
 
         FunctionsProvider.instance

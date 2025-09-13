@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -20,7 +21,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Commute
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
@@ -42,6 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
@@ -50,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.roomie.R
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.StudentProfile
 import com.example.roomie.screens.ProfileChip
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
@@ -88,7 +93,10 @@ fun IndividualProfileCard(group: GroupProfile) {
                 .fillMaxWidth()
         ) {
 
-            ProfilePictureDisplay(group.members.first().profilePictureUrl, true, size = 100.dp)
+            ProfilePictureDisplay(
+                group.members.first().profilePictureUrl,
+                true,
+                size = 100.dp)
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -158,7 +166,7 @@ fun IndividualProfileCard(group: GroupProfile) {
 
         Spacer(Modifier.height(Spacing.slightlyShort))
 
-        AboutMeSection(group.members.first().bio?: "")
+        AboutSection(group.members.first().bio?: "", true)
     }
 }
 
@@ -176,7 +184,10 @@ fun GroupProfileCard(group: GroupProfile) {
                 .fillMaxWidth()
         ) {
 
-            ProfilePictureDisplay(group.profilePicture, false, size = 100.dp)
+            ProfilePictureDisplay(
+                group.members.first().profilePictureUrl,
+                false,
+                size = 100.dp)
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -184,14 +195,69 @@ fun GroupProfileCard(group: GroupProfile) {
             ) {
                 Text(
                     text = group.name,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 30.sp
+                        fontSize = FontSize.header
                     )
                 )
             }
         }
+
+        Spacer(Modifier.height(Spacing.slightlyShort))
+
+        HorizontalDivider(
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.surface
+        )
+
+        Spacer(Modifier.height(Spacing.slightlyShort))
+
+        // Individual Stats
+        Column(
+            modifier = Modifier.padding(4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
+            ) {
+                ProfileSegment(
+                    Icons.Default.Groups,
+                    "Group Size",
+                    group.stats.size.toString()
+                )
+                ProfileSegment(
+                    Icons.Default.Cake,
+                    "Avg. Age",
+                    "${group.stats.avgAge?.roundToInt() ?: 0}"
+                )
+            }
+            ProfileSegment(
+                Icons.Default.AttachMoney,
+                "Avg. Budget",
+                "$${group.stats.avgBudget?.roundToInt() ?: 0}"
+            )
+            ProfileSegment(
+                Icons.Default.DirectionsCar,
+                "Max Commute Time",
+                "${group.stats.avgCommute?.roundToInt() ?: 0} mins"
+            )
+        }
+
+        Spacer(Modifier.height(Spacing.slightlyShort))
+
+        HorizontalDivider(
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.surface
+        )
+
+        Spacer(Modifier.height(Spacing.slightlyShort))
+
+        AboutSection(group.bio, false)
     }
 }
 
@@ -206,7 +272,7 @@ fun ProfilePictureDisplay(
     val statusIcon: ImageVector = if (isIndividual) {
         Icons.Default.Person
     } else {
-        Icons.Default.Groups
+        Icons.Default.Group
     }
 
 
@@ -263,7 +329,7 @@ fun ProfileSegment(icon: ImageVector, category: String, response: String) {
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp).padding(end = 6.dp)
+                modifier = Modifier.size(25.dp).padding(end = 6.dp)
             )
             Text(
                 text = buildAnnotatedString {
@@ -286,8 +352,9 @@ fun ProfileSegment(icon: ImageVector, category: String, response: String) {
 }
 
 @Composable
-fun AboutMeSection(
+fun AboutSection(
     bio: String,
+    isIndividual: Boolean,
     modifier: Modifier = Modifier
 ) {
     val scroll = rememberScrollState()
@@ -298,7 +365,7 @@ fun AboutMeSection(
         verticalArrangement = Arrangement.spacedBy(Spacing.extraShort)
     ) {
         Text(
-            text = "About Me:",
+            text = if (isIndividual) "About Me:" else "About Us: ",
             color = MaterialTheme.colorScheme.inverseSurface,
             fontFamily = MontserratFontFamily,
             fontSize = FontSize.subHeader

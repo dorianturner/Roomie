@@ -134,7 +134,11 @@ fun UserDiscoveryScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                CircularProgressIndicator(Modifier.align(Alignment.Center))
+                CircularProgressIndicator(
+                    Modifier.align(Alignment.Center),
+                    strokeWidth = 5.dp,
+                    color = MaterialTheme.colorScheme.surfaceTint
+                )
             }
             errorMessage != null -> Text("Error: $errorMessage", color = MaterialTheme.colorScheme.error)
             matches!!.isEmpty() -> Text("No matches found")
