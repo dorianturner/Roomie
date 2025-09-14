@@ -25,12 +25,11 @@ import com.google.firebase.firestore.Query
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatsScreen(
-    onBack: () -> Unit, // callback to return to main content screen
+    onBack: () -> Unit,
     navController: NavController
 ) {
 
     val conversations = remember { mutableStateListOf<Conversation>() }
-    val groupConversation = remember { mutableStateOf<Conversation?>(null) }
     val db = FirebaseFirestore.getInstance()
     val currentUserId = Firebase.auth.currentUser?.uid ?: return
 
@@ -41,33 +40,21 @@ fun ChatsScreen(
             .addSnapshotListener { snapshot, e ->
                 if (e != null || snapshot == null) return@addSnapshotListener
 
-                val allConversations = snapshot.documents.mapNotNull {
-                    val convo = it.toObject(Conversation::class.java)
-                    convo?.copy(id = it.id)
-                }.sortedByDescending { it.participants.size }
-
-                val (groups, individualConversations) = allConversations.partition { it.isGroup }
-
-
-                // user should only be in one group
-                for (convo in conversations) {
-                    println("ID: ${convo.id}\n isGroup: ${convo.isGroup}\n")
+                val allConvos = snapshot.documents.mapNotNull { doc ->
+                    val convo = doc.toObject(Conversation::class.java)?.copy(id = doc.id)
+                    convo
                 }
 
+                // just show all conversations (group or 1:1) in one list
                 conversations.clear()
-                conversations.addAll(individualConversations)
-                groupConversation.value = groups.firstOrNull()
+                conversations.addAll(allConvos)
             }
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Messages") },
-            )
-        }
+        topBar = { TopAppBar(title = { Text("Messages") }) }
     ) { innerPadding ->
-        LazyColumn (
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -75,29 +62,6 @@ fun ChatsScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            // group conversation is displayed specially
-            groupConversation.value?.let { group ->
-                item {
-                    val chatManager = remember { ChatManager(group.id) }
-
-                    val participants by produceState(initialValue = "Loading...", group.participants) {
-                        value = chatManager.getConversationTitle(currentUserId)
-                    }
-
-                    ChatItem(
-                        name = "MY GROUP",
-                        lastMessage = group.lastMessage.orEmpty(),
-                        time = group.lastMessageAt,
-                        onClick = {
-                            navController.navigate("chat/${group.id}/$participants")
-                        },
-                        isGroup = true,
-                        groupParticipants = participants,
-                    )
-                }
-            }
-
             items(conversations) { convo ->
                 val chatManager = remember { ChatManager(convo.id) }
 
@@ -111,7 +75,8 @@ fun ChatsScreen(
                     time = convo.lastMessageAt,
                     onClick = {
                         navController.navigate("chat/${convo.id}/$title")
-                    }
+                    },
+                    isGroup = convo.isGroup
                 )
             }
         }

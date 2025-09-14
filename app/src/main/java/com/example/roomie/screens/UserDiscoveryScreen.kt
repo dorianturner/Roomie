@@ -158,7 +158,6 @@ fun UserDiscoveryScreen(
 
                                 when (dir) {
                                     SwipeDirection.RIGHT -> {
-                                        // YES - create or open chat
                                         try {
                                             if (currentUserId == null) {
                                                 Log.e("UserDiscovery", "No current user id - cannot create chat")
@@ -168,8 +167,32 @@ fun UserDiscoveryScreen(
                                             // play sound
                                             sounds.swipeRight()
 
-                                            val otherUserId = currentProfile.id
+                                            val db = FirebaseFirestore.getInstance()
 
+                                            // Probably quite wasteful
+                                            // Fetch current user to get groupId
+                                            val currentUserSnapshot = db.collection("users").document(currentUserId).get().await()
+                                            val currentUserGroupId = currentUserSnapshot.getString("groupId")
+                                                ?: run {
+                                                    Log.e("UserDiscovery", "Current user has no groupId")
+                                                    return@launch
+                                                }
+
+                                            // Fetch current user's group members
+                                            val currentGroupSnapshot = db.collection("groups").document(currentUserGroupId).get().await()
+                                            val currentGroupMembers = currentGroupSnapshot.get("members") as? List<Map<String, Any>> ?: emptyList()
+                                            val currentGroupMemberIds = currentGroupMembers.mapNotNull { it["id"] as? String }
+
+                                            // Get swiped group's members
+                                            val otherGroupMembers = currentProfile.members.map { it.id }
+
+                                            // Combine all member IDs
+                                            var allParticipantIds = (currentGroupMemberIds + otherGroupMembers).distinct()
+                                            if (!allParticipantIds.contains(currentUserId)) {
+                                                allParticipantIds += currentUserId
+                                            }
+
+                                            // Check if a conversation already exists between these members
                                             val snapshot = db.collection("conversations")
                                                 .whereArrayContains("participants", currentUserId)
                                                 .get()
@@ -177,22 +200,25 @@ fun UserDiscoveryScreen(
 
                                             val existingDoc = snapshot.documents.firstOrNull { doc ->
                                                 val participants = doc.get("participants") as? List<*>
-                                                participants?.contains(otherUserId) == true && (participants.size == 2)
+                                                participants?.toSet() == allParticipantIds.toSet()
                                             }
 
+                                            // Create conversation if it doesn't exist
                                             val conversationId = if (existingDoc != null) {
                                                 existingDoc.id
                                             } else {
                                                 val chatManager = ChatManager()
                                                 chatManager.createConversation(
-                                                    listOf(currentUserId, otherUserId),
-                                                    isGroup = false
+                                                    participants = allParticipantIds,
+                                                    isGroup = true
                                                 )
                                                 checkNotNull(chatManager.conversationId)
                                             }
 
+                                            // Navigate to chat
                                             val chatTitle = Uri.encode(currentProfile.name)
                                             navController.navigate("chat/$conversationId/$chatTitle")
+
                                         } catch (e: Exception) {
                                             Log.e("UserDiscovery", "Failed to open/create chat: ${e.message}", e)
                                         }
