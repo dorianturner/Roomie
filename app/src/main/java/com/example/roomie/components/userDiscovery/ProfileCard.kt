@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.Commute
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Groups
@@ -38,24 +36,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.roomie.R
 import com.example.roomie.components.GroupProfile
-import com.example.roomie.components.StudentProfile
-import com.example.roomie.screens.ProfileChip
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
 import com.example.roomie.ui.theme.Spacing
@@ -64,6 +57,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun ProfileCard(group: GroupProfile) {
+    val isIndividual: Boolean = group.stats.size == 1
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -71,193 +65,139 @@ fun ProfileCard(group: GroupProfile) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        if (group.stats.size == 1) {
-            IndividualProfileCard(group)
-        } else {
-            GroupProfileCard(group)
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+
+                ProfilePictureDisplay(
+                    group.members.first().profilePictureUrl,
+                    isIndividual,
+                    size = 100.dp)
+
+                // Name Column
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = group.name,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = FontSize.header
+                        )
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(Spacing.slightlyShort))
+
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.surface
+            )
+
+            Spacer(Modifier.height(Spacing.slightlyShort))
+
+            // Individual Stats
+            if (isIndividual) {
+                IndividualCardContent(group)
+            } else {
+                GroupCardContent(group)
+            }
+
+            Spacer(Modifier.height(Spacing.slightlyShort))
+
+            HorizontalDivider(
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.surface
+            )
+
+            Spacer(Modifier.height(Spacing.slightlyShort))
+
+            AboutSection(group.members.first().bio?: "", isIndividual)
         }
     }
 }
 
-@Composable
-fun IndividualProfileCard(group: GroupProfile) {
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxSize(),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-
-            ProfilePictureDisplay(
-                group.members.first().profilePictureUrl,
-                true,
-                size = 100.dp)
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = group.name,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = FontSize.header
-                    )
-                )
-            }
-        }
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        HorizontalDivider(
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.surface
-        )
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        // Individual Stats
-        Column(
-            modifier = Modifier.padding(4.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
-            ) {
-                ProfileSegment(
-                    Icons.Default.Cake,
-                    "Age",
-                    "${group.stats.avgAge?.roundToInt() ?: 0}"
-                )
-                ProfileSegment(
-                    Icons.Default.AttachMoney,
-                    "Budget",
-                    "$${group.stats.avgBudget?.roundToInt() ?: 0}"
-                )
-            }
-            ProfileSegment(
-                Icons.Default.School,
-                "School",
-                group.stats.universities.first()
-            )
-            ProfileSegment(
-                Icons.Default.DirectionsCar,
-                "Max Commute Time",
-                "${group.stats.avgCommute?.roundToInt() ?: 0} mins"
-            )
-        }
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        HorizontalDivider(
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.surface
-        )
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        AboutSection(group.members.first().bio?: "", true)
-    }
-}
 
 @Composable
-fun GroupProfileCard(group: GroupProfile) {
+fun IndividualCardContent(group: GroupProfile) {
     Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxSize(),
+        modifier = Modifier.padding(4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
         ) {
-
-            ProfilePictureDisplay(
-                group.members.first().profilePictureUrl,
-                false,
-                size = 100.dp)
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = group.name,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = FontSize.header
-                    )
-                )
-            }
-        }
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        HorizontalDivider(
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.surface
-        )
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        // Individual Stats
-        Column(
-            modifier = Modifier.padding(4.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
-            ) {
-                ProfileSegment(
-                    Icons.Default.Groups,
-                    "Group Size",
-                    group.stats.size.toString()
-                )
-                ProfileSegment(
-                    Icons.Default.Cake,
-                    "Avg. Age",
-                    "${group.stats.avgAge?.roundToInt() ?: 0}"
-                )
-            }
+            ProfileSegment(
+                Icons.Default.Cake,
+                "Age",
+                "${group.stats.avgAge?.roundToInt() ?: 0}"
+            )
             ProfileSegment(
                 Icons.Default.AttachMoney,
-                "Avg. Budget",
+                "Budget",
                 "$${group.stats.avgBudget?.roundToInt() ?: 0}"
             )
+        }
+        ProfileSegment(
+            Icons.Default.School,
+            "School",
+            group.stats.universities.first()
+        )
+        ProfileSegment(
+            Icons.Default.DirectionsCar,
+            "Max Commute Time",
+            "${group.stats.avgCommute?.roundToInt() ?: 0} mins"
+        )
+    }
+}
+
+@Composable
+fun GroupCardContent(group: GroupProfile) {
+    Column(
+        modifier = Modifier.padding(4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.extraShort)
+        ) {
             ProfileSegment(
-                Icons.Default.DirectionsCar,
-                "Max Commute Time",
-                "${group.stats.avgCommute?.roundToInt() ?: 0} mins"
+                Icons.Default.Groups,
+                "Group Size",
+                group.stats.size.toString()
+            )
+            ProfileSegment(
+                Icons.Default.Cake,
+                "Avg. Age",
+                "${group.stats.avgAge?.roundToInt() ?: 0}"
             )
         }
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        HorizontalDivider(
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.surface
+        ProfileSegment(
+            Icons.Default.AttachMoney,
+            "Avg. Budget",
+            "$${group.stats.avgBudget?.roundToInt() ?: 0}"
         )
-
-        Spacer(Modifier.height(Spacing.slightlyShort))
-
-        AboutSection(group.bio, false)
+        ProfileSegment(
+            Icons.Default.DirectionsCar,
+            "Max Commute Time",
+            "${group.stats.avgCommute?.roundToInt() ?: 0} mins"
+        )
     }
 }
 
