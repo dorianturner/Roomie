@@ -36,12 +36,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
@@ -67,12 +69,12 @@ fun ProfileCard(group: GroupProfile) {
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(Spacing.short)
                 .fillMaxSize(),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.extremelyShort),
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
@@ -80,17 +82,18 @@ fun ProfileCard(group: GroupProfile) {
                 ProfilePictureDisplay(
                     group.members.first().profilePictureUrl,
                     isIndividual,
-                    size = 100.dp)
+                    size = 90.dp)
 
                 // Name Column
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = group.name,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary,

@@ -29,7 +29,9 @@ val DarkSurface = Color(0xFF151716)       // deep surface for cards / sheets
 val DarkInactive = Color(0xFF49564A)      // muted dark disabled color
 val DarkOutline = Color(0xFF8F6400) // musty gold
 val DarkOutlineVariant = Color(0xFFA8883E) // dark faint yellow
-val DarkScrim = Color(0xFF9F7420) // light musty gold
+val DarkScrim = Color(0xFF0E1110)
+
+val DarkScrim2 = Color(0xFF9F7420) // light musty gold
 
 val DarkContrast = Color.White
 

@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import com.example.roomie.components.PreferenceWeights
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
@@ -47,6 +48,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.overlays.ProfileOnTap
 import com.example.roomie.components.soundManager.LocalSoundManager
 import com.example.roomie.components.userDiscovery.ProfileCard
 import com.example.roomie.ui.theme.FontSize
@@ -65,11 +67,15 @@ private val weightLabels = arrayOf(
 
 enum class SwipeDirection { LEFT, RIGHT, NONE }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDiscoveryScreen(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+
+    var showOverlay by remember { mutableStateOf(false) }
+    var selectedProfile by remember { mutableStateOf<GroupProfile?>(null) }
     var matches by remember { mutableStateOf<List<GroupProfile>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var currentIndex by remember { mutableStateOf(0) }
@@ -147,12 +153,14 @@ fun UserDiscoveryScreen(
                 if (currentProfile != null) {
                     SwipeableMatchCard(
                         profile = currentProfile,
-                        onSwiped = {
-                            dir ->
+                        onSwiped = { dir ->
                             coroutineScope.launch {
                                 if (currentUserId != null) {
                                     db.collection("users").document(currentUserId)
-                                        .update("seenUsersTimestamps.${currentProfile.id}", System.currentTimeMillis())
+                                        .update(
+                                            "seenUsersTimestamps.${currentProfile.id}",
+                                            System.currentTimeMillis()
+                                        )
                                         .await()
                                 }
 
@@ -160,7 +168,10 @@ fun UserDiscoveryScreen(
                                     SwipeDirection.RIGHT -> {
                                         try {
                                             if (currentUserId == null) {
-                                                Log.e("UserDiscovery", "No current user id - cannot create chat")
+                                                Log.e(
+                                                    "UserDiscovery",
+                                                    "No current user id - cannot create chat"
+                                                )
                                                 return@launch
                                             }
 
@@ -171,23 +182,36 @@ fun UserDiscoveryScreen(
 
                                             // Probably quite wasteful
                                             // Fetch current user to get groupId
-                                            val currentUserSnapshot = db.collection("users").document(currentUserId).get().await()
-                                            val currentUserGroupId = currentUserSnapshot.getString("groupId")
-                                                ?: run {
-                                                    Log.e("UserDiscovery", "Current user has no groupId")
-                                                    return@launch
-                                                }
+                                            val currentUserSnapshot =
+                                                db.collection("users").document(currentUserId).get()
+                                                    .await()
+                                            val currentUserGroupId =
+                                                currentUserSnapshot.getString("groupId")
+                                                    ?: run {
+                                                        Log.e(
+                                                            "UserDiscovery",
+                                                            "Current user has no groupId"
+                                                        )
+                                                        return@launch
+                                                    }
 
                                             // Fetch current user's group members
-                                            val currentGroupSnapshot = db.collection("groups").document(currentUserGroupId).get().await()
-                                            val currentGroupMembers = currentGroupSnapshot.get("members") as? List<Map<String, Any>> ?: emptyList()
-                                            val currentGroupMemberIds = currentGroupMembers.mapNotNull { it["id"] as? String }
+                                            val currentGroupSnapshot =
+                                                db.collection("groups").document(currentUserGroupId)
+                                                    .get().await()
+                                            val currentGroupMembers =
+                                                currentGroupSnapshot.get("members") as? List<Map<String, Any>>
+                                                    ?: emptyList()
+                                            val currentGroupMemberIds =
+                                                currentGroupMembers.mapNotNull { it["id"] as? String }
 
                                             // Get swiped group's members
-                                            val otherGroupMembers = currentProfile.members.map { it.id }
+                                            val otherGroupMembers =
+                                                currentProfile.members.map { it.id }
 
                                             // Combine all member IDs
-                                            var allParticipantIds = (currentGroupMemberIds + otherGroupMembers).distinct()
+                                            var allParticipantIds =
+                                                (currentGroupMemberIds + otherGroupMembers).distinct()
                                             if (!allParticipantIds.contains(currentUserId)) {
                                                 allParticipantIds += currentUserId
                                             }
@@ -198,10 +222,12 @@ fun UserDiscoveryScreen(
                                                 .get()
                                                 .await()
 
-                                            val existingDoc = snapshot.documents.firstOrNull { doc ->
-                                                val participants = doc.get("participants") as? List<*>
-                                                participants?.toSet() == allParticipantIds.toSet()
-                                            }
+                                            val existingDoc =
+                                                snapshot.documents.firstOrNull { doc ->
+                                                    val participants =
+                                                        doc.get("participants") as? List<*>
+                                                    participants?.toSet() == allParticipantIds.toSet()
+                                                }
 
                                             // Create conversation if it doesn't exist
                                             val conversationId = if (existingDoc != null) {
@@ -220,9 +246,14 @@ fun UserDiscoveryScreen(
                                             navController.navigate("chat/$conversationId/$chatTitle")
 
                                         } catch (e: Exception) {
-                                            Log.e("UserDiscovery", "Failed to open/create chat: ${e.message}", e)
+                                            Log.e(
+                                                "UserDiscovery",
+                                                "Failed to open/create chat: ${e.message}",
+                                                e
+                                            )
                                         }
                                     }
+
                                     SwipeDirection.LEFT -> {
 
                                         // play sound
@@ -235,11 +266,27 @@ fun UserDiscoveryScreen(
                                             reloadKey++
                                         }
                                     }
+
                                     SwipeDirection.NONE -> {} // No action
                                 }
                             }
+                        },
+                        onClick = {
+                            showOverlay = true
                         }
                     )
+
+                    // Profile screen pops up
+                    if (showOverlay) {
+                        val sheetState = rememberModalBottomSheetState(
+                            skipPartiallyExpanded = true
+                        )
+                        ProfileOnTap(
+                            sheetState,
+                            { showOverlay = false },
+                            groupProfile = currentProfile
+                        )
+                    }
                 } else {
                     Text("All users have been explored")
                 }
@@ -286,7 +333,8 @@ fun ProfileChip(icon: ImageVector, text: String) {
 @Composable
 fun SwipeableMatchCard(
     profile: GroupProfile,
-    onSwiped: (SwipeDirection) -> Unit
+    onSwiped: (SwipeDirection) -> Unit,
+    onClick: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -336,6 +384,9 @@ fun SwipeableMatchCard(
             .anchoredDraggable(
                 state = state,
                 orientation = Orientation.Horizontal,
+            )
+            .combinedClickable(
+                onClick = onClick
             ),
         colors = CardDefaults.cardColors(containerColor = bgColor),
     ) {
