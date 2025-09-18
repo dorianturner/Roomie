@@ -2,11 +2,9 @@ package com.example.roomie.components.chat
 
 import android.content.Context
 import android.util.Log
-import com.example.roomie.components.FunctionsProvider
 import com.example.roomie.components.cancelMerge
 import com.example.roomie.components.cancelMergeTransaction
 import com.example.roomie.components.finaliseMergeGroups
-import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
 import kotlin.collections.containsAll
 
@@ -29,44 +27,24 @@ class PollManager(private val chatManager: ChatManager) {
                     val groupA = groupIds.elementAt(0)
                     val groupB = groupIds.elementAt(1)
 
+                    // Stage 1: Finalise merging group
+                    val mergeFinalised = finaliseMergeGroups(groupA, groupB)
+                    if (!mergeFinalised) {
+                        Log.e("PollManager", "Failed to merge $groupA and $groupB")
+                        return@to
+                    }
+
                     try {
-                        // Stage 1: mark groups as merging (safe client-side)
-                        val mergeStarted = mergeGroups(groupA, groupB)
-                        if (!mergeStarted) {
-                            Log.e("PollManager", "Failed to start merge between $groupA and $groupB")
-                            return@to
-                        }
-
-                        // Stage 2: request server-side finalisation (admin)
-                        val funcResult = try {
-                            FunctionsProvider.instance
-                                .getHttpsCallable("finaliseMergeGroupsAdmin")
-                                .call(mapOf("groupA" to groupA, "groupB" to groupB))
-                        } catch (e: Exception) {
-                            Log.e("PollManager", "Callable finaliseMergeGroupsAdmin failed: ${e.message}", e)
-                            null
-                        }
-
-                        if (funcResult != null) {
-                            // server finalised the merge successfully — update convo metadata
-                            try {
-                                chatManager.convoRef.update(
-                                    mapOf(
-                                        "chatType" to ChatType.MY_GROUP.name,
-                                        "isGroup" to true,
-                                        "activePoll" to null
-                                    )
-                                ).await()
-                                Log.d("PollManager", "Conversation updated to MY_GROUP after merge")
-                            } catch (e: Exception) {
-                                Log.e("PollManager", "Error updating conversation after server finalise: ${e.message}", e)
-                            }
-                        } else {
-                            // server call failed or not available — keep 'mergingWith' markers and inform via logs
-                            Log.d("PollManager", "Merge started (groups marked mergingWith); awaiting server finalisation")
-                        }
+                        chatManager.convoRef.update(
+                            mapOf(
+                                "chatType" to ChatType.MY_GROUP.name,
+                                "isGroup" to true,
+                                "activePoll" to null
+                            )
+                        ).await()
+                        Log.d("PollManager", "Conversation updated to MY_GROUP after merge")
                     } catch (e: Exception) {
-                        Log.e("PollManager", "Error while merging groups: ${e.message}", e)
+                        Log.e("PollManager", "Error updating conversation after server finalise: ${e.message}", e)
                     }
                 } else {
                     Log.d("PollManager", "Not enough groups to merge, expected 2, got ${groupIds.size}")
@@ -86,6 +64,9 @@ class PollManager(private val chatManager: ChatManager) {
                 if (groupIds.size == 2) {
                     cancelMerge(groupIds.first(), groupIds.last())
                 }
+
+                chatManager.convoRef.delete().await()
+                Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
             }
         },
         "finalise" to { poll ->
@@ -118,7 +99,8 @@ class PollManager(private val chatManager: ChatManager) {
                             cancelMergeTransaction(groupIds.first(), groupIds.last(), transaction)
                         }
 
-                        transaction.update(chatManager.convoRef, "activePoll", null)
+                        transaction.delete(chatManager.convoRef)
+                        Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
                     }.await()
                     true
                 } catch (e: Throwable) {
