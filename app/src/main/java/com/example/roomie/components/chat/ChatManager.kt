@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +75,11 @@ class ChatManager(
             .orderBy("timestamp")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    // Handle error
+                    if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.d("ChatManager", "Conversation deleted, stopping listener")
+                    } else {
+                        Log.e("ChatManager", "Listen messages failed: ${error.message}")
+                    }
                     return@addSnapshotListener
                 }
                 val messages = snapshot?.toObjects(Message::class.java) ?: emptyList()
@@ -268,7 +273,11 @@ class ChatManager(
         return convoRef
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("ChatManager", "Listen conversation failed: ${error.message}")
+                    if (error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                        Log.d("ChatManager", "Conversation deleted, stopping listener")
+                    } else {
+                        Log.e("ChatManager", "Listen conversation failed: ${error.message}")
+                    }
                     return@addSnapshotListener
                 }
                 if (snapshot != null && snapshot.exists()) {

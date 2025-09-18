@@ -84,7 +84,7 @@ class PollManager(private val chatManager: ChatManager) {
     private val voteEffectsRegistry: MutableMap<String, suspend (Context, String, Poll) -> Unit> = mutableMapOf(
         "merge" to { context, uid, poll ->
             if (poll.votes[uid] == "no") {
-                val cancelled = try {
+                try {
                     chatManager.db.runTransaction { transaction ->
                         Log.d("PollManager", "User $uid voted no, vetoing merge")
                         val convoSnap = transaction.get(chatManager.convoRef)
@@ -106,14 +106,6 @@ class PollManager(private val chatManager: ChatManager) {
                 } catch (e: Throwable) {
                     Log.e("PollManager", "Error cancelling merge", e)
                     false
-                }
-                if (cancelled) {
-                    chatManager.sendMessage(
-                        context = context,
-                        senderId = "system",
-                        type = "system",
-                        text = "Poll: ${poll.question}\nResolution: Vetoed"
-                    )
                 }
             }
         },
