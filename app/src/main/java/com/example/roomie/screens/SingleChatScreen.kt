@@ -46,6 +46,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
 import com.example.roomie.components.chat.ABOVE_NANOSECOND_DIGITS
 
 import com.example.roomie.components.chat.AttachedFile
@@ -94,6 +97,17 @@ fun SingleChatScreen(
 
     var conversationState by remember { mutableStateOf<Conversation?>(null) }
     var mergePollStarted by remember { mutableStateOf(false) } // prevents duplicate auto-creates
+
+    // used by chatManager to delete conversation and invoke onBack
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(chatManager) {
+        chatManager.conversationDeleted
+            .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .collect {
+                onBack() // trigger navigation
+            }
+    }
+
 
     // Listen for messages
     DisposableEffect(chatManager) {

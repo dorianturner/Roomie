@@ -12,6 +12,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -29,6 +31,16 @@ class ChatManager(
         }
 
     private val userNameMap: MutableMap<String, String> = mutableMapOf()
+
+    private val _conversationDeleted = MutableSharedFlow<Unit>()
+    val conversationDeleted = _conversationDeleted.asSharedFlow()
+
+    // delete the conversation
+    suspend fun deleteConversation() {
+        if (conversationId == null) return
+        convoRef.delete().await()
+        _conversationDeleted.emit(Unit) // signal upwards
+    }
 
     // creates new conversationID if one wasn't passed in
 

@@ -99,9 +99,9 @@ class PollManager(private val chatManager: ChatManager) {
                             cancelMergeTransaction(groupIds.first(), groupIds.last(), transaction)
                         }
 
-                        transaction.delete(chatManager.convoRef)
                         Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
                     }.await()
+                    chatManager.deleteConversation()
                     true
                 } catch (e: Throwable) {
                     Log.e("PollManager", "Error cancelling merge", e)
