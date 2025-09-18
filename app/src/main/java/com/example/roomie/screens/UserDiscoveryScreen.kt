@@ -47,7 +47,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import com.example.roomie.components.GroupProfile
-import com.example.roomie.components.mergeGroups
 import com.example.roomie.components.overlays.ProfileOnTap
 import com.example.roomie.components.soundManager.LocalSoundManager
 import com.example.roomie.components.userDiscovery.ProfileCard
@@ -193,15 +192,6 @@ fun UserDiscoveryScreen(
                                                         )
                                                         return@launch
                                                     }
-
-                                            // initiate merge
-                                            if (!mergeGroups(currentUserGroupId, currentProfile.id)) {
-                                                Log.e(
-                                                    "UserDiscovery",
-                                                    "Failed to initiate merge, cancelling creating group"
-                                                )
-                                                return@launch
-                                            }
 
                                             // Fetch current user's group members
                                             val currentGroupSnapshot =

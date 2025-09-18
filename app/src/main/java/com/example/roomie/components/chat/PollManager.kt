@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.roomie.components.cancelMerge
 import com.example.roomie.components.cancelMergeTransaction
 import com.example.roomie.components.finaliseMergeGroups
+import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
 import kotlin.collections.containsAll
 
@@ -101,10 +102,33 @@ class PollManager(private val chatManager: ChatManager) {
 
                         Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
                     }.await()
-                    chatManager.deleteConversation()
                     true
                 } catch (e: Throwable) {
                     Log.e("PollManager", "Error cancelling merge", e)
+                    false
+                } finally {
+                    chatManager.deleteConversation()
+                }
+            } else if (poll.votes[uid] == "yes") {
+                // if anyone votes yes, try to initiate merge
+                try {
+                    Log.d("PollManager", "User $uid voted yes, attempting to initialise merge")
+                    val convoSnap = chatManager.convoRef.get().await()
+                    val participantUids =
+                        convoSnap.get("participants") as? List<String> ?: emptyList()
+                    val groupIds = participantUids.mapNotNull { uid ->
+                        val userSnap =
+                            chatManager.db.collection("users").document(uid).get().await()
+                        userSnap.getString("groupId")
+                    }.toSet()
+                    if (groupIds.size == 2) {
+                        mergeGroups(groupIds.first(), groupIds.last())
+                    }
+
+                    Log.d("PollManager","Successfully initiated merge")
+                    true
+                } catch (e: Throwable) {
+                    Log.e("PollManager", "Error initiating merge", e)
                     false
                 }
             }
