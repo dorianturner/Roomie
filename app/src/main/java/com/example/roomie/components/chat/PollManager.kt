@@ -2,9 +2,11 @@ package com.example.roomie.components.chat
 
 import android.content.Context
 import android.util.Log
+import com.example.roomie.components.FunctionsProvider
 import com.example.roomie.components.cancelMerge
 import com.example.roomie.components.cancelMergeTransaction
 import com.example.roomie.components.finaliseMergeGroups
+import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
 import kotlin.collections.containsAll
 
@@ -13,41 +15,77 @@ class PollManager(private val chatManager: ChatManager) {
     private val endEffectsRegistry: MutableMap<String, suspend (Poll) -> Unit> = mutableMapOf(
         "merge" to { poll ->
             if (poll.resolution == "Unanimous Yes") {
-                Log.d("PollManager", "Unanimous Yes detected, merging conversations")
+                Log.d("PollManager", "Unanimous Yes detected, merging groups")
+
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids =
-                    convoSnap.get("participants") as? List<String> ?: emptyList()
+                val participantUids = convoSnap.get("participants") as? List<String> ?: emptyList()
+
                 val groupIds = participantUids.mapNotNull { uid ->
-                    val userSnap =
-                        chatManager.db.collection("users").document(uid).get().await()
+                    val userSnap = chatManager.db.collection("users").document(uid).get().await()
                     userSnap.getString("groupId")
                 }.toSet()
+
                 if (groupIds.size == 2) {
-                    val success = finaliseMergeGroups(groupIds.first(), groupIds.last())
-                    if (success) {
-                        Log.d("PollManager", "Merged groups ${groupIds.first()} and ${groupIds.last()}")
-                    } else {
-                        Log.e("PollManager", "Failed to merge groups ${groupIds.first()} and ${groupIds.last()}")
+                    val groupA = groupIds.elementAt(0)
+                    val groupB = groupIds.elementAt(1)
+
+                    try {
+                        // Stage 1: mark groups as merging (safe client-side)
+                        val mergeStarted = mergeGroups(groupA, groupB)
+                        if (!mergeStarted) {
+                            Log.e("PollManager", "Failed to start merge between $groupA and $groupB")
+                            return@to
+                        }
+
+                        // Stage 2: request server-side finalisation (admin)
+                        val funcResult = try {
+                            FunctionsProvider.instance
+                                .getHttpsCallable("finaliseMergeGroupsAdmin")
+                                .call(mapOf("groupA" to groupA, "groupB" to groupB))
+                        } catch (e: Exception) {
+                            Log.e("PollManager", "Callable finaliseMergeGroupsAdmin failed: ${e.message}", e)
+                            null
+                        }
+
+                        if (funcResult != null) {
+                            // server finalised the merge successfully — update convo metadata
+                            try {
+                                chatManager.convoRef.update(
+                                    mapOf(
+                                        "chatType" to ChatType.MY_GROUP.name,
+                                        "isGroup" to true,
+                                        "activePoll" to null
+                                    )
+                                ).await()
+                                Log.d("PollManager", "Conversation updated to MY_GROUP after merge")
+                            } catch (e: Exception) {
+                                Log.e("PollManager", "Error updating conversation after server finalise: ${e.message}", e)
+                            }
+                        } else {
+                            // server call failed or not available — keep 'mergingWith' markers and inform via logs
+                            Log.d("PollManager", "Merge started (groups marked mergingWith); awaiting server finalisation")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("PollManager", "Error while merging groups: ${e.message}", e)
                     }
                 } else {
                     Log.d("PollManager", "Not enough groups to merge, expected 2, got ${groupIds.size}")
                 }
-                // TODO: delete subgroup convos
 
             } else {
-                Log.d("PollManager", "Unanimous Yes not detected, not merging conversations")
+                Log.d("PollManager", "Poll failed, not merging groups")
+
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids =
-                    convoSnap.get("participants") as? List<String> ?: emptyList()
+                val participantUids = convoSnap.get("participants") as? List<String> ?: emptyList()
+
                 val groupIds = participantUids.mapNotNull { uid ->
-                    val userSnap =
-                        chatManager.db.collection("users").document(uid).get().await()
+                    val userSnap = chatManager.db.collection("users").document(uid).get().await()
                     userSnap.getString("groupId")
                 }.toSet()
+
                 if (groupIds.size == 2) {
                     cancelMerge(groupIds.first(), groupIds.last())
                 }
-                // TODO: delete convo
             }
         },
         "finalise" to { poll ->
@@ -113,9 +151,30 @@ class PollManager(private val chatManager: ChatManager) {
         }
     )
 
-    suspend fun createPoll(question: String, pollType: String) {
-        val poll = Poll(question = question, type = pollType)
-        chatManager.convoRef.update("activePoll", poll).await()
+    suspend fun createPoll(question: String, pollType: String) : Boolean {
+        return try {
+            chatManager.db.runTransaction { transaction ->
+                val convoSnap = transaction.get(chatManager.convoRef)
+                val existing = convoSnap.get("activePoll")
+                if (existing != null) {
+                    false
+                } else {
+                    val poll = Poll(question = question, type = pollType)
+                    val pollMap = mapOf(
+                        "question" to poll.question,
+                        "votes" to poll.votes,
+                        "closed" to poll.closed,
+                        "resolution" to poll.resolution,
+                        "type" to poll.type
+                    )
+                    transaction.update(chatManager.convoRef, "activePoll", pollMap)
+                    true
+                }
+            }.await()
+        } catch (e: Exception) {
+            Log.e("PollManager", "createPollIfMissing error: ${e.message}", e)
+            false
+        }
     }
 
     suspend fun castVote(context: Context, userId: String, choice: String) {

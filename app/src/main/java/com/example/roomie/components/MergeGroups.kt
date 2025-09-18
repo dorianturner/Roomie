@@ -250,17 +250,36 @@ fun cancelMergeTransaction(groupAID: String, groupBID: String, transaction: Tran
     val groupASnap = transaction.get(groupARef)
     val groupBSnap = transaction.get(groupBRef)
 
-    if (!groupASnap.exists() || !groupBSnap.exists()) {
-        throw Exception("One or both groups do not exist")
+    // Only proceed if both exist
+    if (!groupASnap.exists() && !groupBSnap.exists()) {
+        Log.d("MergeGroups", "Both groups missing, nothing to cancel")
+        return
     }
 
+    if (!groupASnap.exists()) {
+        Log.d("MergeGroups", "Group A missing, cancelling merge only for Group B")
+        if (groupBSnap.getString("mergingWith") == groupAID) {
+            transaction.update(groupBRef, "mergingWith", null)
+        }
+        return
+    }
+
+    if (!groupBSnap.exists()) {
+        Log.d("MergeGroups", "Group B missing, cancelling merge only for Group A")
+        if (groupASnap.getString("mergingWith") == groupBID) {
+            transaction.update(groupARef, "mergingWith", null)
+        }
+        return
+    }
+
+    // Both exist: normal cancel
     val mergingA = groupASnap.getString("mergingWith")
     val mergingB = groupBSnap.getString("mergingWith")
 
-    if (mergingA != groupBID || mergingB != groupAID) {
-        throw Exception("Groups are not mutually merging")
+    if (mergingA == groupBID && mergingB == groupAID) {
+        transaction.update(groupARef, "mergingWith", null)
+        transaction.update(groupBRef, "mergingWith", null)
+    } else {
+        Log.d("MergeGroups", "Groups are not mutually merging, nothing to cancel")
     }
-
-    transaction.update(groupARef, "mergingWith", null)
-    transaction.update(groupBRef, "mergingWith", null)
 }

@@ -22,6 +22,7 @@ fun ChatItem(
     onClick: () -> Unit,
     isGroup: Boolean = false,
     groupParticipants: String? = null, // potentially could list participants
+    chatType: ChatType = ChatType.MERGE,
     // lastMessenger: String? = null, // to show who sent latest message
 ) {
     Card(

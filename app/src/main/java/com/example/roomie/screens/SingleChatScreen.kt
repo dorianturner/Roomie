@@ -34,6 +34,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -52,6 +53,8 @@ import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.chat.Message
 import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.AttachmentPreviewSection
+import com.example.roomie.components.chat.ChatType
+import com.example.roomie.components.chat.Conversation
 import com.example.roomie.components.chat.Poll
 import com.example.roomie.components.chat.PollManager
 import com.example.roomie.components.chat.PollSection
@@ -89,6 +92,9 @@ fun SingleChatScreen(
     var activePoll by remember { mutableStateOf<Poll?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
 
+    var conversationState by remember { mutableStateOf<Conversation?>(null) }
+    var mergePollStarted by remember { mutableStateOf(false) } // prevents duplicate auto-creates
+
     // Listen for messages
     DisposableEffect(chatManager) {
         val msgRegistration = chatManager.listenMessages { messages ->
@@ -97,12 +103,29 @@ fun SingleChatScreen(
         }
 
         val convoRegistration = chatManager.listenConversation { convo ->
+            // keep full conversation so we can check chatType
+            conversationState = convo.copy()
+            // keep activePoll in sync for UI
             activePoll = convo.activePoll?.copy()
+            // if there's already an active poll from another client, mark started guard
+            if (convo.activePoll != null) mergePollStarted = true
         }
 
         onDispose {
             msgRegistration.remove()
             convoRegistration.remove()
+        }
+    }
+
+    LaunchedEffect(conversationState?.chatType) {
+        val chatType = conversationState?.chatType
+        if (chatType == ChatType.MERGE && !mergePollStarted) {
+            try {
+                val created = pollManager.createPoll("Merge groups?", "merge")
+                mergePollStarted = mergePollStarted || created
+            } catch (e: Exception) {
+                Log.e("SingleChatScreen", "Failed to auto-start merge poll: ${e.message}")
+            }
         }
     }
 
@@ -231,53 +254,57 @@ fun SingleChatScreen(
                 }
             }
 
-            activePoll?.let { poll ->
+            // Poll UI (show poll if present)
+            if (activePoll != null) {
                 PollSection(
-                    poll = poll,
+                    poll = activePoll!!,
                     onVote = { choice ->
                         coroutineScope.launch {
-                            pollManager.castVote(context, userId = userID, choice)
+                            pollManager.castVote(context, userId = userID!!, choice = choice)
                         }
                     },
                     userId = userID!!
                 )
-            }
-            if (activePoll == null) {
-                Button(
-                    onClick = { showConfirmDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text("Propose to Finalise Group")
-                }
+            } else {
+                // no active poll -> show finalise button only for MY_GROUP (not for MERGE chats)
+                if (conversationState?.chatType == ChatType.MY_GROUP) {
+                    Button(
+                        onClick = { showConfirmDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text("Propose to Finalise Group")
+                    }
 
-                if (showConfirmDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showConfirmDialog = false },
-                        title = { Text("Confirm") },
-                        text = { Text("Are you sure you want to propose finalising this group? This will create a poll.") },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pollManager.createPoll("Finalise Group?", "finalise")
-                                        showConfirmDialog = false
+                    if (showConfirmDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showConfirmDialog = false },
+                            title = { Text("Confirm") },
+                            text = { Text("Are you sure you want to propose finalising this group? This will create a poll.") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            pollManager.createPoll("Finalise Group?", "finalise")
+                                            showConfirmDialog = false
+                                        }
                                     }
+                                ) {
+                                    Text("Yes")
                                 }
-                            ) {
-                                Text("Yes")
+                            },
+                            dismissButton = {
+                                Button(
+                                    onClick = { showConfirmDialog = false }
+                                ) {
+                                    Text("Cancel")
+                                }
                             }
-                        },
-                        dismissButton = {
-                            Button(
-                                onClick = { showConfirmDialog = false }
-                            ) {
-                                Text("Cancel")
-                            }
-                        }
-                    )
+                        )
+                    }
                 }
+                // If chatType == MERGE and activePoll == null -> nothing shown (auto-create should run)
             }
 
             if (attachedFiles.isNotEmpty() && !isUploading) {

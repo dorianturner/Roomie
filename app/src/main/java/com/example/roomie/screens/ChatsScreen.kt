@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
 
 import com.example.roomie.components.chat.ChatManager
+import com.example.roomie.components.chat.ChatType
 import com.example.roomie.components.chat.Conversation
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -41,13 +42,17 @@ fun ChatsScreen(
                 if (e != null || snapshot == null) return@addSnapshotListener
 
                 val allConvos = snapshot.documents.mapNotNull { doc ->
-                    val convo = doc.toObject(Conversation::class.java)?.copy(id = doc.id)
-                    convo
+                    doc.toObject(Conversation::class.java)?.copy(id = doc.id)
                 }
 
-                // just show all conversations (group or 1:1) in one list
+                // Sort so MY_GROUP chats are first
+                val sortedConvos = allConvos.sortedWith(
+                    compareByDescending<Conversation> { it.chatType == ChatType.MY_GROUP }
+                        .thenByDescending { it.lastMessageAt }
+                )
+
                 conversations.clear()
-                conversations.addAll(allConvos)
+                conversations.addAll(sortedConvos)
             }
     }
 
@@ -76,7 +81,8 @@ fun ChatsScreen(
                     onClick = {
                         navController.navigate("chat/${convo.id}/$title")
                     },
-                    isGroup = convo.isGroup
+                    isGroup = convo.isGroup,
+                    chatType = convo.chatType
                 )
             }
         }
