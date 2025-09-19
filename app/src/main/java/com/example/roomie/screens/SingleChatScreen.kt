@@ -61,6 +61,7 @@ import com.example.roomie.components.chat.Conversation
 import com.example.roomie.components.chat.Poll
 import com.example.roomie.components.chat.PollManager
 import com.example.roomie.components.chat.PollSection
+import com.example.roomie.components.chat.PollViewModel
 
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
@@ -79,6 +80,8 @@ fun SingleChatScreen(
 ) {
     val context = LocalContext.current
     val pollManager = PollManager(chatManager)
+    val pollViewModel: PollViewModel = remember { PollViewModel(pollManager) }
+
     val messagesState = remember { mutableStateListOf<Message>() }
 
     var attachedFiles by remember { mutableStateOf<List<AttachedFile>>(emptyList()) }
@@ -273,9 +276,7 @@ fun SingleChatScreen(
                 PollSection(
                     poll = activePoll!!,
                     onVote = { choice ->
-                        coroutineScope.launch {
-                            pollManager.castVote(context, userId = userID!!, choice = choice)
-                        }
+                        pollViewModel.castVote(userId = userID, choice = choice, context = context)
                     },
                     userId = userID!!
                 )
