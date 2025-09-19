@@ -144,6 +144,8 @@ suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
             }
         }
     } catch (e: Exception) {
+        Log.e("MergeGroups", "Error merging", e)
+
         false
     }
 }
@@ -310,7 +312,7 @@ suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
     }
 }
 
-suspend fun finaliseGroups(groupID: String): Boolean {
+suspend fun finaliseGroup(groupID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
     return try {

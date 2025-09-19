@@ -3,6 +3,7 @@ package com.example.roomie.components.chat
 import android.content.Context
 import android.util.Log
 import com.example.roomie.components.cancelMerge
+import com.example.roomie.components.finaliseGroup
 import com.example.roomie.components.finaliseMergeGroups
 import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
@@ -16,7 +17,7 @@ class PollManager(private val chatManager: ChatManager) {
                 Log.d("PollManager", "Unanimous Yes detected, merging groups")
 
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids = convoSnap.get("participants") as? List<String> ?: emptyList()
+                val participantUids = (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
                 val groupIds = participantUids.mapNotNull { uid ->
                     val userSnap = chatManager.db.collection("users").document(uid).get().await()
@@ -54,7 +55,7 @@ class PollManager(private val chatManager: ChatManager) {
                 Log.d("PollManager", "Poll failed, not merging groups")
 
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids = convoSnap.get("participants") as? List<String> ?: emptyList()
+                val participantUids = (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
                 val groupIds = participantUids.mapNotNull { uid ->
                     val userSnap = chatManager.db.collection("users").document(uid).get().await()
@@ -72,6 +73,23 @@ class PollManager(private val chatManager: ChatManager) {
         "finalise" to { poll ->
             if (poll.resolution == "Unanimous Yes") {
                 Log.d("PollManager", "Unanimous Yes detected, finalising group")
+
+                val convoSnap = chatManager.convoRef.get().await()
+                val participantUids = (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                val groupId = participantUids.firstOrNull()?.let { uid ->
+                    val userSnap = chatManager.db.collection("users").document(uid).get().await()
+                    userSnap.getString("groupId")
+                } ?: run {
+                    Log.e("PollManager", "No participants found in conversation")
+                    return@to
+                }
+
+                val groupFinalised = finaliseGroup(groupId)
+                if (!groupFinalised) {
+                    Log.e("PollManager", "Failed to finalise group $groupId")
+                    return@to
+                }
+                Log.d("PollManager", "Group $groupId finalised")
             } else {
                 Log.d("PollManager", "Unanimous Yes not detected, not finalising group")
             }
@@ -88,7 +106,7 @@ class PollManager(private val chatManager: ChatManager) {
                     Log.d("PollManager", "User $uid voted no, vetoing merge")
                     val convoSnap = chatManager.convoRef.get().await()
                     val participantUids =
-                        convoSnap.get("participants") as? List<String> ?: emptyList()
+                        (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                     val groupIds = participantUids.mapNotNull { uid ->
                         val userSnap =
                             chatManager.db.collection("users").document(uid).get().await()
@@ -112,7 +130,7 @@ class PollManager(private val chatManager: ChatManager) {
                     Log.d("PollManager", "User $uid voted yes, attempting to initialise merge")
                     val convoSnap = chatManager.convoRef.get().await()
                     val participantUids =
-                        convoSnap.get("participants") as? List<String> ?: emptyList()
+                        (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                     val groupIds = participantUids.mapNotNull { uid ->
                         val userSnap =
                             chatManager.db.collection("users").document(uid).get().await()
