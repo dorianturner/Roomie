@@ -2,33 +2,8 @@ package com.example.roomie.screens
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Commute
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.example.roomie.components.StudentProfile
-import com.example.roomie.components.MatchingService
-import com.example.roomie.components.chat.ChatManager
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.launch
-import com.example.roomie.components.PreferenceWeights
-
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
@@ -36,22 +11,74 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Commute
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.MatchingService
+import com.example.roomie.components.PreferenceWeights
+import com.example.roomie.components.StudentProfile
+import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.overlays.ProfileOnTap
 import com.example.roomie.components.soundManager.LocalSoundManager
 import com.example.roomie.components.userDiscovery.ProfileCard
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.math.abs
 
 // String descriptions for each of the weights
@@ -213,8 +240,9 @@ fun UserDiscoveryScreen(
                                                 currentProfile.members.map { it.id }
 
                                             // Combine all member IDs
-                                            var allParticipantIds =
+                                            val allParticipantIds =
                                                 (currentGroupMemberIds + otherGroupMembers).distinct()
+                                                    .toMutableList()
                                             if (!allParticipantIds.contains(currentUserId)) {
                                                 allParticipantIds += currentUserId
                                             }
@@ -248,7 +276,8 @@ fun UserDiscoveryScreen(
                                             val chatTitle = Uri.encode(currentProfile.name)
                                             navController.navigate("chat/$conversationId/$chatTitle")
 
-                                        } catch (e: Exception) {
+                                        } catch (
+                                            e: Exception) {
                                             Log.e(
                                                 "UserDiscovery",
                                                 "Failed to open/create chat: ${e.message}",
@@ -364,8 +393,7 @@ fun SwipeableMatchCard(
     LaunchedEffect(state.settledValue) {
         if (state.currentValue == SwipeDirection.LEFT || state.currentValue == SwipeDirection.RIGHT) {
             onSwiped(state.currentValue)
-            state.animateTo(SwipeDirection.NONE, tween(300, 20)) // doesnt work
-            // state.snapTo(SwipeDirection.NONE)
+            state.animateTo(SwipeDirection.NONE, tween(300, 20))
         }
     }
 

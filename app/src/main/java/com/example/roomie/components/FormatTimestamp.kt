@@ -1,10 +1,10 @@
 package com.example.roomie.components
 
 import com.google.firebase.Timestamp
-
 import java.text.DateFormat
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 fun formatTimestamp(timestamp: Timestamp): String {
     val now = Calendar.getInstance()

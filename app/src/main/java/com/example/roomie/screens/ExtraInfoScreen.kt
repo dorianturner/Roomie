@@ -3,12 +3,9 @@ package com.example.roomie.screens
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.MutableState
-import com.example.roomie.components.ProfileTextField
-
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +13,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.roomie.components.OnboardingProfileState
+import com.example.roomie.components.ProfileTextField
 import com.example.roomie.components.ProfileTextFieldView
 import com.example.roomie.components.RoomieTopBar
 import com.example.roomie.components.saveProfile
@@ -77,10 +76,18 @@ fun ExtraInfoScreen(
                         coroutineScope.launch {
                             val success = saveProfile(profileState)
                             if (success) {
-                                Toast.makeText(context, "Profile saved successfully!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Profile saved successfully!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 onFinish()
                             } else {
-                                Toast.makeText(context, "Error saving profile.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    "Error saving profile.",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         }
                     } else {
@@ -120,7 +127,8 @@ fun ExtraInfoScreen(
                     ProfileTextFieldView(
                         field = ageField.value,
                         onValueChange = {
-                            if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                            if (it.isBlank() ||
+                                (it.all(Char::isDigit) && !it.startsWith("-"))) {
                                 ageField.value.value = it
                                 profileState.age.value = it
                             }
@@ -146,7 +154,8 @@ fun ExtraInfoScreen(
                         ProfileTextFieldView(
                             field = groupSizeMinField.value,
                             onValueChange = {
-                                if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                                if (it.isBlank() ||
+                                    (it.all(Char::isDigit) && !it.startsWith("-"))) {
                                     groupSizeMinField.value.value = it
                                     profileState.groupSizeMin.value = it
                                 }
@@ -159,7 +168,10 @@ fun ExtraInfoScreen(
                         ProfileTextFieldView(
                             field = groupSizeMaxField.value,
                             onValueChange = {
-                                if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                                if (it.isBlank() ||
+                                    (it.all(Char::isDigit) &&
+                                            !it.startsWith("-")
+                                            )) {
                                     groupSizeMaxField.value.value = it
                                     profileState.groupSizeMax.value = it
                                 }
@@ -173,7 +185,8 @@ fun ExtraInfoScreen(
                     ProfileTextFieldView(
                         field = maxCommuteField.value,
                         onValueChange = {
-                            if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                            if (it.isBlank() ||
+                                (it.all(Char::isDigit) && !it.startsWith("-"))) {
                                 maxCommuteField.value.value = it
                                 profileState.maxCommute.value = it
                             }
@@ -185,7 +198,8 @@ fun ExtraInfoScreen(
                     ProfileTextFieldView(
                         field = maxBudgetField.value,
                         onValueChange = {
-                            if (it.isBlank() || (it.all(Char::isDigit) && !it.startsWith("-"))) {
+                            if (it.isBlank() ||
+                                (it.all(Char::isDigit) && !it.startsWith("-"))) {
                                 maxBudgetField.value.value = it
                                 profileState.maxBudget.value = it
                             }

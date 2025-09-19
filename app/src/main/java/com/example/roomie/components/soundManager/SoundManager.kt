@@ -38,7 +38,7 @@ class SoundManager(context: Context) {
 
         private fun play(id: Int?) {
             if (id == null || id !in loaded) return
-            val streamId = soundPool.play(id, 1f, 1f, 1, 0, 1f)
+            soundPool.play(id, 1f, 1f, 1, 0, 1f)
         }
 
         fun swipeRight() = play(soundIds[UISounds.SWIPE_RIGHT])

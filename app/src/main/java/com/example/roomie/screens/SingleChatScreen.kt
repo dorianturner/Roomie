@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,19 +51,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
 import com.example.roomie.components.chat.ABOVE_NANOSECOND_DIGITS
-
 import com.example.roomie.components.chat.AttachedFile
-import com.example.roomie.components.chat.ChatManager
-import com.example.roomie.components.chat.Message
-import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.AttachmentPreviewSection
+import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.chat.ChatType
 import com.example.roomie.components.chat.Conversation
+import com.example.roomie.components.chat.Message
+import com.example.roomie.components.chat.MessageItem
 import com.example.roomie.components.chat.Poll
 import com.example.roomie.components.chat.PollManager
 import com.example.roomie.components.chat.PollSection
 import com.example.roomie.components.chat.PollViewModel
-
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.auth
@@ -93,7 +92,7 @@ fun SingleChatScreen(
     val userNameCache = remember { mutableStateMapOf<String, String>() }
 
     var isUploading by remember { mutableStateOf(false) }
-    var uploadProgress by remember { mutableStateOf(0f) }
+    var uploadProgress by remember { mutableFloatStateOf(0f) }
 
     var activePoll by remember { mutableStateOf<Poll?>(null) }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -141,7 +140,7 @@ fun SingleChatScreen(
                 val created = pollManager.createPoll("Merge groups?", "merge")
                 mergePollStarted = mergePollStarted || created
             } catch (e: Exception) {
-                Log.e("SingleChatScreen", "Failed to auto-start merge poll: ${e.message}")
+                Log.e("SingleChatScreen", "Failed to auto-start merge poll.", e)
             }
         }
     }
@@ -190,13 +189,13 @@ fun SingleChatScreen(
                         context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                             size = pfd.statSize
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // Ignore and return null
                     }
                 }
 
                 size
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -388,7 +387,6 @@ fun SingleChatScreen(
                                     attachedFiles.forEachIndexed { index, file ->
                                         try {
                                             chatManager.sendMessage(
-                                                context = context,
                                                 senderId = userID!!,
                                                 mediaUri = file.uri,
                                                 type = file.type,
@@ -403,7 +401,7 @@ fun SingleChatScreen(
                                                 }
                                             )
                                         } catch (e: Exception) {
-                                            Log.e("SingleChatScreen", "Failed to upload ${file.name}: ${e.message}")
+                                            Log.e("SingleChatScreen", "Failed to upload ${file.name}.", e)
                                             uploadSuccess = false
                                             // Continue with other files instead of stopping
                                         }
@@ -412,15 +410,15 @@ fun SingleChatScreen(
                                     // Send text message if there's any text input
                                     if (inputText.isNotBlank()) {
                                         try {
-                                            chatManager.sendMessage(context, userID!!, inputText)
+                                            chatManager.sendMessage(userID!!, inputText)
                                         } catch (e: Exception) {
-                                            Log.e("SingleChatScreen", "Failed to send text: ${e.message}")
+                                            Log.e("SingleChatScreen", "Failed to send text", e)
                                             uploadSuccess = false
                                         }
                                     }
 
                                 } catch (e: Exception) {
-                                    Log.e("SingleChatScreen", "Upload failed: ${e.message}")
+                                    Log.e("SingleChatScreen", "Upload failed.", e)
                                     uploadSuccess = false
                                 } finally {
                                     // Only clear if all uploads were successful
@@ -434,10 +432,10 @@ fun SingleChatScreen(
                             } else if (inputText.isNotBlank()) {
                                 // === SEND TEXT ONLY ===
                                 try {
-                                    chatManager.sendMessage(context, userID!!, inputText)
+                                    chatManager.sendMessage(userID!!, inputText)
                                     inputText = ""
                                 } catch (e: Exception) {
-                                    Log.e("SingleChatScreen", "Failed to send text: ${e.message}")
+                                    Log.e("SingleChatScreen", "Failed to send text", e)
                                     // Don't clear input text on error so user can retry
                                 }
                             }

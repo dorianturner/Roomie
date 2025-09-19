@@ -1,10 +1,10 @@
 package com.example.roomie.components
 
-import com.example.roomie.R
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import com.example.roomie.R
 
 @Composable
 fun RoomieNameLogo(

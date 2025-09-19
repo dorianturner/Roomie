@@ -1,7 +1,5 @@
 package com.example.roomie.components
 
-import kotlin.Double
-
 data class GroupProfile(
     val id: String,
     val name: String,

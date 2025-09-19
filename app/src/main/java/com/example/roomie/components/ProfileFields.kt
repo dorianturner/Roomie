@@ -1,18 +1,26 @@
 package com.example.roomie.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 
 // Simple reusable field model
 class ProfileTextField(
@@ -20,7 +28,7 @@ class ProfileTextField(
     value: String = "",
     val keyboardType: KeyboardType = KeyboardType.Text,
     val required: Boolean = true,
-    val validator: ((String) -> Boolean)? = null
+    private val validator: ((String) -> Boolean)? = null
 ) {
     var value by mutableStateOf(value)
     var isError by mutableStateOf(false)
@@ -97,7 +105,6 @@ fun StudentProfileSection(
     addicted: MutableState<ProfileTextField>,
     ideal: MutableState<ProfileTextField>,
     passionate: MutableState<ProfileTextField>,
-
 ) {
     Column {
         Text("Student Profile", style = MaterialTheme.typography.titleLarge)

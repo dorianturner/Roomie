@@ -6,20 +6,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.Firebase
+import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
 import com.example.roomie.navigation.RoomieNavHost
 import com.example.roomie.navigation.Routes
-import com.google.firebase.auth.auth
 import com.example.roomie.ui.theme.RoomieTheme
-
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.google.firebase.firestore.*
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.core.view.WindowCompat
+import com.google.firebase.firestore.firestore
+import com.google.firebase.firestore.firestoreSettings
+import com.google.firebase.firestore.memoryCacheSettings
+import com.google.firebase.firestore.persistentCacheSettings
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth

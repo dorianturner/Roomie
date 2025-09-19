@@ -1,26 +1,52 @@
 package com.example.roomie.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.roomie.components.PhotoItem
-import com.example.roomie.components.listings.Listing
 import com.example.roomie.components.listings.ListingData
 import com.example.roomie.components.listings.ListingPhotosEdit
 import com.example.roomie.components.listings.saveListing
 import com.example.roomie.ui.theme.Spacing
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.toObject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
@@ -55,7 +81,7 @@ fun EditListingScreen(
 
     // --- Load listing if editing ---
     LaunchedEffect(listingId) {
-        if (!isNew && listingId != null) {
+        if (!isNew) {
             try {
                 val snapshot = db.collection("listings").document(listingId).get().await()
                 val data = snapshot.toObject(ListingData::class.java)
@@ -70,7 +96,7 @@ fun EditListingScreen(
                     availableFrom = data.availableFromEpoch
                 }
             } catch (e: Exception) {
-                message = "Failed to load listing."
+                message = "Failed to load listing, ${e.message}"
             }
         }
     }
@@ -206,12 +232,12 @@ fun EditListingScreen(
                                     val ownerName = currentUser?.let {
                                         db.collection("users").document(it.uid).get().await().getString("name")
                                     }
-                                    db.collection("listings").document(listingId!!).set(
+                                    db.collection("listings").document(listingId).set(
                                         listing.toMap(currentUser?.uid ?: "", ownerName)
                                     ).await()
                                     true
                                 }
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 false
                             }
                             isSaving = false
@@ -238,7 +264,7 @@ fun EditListingScreen(
                 // Delete listing button
                 var showDeleteDialog by remember { mutableStateOf(false) }
 
-                if (!isNew && listingId != null) {
+                if (!isNew) {
                     Spacer(Modifier.height(16.dp))
                     Button(
                         onClick = { showDeleteDialog = true },
@@ -267,7 +293,7 @@ fun EditListingScreen(
                                                 popUpTo("profile") { inclusive = true }
                                             }
                                         } catch (e: Exception) {
-                                            message = "Failed to delete listing."
+                                            message = "Failed to delete listing, ${e.message}"
                                         }
                                     }
                                 }

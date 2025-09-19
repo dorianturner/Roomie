@@ -1,15 +1,19 @@
 package com.example.roomie.components.listings
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.util.*
+import java.util.Calendar
+import java.util.Date
 
 @Composable
 fun ListingDetailsContent(
@@ -61,8 +65,13 @@ fun ListingDetailsContent(
         }
         // available from date
         listing.availableFrom?.let { timestamp ->
-            val date = Date(timestamp)
-            val dateString = "${date.date}/${(date.month) + 1}/${date.year + 1900}"
+            val date = Date()
+            val calendar = Calendar.getInstance()
+            calendar.time = date
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+            val month = calendar.get(Calendar.MONTH) + 1
+            val year = calendar.get(Calendar.YEAR)
+            val dateString = "$day/$month/$year"
 
             Text(
                 text = "Available from: $dateString",

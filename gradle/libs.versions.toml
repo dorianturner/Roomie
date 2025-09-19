@@ -2,6 +2,7 @@
 agp = "8.12.3"
 coilCompose = "2.7.0"
 firebaseBom = "34.0.0"
+firebaseFunctions = "22.0.0"
 kotlin = "2.2.0"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -11,7 +12,6 @@ kotlinxCoroutinesPlayServices = "1.10.2"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.07.00"
-lottie = "6.6.7"
 lottieVersion = "6.0.0"
 media3Exoplayer = "1.8.0"
 media3Ui = "1.8.0"
@@ -29,6 +29,8 @@ foundationVersion = "1.9.1"
 androidxFoundation = "1.9.1"
 firebaseAppcheckPlayintegrity = "19.0.0"
 firebaseAppcheckDebug = "19.0.0"
+runtimeVersion = "1.9.1"
+foundationLayoutVersion = "1.9.1"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -43,6 +45,7 @@ firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+firebase-functions = { module = "com.google.firebase:firebase-functions", version.ref = "firebaseFunctions" }
 firebase-storage = { module = "com.google.firebase:firebase-storage" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -61,7 +64,6 @@ androidx-navigation-runtime-android = { group = "androidx.navigation", name = "n
 androidx-navigation-compose-android = { group = "androidx.navigation", name = "navigation-compose-android", version.ref = "navigationComposeAndroid" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
-lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
 lottie-v600 = { module = "com.airbnb.android:lottie", version.ref = "lottieVersion" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
@@ -72,6 +74,9 @@ foundation = { group = "androidx.compose.foundation", name = "foundation", versi
 androidx-compose-foundation-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "androidxFoundation" }
 firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity", version.ref = "firebaseAppcheckPlayintegrity" }
 firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug", version.ref = "firebaseAppcheckDebug" }
+runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtimeVersion" }
+foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
+ui-text = { module = "androidx.compose.ui:ui-text" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

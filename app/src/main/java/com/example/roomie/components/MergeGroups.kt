@@ -95,14 +95,14 @@ suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
             val groupASnap = transaction.get(groupARef)
             val groupBSnap = transaction.get(groupBRef)
 
-            if (!groupASnap.exists() || !groupBSnap.exists()) {
-                throw Exception("One or both groups do not exist")
-            }
+            check(
+                groupASnap.exists() && groupBSnap.exists()
+            ) { "One or both groups do not exist" }
 
-            if (groupASnap.getString("mergingWith") != null ||
-                groupBSnap.getString("mergingWith") != null) {
-                throw Exception("One or both groups are already being merged")
-            }
+            check(
+                groupASnap.getString("mergingWith") == null &&
+                        groupBSnap.getString("mergingWith") == null
+            ) { "One or both groups are already being merged" }
 
             transaction.update(groupARef, "mergingWith", groupBID)
             transaction.update(groupBRef, "mergingWith", groupAID)
@@ -162,14 +162,14 @@ suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
             val groupBSnap = transaction.get(groupBRef)
 
             if (!groupASnap.exists() || !groupBSnap.exists()) {
-                throw Exception("One or both groups do not exist")
+                throw IllegalAccessException("One or both groups do not exist")
             }
 
             val mergingA = groupASnap.getString("mergingWith")
             val mergingB = groupBSnap.getString("mergingWith")
 
             if (mergingA != groupBID || mergingB != groupAID) {
-                throw Exception("Groups are not mutually merging")
+                throw IllegalStateException("Groups are not mutually merging")
             }
 
             val membersCountA = groupASnap.getLong("membersCount")?.toInt() ?: 0
@@ -257,16 +257,16 @@ suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
             val groupASnap = transaction.get(groupARef)
             val groupBSnap = transaction.get(groupBRef)
 
-            if (!groupASnap.exists() || !groupBSnap.exists()) {
-                throw Exception("One or both groups do not exist")
-            }
+            check(
+                groupASnap.exists() && groupBSnap.exists()
+            ) { "One or both groups do not exist" }
 
             val mergingA = groupASnap.getString("mergingWith")
             val mergingB = groupBSnap.getString("mergingWith")
 
-            if (mergingA != groupBID || mergingB != groupAID) {
-                throw Exception("Groups are not mutually merging")
-            }
+            check(
+                mergingA == groupBID && mergingB == groupAID
+            ) { "Groups are not mutually merging" }
 
             transaction.update(groupARef, "mergingWith", null)
             transaction.update(groupBRef, "mergingWith", null)

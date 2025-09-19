@@ -1,20 +1,19 @@
 package com.example.roomie.components.chat
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.UploadTask
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -116,7 +115,7 @@ class ChatManager(
                 val uploadTask = storageRef.putFile(mediaUri)
 
                 // coverts the task to a suspend function to track the progress
-                val result = uploadTask.awaitWithProgress(onProgress)
+                uploadTask.awaitWithProgress(onProgress)
 
                 val downloadUrl = storageRef.downloadUrl.await().toString()
 
@@ -124,7 +123,7 @@ class ChatManager(
                 downloadUrl
 
             } catch (e: Exception) {
-                Log.e("ChatManager", "Upload failed: ${e.message}")
+                Log.e("ChatManager", "Upload failed.", e)
                 throw e
             }
         }
@@ -132,7 +131,7 @@ class ChatManager(
     private suspend fun UploadTask.awaitWithProgress(
         onProgress: (progress: Float) -> Unit
     ): UploadTask.TaskSnapshot = suspendCancellableCoroutine { continuation ->
-        val task = addOnProgressListener { snapshot ->
+        addOnProgressListener { snapshot ->
             val progress = snapshot.bytesTransferred.toFloat() / snapshot.totalByteCount
             onProgress(progress)
         }
@@ -153,14 +152,13 @@ class ChatManager(
         continuation.invokeOnCancellation {
             try {
                 cancel()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Ignore cancellation errors
             }
         }
     }
 
     suspend fun sendMessage(
-        context: Context,
         senderId: String,
         text: String? = null,
         type: String = "text",
@@ -216,7 +214,10 @@ class ChatManager(
         check(conversationId != null) { "Conversation does not exist" }
 
         val snapshot = convoRef.get().await()
-        val conversation = snapshot.toObject(Conversation::class.java) ?: throw IllegalStateException("Conversation not found")
+        val conversation =
+            snapshot.toObject(Conversation::class.java)
+
+        check(conversation != null) { "Conversation not found" }
 
         val updatedParticipants = (conversation.participants + newParticipants).distinct()
 
@@ -265,7 +266,7 @@ class ChatManager(
             try {
                 val userSnap = db.collection("users").document(uid).get().await()
                 userSnap.getString("name")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }

@@ -11,7 +11,7 @@ suspend fun fetchUserNameFromFirestore(uid: String): String {
             .get()
             .await()
         snapshot.getString("name") ?: "Unknown"
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         "Unknown"
     }
 }

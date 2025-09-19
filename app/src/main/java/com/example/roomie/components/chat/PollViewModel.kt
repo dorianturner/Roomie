@@ -14,7 +14,7 @@ class PollViewModel (
             try {
                 pollManager.castVote(context, userId, choice)
             } catch (e: Exception) {
-                Log.e("PollViewModel", "Failed to cast vote: ${e.message}")
+                Log.e("PollViewModel", "Failed to cast vote.", e)
             }
         }
     }

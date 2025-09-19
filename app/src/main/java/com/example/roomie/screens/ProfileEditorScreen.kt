@@ -3,28 +3,50 @@ package com.example.roomie.screens
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
-import com.example.roomie.components.*
+import com.example.roomie.components.FunctionsProvider
+import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.LandlordProfileSection
+import com.example.roomie.components.PhotoItem
+import com.example.roomie.components.ProfileTextField
+import com.example.roomie.components.ProfileTextFieldView
+import com.example.roomie.components.StudentProfile
+import com.example.roomie.components.StudentProfileSection
+import com.example.roomie.components.deletePhoto
+import com.example.roomie.components.generateGroupStats
 import com.example.roomie.ui.theme.Spacing
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.firestore
-import com.example.roomie.components.PhotoItem
-import com.example.roomie.components.deletePhoto
-import androidx.compose.runtime.rememberCoroutineScope
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
-import kotlin.collections.set
 
 fun validateFields(fields: List<MutableState<ProfileTextField>>): Boolean {
     var isValid = true
@@ -74,11 +96,15 @@ fun ProfileEditorScreen(
     val bedtimeState = remember { mutableIntStateOf(1) }
     val alcoholState = remember { mutableIntStateOf(1) }
     val petState = remember {mutableStateOf("No")}
-    val musicField = remember { mutableStateOf(ProfileTextField("The type of music I like the most is...", "", required = false)) }
+    val musicField = remember { mutableStateOf(ProfileTextField(
+        "The type of music I like the most is...",
+        "",
+        required = false))
+    }
     val petPeeveField = remember { mutableStateOf(ProfileTextField("My biggest pet peeve is...", "", required = false)) }
     val addictedField = remember { mutableStateOf(ProfileTextField("My ideal night is...", "", required = false)) }
     val idealField = remember { mutableStateOf(ProfileTextField("I am completely addicted to", "", required = false)) }
-    val passionateField = remember { mutableStateOf(ProfileTextField("I am passionate about", "", required = false),) }
+    val passionateField = remember { mutableStateOf(ProfileTextField("I am passionate about", "", required = false)) }
     var groupId by remember { mutableStateOf<String?>(null) }
 
     val allFields = remember {
@@ -333,6 +359,8 @@ fun ProfileEditorScreen(
                         data["studentIdeal"] = idealField.value.value
                         data["studentPassionate"] = passionateField.value.value
 
+                        val groupSizes = data["studentDesiredGroupSize"] as? List<*>
+
                         val currentStudent = StudentProfile(
                             id = currentUser.uid,
                             name = data["name"] as String,
@@ -343,8 +371,8 @@ fun ProfileEditorScreen(
                             studentBedtime = data["studentBedtime"] as Int?,
                             studentAlcohol = data["studentAlcohol"] as Int?,
                             studentSmokingStatus = data["studentSmokingStatus"] as String?,
-                            groupMin = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(0),
-                            groupMax = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(1),
+                            groupMin = groupSizes?.getOrNull(0) as? Int,
+                            groupMax = groupSizes?.getOrNull(1) as? Int,
                             studentMaxCommute = data["studentMaxCommute"] as Int?,
                             studentMaxBudget = data["studentMaxBudget"] as Int?,
                             studentUniversity = data["studentUniversity"] as String?,

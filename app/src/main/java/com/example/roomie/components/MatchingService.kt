@@ -9,7 +9,9 @@ import kotlinx.coroutines.tasks.await
 
 object MatchingService {
     private val auth = FirebaseAuth.getInstance()
-    private val db = FirebaseFirestore.getInstance()
+    private val db by lazy {
+        FirebaseFirestore.getInstance()
+    }
 
     fun docToStudentProfileSafe(doc: DocumentSnapshot): StudentProfile? {
         val d = doc.data ?: return null
@@ -101,7 +103,16 @@ object MatchingService {
     suspend fun findMatchesForCurrentUser(
         weights: PreferenceWeights
     ): List<GroupProfile> {
-        val curUser = auth.currentUser?.uid?.let { db.collection("users").document(it).get().await() } ?: return emptyList()
+        val curUser =
+            auth.currentUser
+                ?.uid
+                ?.let {
+                    db.collection("users")
+                        .document(it)
+                        .get()
+                        .await()
+                }
+                ?: return emptyList()
         val currentUser = docToStudentProfileSafe(curUser) ?: return emptyList()
 
         val user = FirebaseAuth.getInstance().currentUser
@@ -125,22 +136,29 @@ object MatchingService {
                 )
             )
             .await()
-            .data as? List<Map<String, Any>> ?: emptyList()
+            .data as? List<*>
 
-        if (rawResults.isEmpty()) return emptyList()
+        val results = rawResults
+            ?.mapNotNull { raw ->
+                (raw as? Map<*, *>)?.mapNotNull { (k, v) ->
+                    if (k is String) k to v else null
+                }?.toMap()
+            } ?: emptyList()
 
-        val matches = rawResults.map { map ->
+        if (results.isEmpty()) return emptyList()
+
+        val matches = results.map { map ->
             val id = map["id"] as String
             val rawScore = (map["score"] as Number).toDouble()
-            val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) {
+            /*val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) {
                 val now = System.currentTimeMillis()
                 val lastSeen = currentUser.seenUsersTimestamps[id] ?: 0L
                 val daysSinceSeen = (now - lastSeen) / (1000 * 60 * 60 * 24)
                 val decayDays = 7.0
                 val factor = (0.7 + (daysSinceSeen / decayDays) * (1.0 - 0.7)).coerceIn(0.7, 1.0)
                 rawScore * factor
-            } else rawScore
-            MatchResult(id = id, score = adjustedScore)
+            } else rawScore*/
+            MatchResult(id = id, score = rawScore)
         }
 
         for (match in matches) {
@@ -155,8 +173,13 @@ object MatchingService {
             .get()
             .await()
 
-        val profilesById = snapshot.documents.associateBy({ it.id }, { docToGroupProfileSafe(it) })
+        val profilesById =
+            snapshot
+                .documents
+                .associateBy(
+                    { it.id },
+                    { docToGroupProfileSafe(it) }
+                )
         return matches.mapNotNull { profilesById[it.id] }
     }
 }
-

@@ -7,7 +7,6 @@ import com.example.roomie.components.finaliseGroup
 import com.example.roomie.components.finaliseMergeGroups
 import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
-import kotlin.collections.containsAll
 
 class PollManager(private val chatManager: ChatManager) {
 
@@ -17,10 +16,17 @@ class PollManager(private val chatManager: ChatManager) {
                 Log.d("PollManager", "Unanimous Yes detected, merging groups")
 
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids = (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                val participantUids =
+                    (convoSnap.get("participants") as? List<*>)
+                        ?.filterIsInstance<String>() ?: emptyList()
 
                 val groupIds = participantUids.mapNotNull { uid ->
-                    val userSnap = chatManager.db.collection("users").document(uid).get().await()
+                    val userSnap =
+                        chatManager.db
+                            .collection("users")
+                            .document(uid)
+                            .get()
+                            .await()
                     userSnap.getString("groupId")
                 }.toSet()
 
@@ -43,22 +49,39 @@ class PollManager(private val chatManager: ChatManager) {
                                 "activePoll" to null
                             )
                         ).await()
-                        Log.d("PollManager", "Conversation updated to MY_GROUP after merge")
+                        Log.d(
+                            "PollManager",
+                            "Conversation updated to MY_GROUP after merge"
+                        )
                     } catch (e: Exception) {
-                        Log.e("PollManager", "Error updating conversation after server finalise: ${e.message}", e)
+                        Log.e(
+                            "PollManager",
+                            "Error updating conversation after server finalise: ${e.message}",
+                            e
+                        )
                     }
                 } else {
-                    Log.d("PollManager", "Not enough groups to merge, expected 2, got ${groupIds.size}")
+                    Log.d(
+                        "PollManager",
+                        "Not enough groups to merge, expected 2, got ${groupIds.size}"
+                    )
                 }
 
             } else {
                 Log.d("PollManager", "Poll failed, not merging groups")
 
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids = (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                val participantUids =
+                    (convoSnap.get("participants") as? List<*>)
+                        ?.filterIsInstance<String>() ?: emptyList()
 
                 val groupIds = participantUids.mapNotNull { uid ->
-                    val userSnap = chatManager.db.collection("users").document(uid).get().await()
+                    val userSnap =
+                        chatManager.db
+                            .collection("users")
+                            .document(uid)
+                            .get()
+                            .await()
                     userSnap.getString("groupId")
                 }.toSet()
 
@@ -67,7 +90,10 @@ class PollManager(private val chatManager: ChatManager) {
                 }
 
                 chatManager.convoRef.delete().await()
-                Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
+                Log.d(
+                    "PollManager",
+                    "Conversation ${chatManager.convoRef.id} deleted after failed merge"
+                )
             }
         },
         "finalise" to { poll ->
@@ -75,9 +101,16 @@ class PollManager(private val chatManager: ChatManager) {
                 Log.d("PollManager", "Unanimous Yes detected, finalising group")
 
                 val convoSnap = chatManager.convoRef.get().await()
-                val participantUids = (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                val participantUids =
+                    (convoSnap.get("participants") as? List<*>)
+                        ?.filterIsInstance<String>() ?: emptyList()
                 val groupId = participantUids.firstOrNull()?.let { uid ->
-                    val userSnap = chatManager.db.collection("users").document(uid).get().await()
+                    val userSnap =
+                        chatManager.db
+                            .collection("users")
+                            .document(uid)
+                            .get()
+                            .await()
                     userSnap.getString("groupId")
                 } ?: run {
                     Log.e("PollManager", "No participants found in conversation")
@@ -91,32 +124,46 @@ class PollManager(private val chatManager: ChatManager) {
                 }
                 Log.d("PollManager", "Group $groupId finalised")
             } else {
-                Log.d("PollManager", "Unanimous Yes not detected, not finalising group")
+                Log.d(
+                    "PollManager",
+                    "Unanimous Yes not detected, not finalising group")
             }
         },
         "generic" to { poll ->
-            Log.d("PollManager", "Generic poll effect triggered with result ${poll.resolution}")
+            Log.d(
+                "PollManager",
+                "Generic poll effect triggered with result ${poll.resolution}"
+            )
         }
     )
 
-    private val voteEffectsRegistry: MutableMap<String, suspend (Context, String, Poll) -> Unit> = mutableMapOf(
+    private val voteEffectsRegistry: MutableMap<String, suspend (Context, String, Poll) -> Unit>
+    = mutableMapOf(
         "merge" to { context, uid, poll ->
             if (poll.votes[uid] == "no") {
                 try {
                     Log.d("PollManager", "User $uid voted no, vetoing merge")
                     val convoSnap = chatManager.convoRef.get().await()
                     val participantUids =
-                        (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                        (convoSnap.get("participants") as? List<*>)
+                            ?.filterIsInstance<String>() ?: emptyList()
                     val groupIds = participantUids.mapNotNull { uid ->
                         val userSnap =
-                            chatManager.db.collection("users").document(uid).get().await()
+                            chatManager.db
+                                .collection("users")
+                                .document(uid)
+                                .get()
+                                .await()
                         userSnap.getString("groupId")
                     }.toSet()
                     if (groupIds.size == 2) {
                         cancelMerge(groupIds.first(), groupIds.last())
                     }
 
-                    Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
+                    Log.d(
+                        "PollManager",
+                        "Conversation ${chatManager.convoRef.id} deleted after failed merge"
+                    )
                     true
                 } catch (e: Throwable) {
                     Log.e("PollManager", "Error cancelling merge", e)
@@ -127,13 +174,21 @@ class PollManager(private val chatManager: ChatManager) {
             } else if (poll.votes[uid] == "yes") {
                 // if anyone votes yes, try to initiate merge
                 try {
-                    Log.d("PollManager", "User $uid voted yes, attempting to initialise merge")
+                    Log.d(
+                        "PollManager",
+                        "User $uid voted yes, attempting to initialise merge"
+                    )
                     val convoSnap = chatManager.convoRef.get().await()
                     val participantUids =
-                        (convoSnap.get("participants") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                        (convoSnap.get("participants") as? List<*>)
+                            ?.filterIsInstance<String>() ?: emptyList()
                     val groupIds = participantUids.mapNotNull { uid ->
                         val userSnap =
-                            chatManager.db.collection("users").document(uid).get().await()
+                            chatManager.db
+                                .collection("users")
+                                .document(uid)
+                                .get()
+                                .await()
                         userSnap.getString("groupId")
                     }.toSet()
                     if (groupIds.size == 2) {
@@ -155,7 +210,6 @@ class PollManager(private val chatManager: ChatManager) {
                 chatManager.convoRef.update("activePoll", null).await()
 
                 chatManager.sendMessage(
-                    context = context,
                     senderId = "system",
                     type = "system",
                     text = "Poll: ${poll.question}\nResolution: Vetoed"
@@ -180,12 +234,16 @@ class PollManager(private val chatManager: ChatManager) {
                         "resolution" to poll.resolution,
                         "type" to poll.type
                     )
-                    transaction.update(chatManager.convoRef, "activePoll", pollMap)
+                    transaction.update(
+                        chatManager.convoRef,
+                        "activePoll",
+                        pollMap
+                    )
                     true
                 }
             }.await()
         } catch (e: Exception) {
-            Log.e("PollManager", "createPollIfMissing error: ${e.message}", e)
+            Log.e("PollManager", "Error creating poll.", e)
             false
         }
     }
@@ -194,40 +252,54 @@ class PollManager(private val chatManager: ChatManager) {
         val pollResult: Poll? = chatManager.db.runTransaction { transaction ->
             val snap = transaction.get(chatManager.convoRef)
             val poll = snap.toObject(Conversation::class.java)?.activePoll
-                ?: throw IllegalStateException("No active poll")
+
+            check(poll != null) { "No active poll" }
 
             if (poll.closed) return@runTransaction null
 
             val updatedVotes = poll.votes.toMutableMap()
             updatedVotes[userId] = choice
 
-            var isClosed = poll.closed
+            var isClosed = false
             var resolution = poll.resolution
 
             val participants = snap.get("participants") as? List<*> ?: emptyList<String>()
 
-            if (updatedVotes.keys.containsAll(participants) && !updatedVotes.values.contains("undecided")) {
+            if (updatedVotes.keys.containsAll(participants) &&
+                !updatedVotes.values.contains("undecided")) {
                 resolution = calculateResolution(updatedVotes)
                 isClosed = true
 
-                transaction.update(chatManager.convoRef, "activePoll", null)
+                transaction.update(
+                    chatManager.convoRef,
+                    "activePoll",
+                    null
+                )
             } else {
-                transaction.update(chatManager.convoRef, "activePoll", mapOf(
-                    "question" to poll.question,
-                    "votes" to updatedVotes.toMap(),
-                    "closed" to false,
-                    "resolution" to resolution,
-                    "type" to poll.type,
-                ))
+                transaction.update(
+                    chatManager.convoRef,
+                    "activePoll",
+                    mapOf(
+                        "question" to poll.question,
+                        "votes" to updatedVotes.toMap(),
+                        "closed" to false,
+                        "resolution" to resolution,
+                        "type" to poll.type,
+                    )
+                )
             }
 
-            poll.copy(votes = updatedVotes.toMap(), closed = isClosed, resolution = resolution, type = poll.type)
+            poll.copy(
+                votes = updatedVotes.toMap(),
+                closed = isClosed,
+                resolution = resolution,
+                type = poll.type
+            )
         }.await()
 
         pollResult?.let { poll ->
             if (poll.closed) {
                 chatManager.sendMessage(
-                    context = context,
                     senderId = "system",
                     type = "system",
                     text = "Poll: ${poll.question}\nResolution: ${poll.resolution}"

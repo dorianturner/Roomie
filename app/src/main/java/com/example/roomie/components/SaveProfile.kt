@@ -1,13 +1,13 @@
 package com.example.roomie.components
 
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlin.coroutines.suspendCoroutine
 import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 suspend fun saveProfile(state: OnboardingProfileState): Boolean {
     val auth: FirebaseAuth = Firebase.auth
@@ -80,6 +80,8 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             if (!state.isLandlord) {
                 val groupRef = db.collection("groups").document(currentUser.uid)
 
+                val groupSizes = data["studentDesiredGroupSize"] as? List<*>
+
                 val members: List<StudentProfile> = listOf(StudentProfile(
                     id = currentUser.uid,
                     name = data["name"] as String,
@@ -90,8 +92,8 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
                     studentBedtime = data["studentBedtime"] as Int?,
                     studentAlcohol = data["studentAlcohol"] as Int?,
                     studentSmokingStatus = data["studentSmokingStatus"] as String?,
-                    groupMin = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(0),
-                    groupMax = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(1),
+                    groupMin = groupSizes?.getOrNull(0) as? Int,
+                    groupMax = groupSizes?.getOrNull(1) as? Int,
                     studentMaxCommute = data["studentMaxCommute"] as Int?,
                     studentMaxBudget = data["studentMaxBudget"] as Int?,
                     studentUniversity = data["studentUniversity"] as String?,

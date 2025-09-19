@@ -19,6 +19,17 @@ ktlint {
 
 detekt {
     buildUponDefaultConfig = true
-    allRules = false
+    allRules = true
     config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+
+    source.setFrom(files("$rootDir/app/src/main/java", "$rootDir/app/src/main/kotlin"))
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    // enable HTML, TXT, XML reports per task
+    reports {
+        html.required.set(true)
+        xml.required.set(true)
+        txt.required.set(true)
+    }
 }

@@ -31,8 +31,6 @@ val DarkOutline = Color(0xFF8F6400) // musty gold
 val DarkOutlineVariant = Color(0xFFA8883E) // dark faint yellow
 val DarkScrim = Color(0xFF0E1110)
 
-val DarkScrim2 = Color(0xFF9F7420) // light musty gold
-
 val DarkContrast = Color.White
 
 val DarkAccent = Color(0xFFFB923C)
