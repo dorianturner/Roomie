@@ -48,6 +48,8 @@ export interface GroupStats {
   // --- Meta ---
   universities: string[]; // not actually used in matching
   profilePictureRatio: number; // 0.0–1.0
+
+  status: number; // 0 = normal, 1 = merging, 2 = finalised
 }
 
 export interface GroupProfile {

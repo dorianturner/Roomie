@@ -80,6 +80,7 @@ fun ProfileEditorScreen(
     val addictedField = remember { mutableStateOf(ProfileTextField("My ideal night is...", "", required = false)) }
     val idealField = remember { mutableStateOf(ProfileTextField("I am completely addicted to", "", required = false)) }
     val passionateField = remember { mutableStateOf(ProfileTextField("I am passionate about", "", required = false),) }
+    var groupId by remember { mutableStateOf<String?>(null) }
 
     val allFields = remember {
         mutableListOf<MutableState<ProfileTextField>>()
@@ -130,7 +131,6 @@ fun ProfileEditorScreen(
                             groupSizeMaxField.value.value = (group?.getOrNull(1) as? Long)?.toString().orEmpty()
                             maxCommuteField.value.value = doc.getLong("studentMaxCommute")?.toString().orEmpty()
                             maxBudgetField.value.value = doc.getLong("studentMaxBudget")?.toString().orEmpty()
-                            isPartOfGroup = doc.getString("groupId") != null
                             // load lifestyle fields
                             smokingStatusState.value = doc.getString("studentSmokingStatus") ?: "Neither"
                             val bedtimeAny = doc.get("studentBedtime")
@@ -146,6 +146,8 @@ fun ProfileEditorScreen(
                             addictedField.value.value = doc.getString("studentAddicted").orEmpty()
                             idealField.value.value = doc.getString("studentIdeal").orEmpty()
                             passionateField.value.value = doc.getString("studentPassionate").orEmpty()
+                            groupId = doc.getString("groupId")
+                            Log.d("ProfileEditorScreen", "Loaded profile for user $uid, groupId = $groupId")
                         }
                     }
                 }
@@ -362,11 +364,10 @@ fun ProfileEditorScreen(
                             commute == null || budget == null
                         ) isMinProfileSet = false
 
-                        if (!isPartOfGroup) {
+                        if (groupId == null) {
                             // Case 1: user not in a group → create one
                             Log.d("ProfileEditorScreen", "Creating group for user ${currentUser.uid}")
-                            val groupId = currentUser.uid
-                            data["groupId"] = groupId
+                            data["groupId"] = currentUser.uid
                             val members: List<StudentProfile> = listOf(currentStudent)
                             val stats = generateGroupStats(members)
 
@@ -390,24 +391,23 @@ fun ProfileEditorScreen(
                                     Log.e("SaveProfile","Group upsert failure", e)
                                 }
 
-                            batch.set(db.collection("groups").document(groupId), groupProfile.toMap())
+                            batch.set(db.collection("groups").document(currentUser.uid), groupProfile.toMap())
                         } else {
                             // Case 2: user already has a groupId → check stats.size
-                            val groupId = data["groupId"] as? String ?: currentUser.uid
-                            val groupRef = db.collection("groups").document(groupId)
+                            val groupRef = db.collection("groups").document(groupId!!)
 
                             groupRef.get().addOnSuccessListener { groupDoc ->
                                 val stats = groupDoc.get("stats") as? Map<*, *>
                                 val size = (stats?.get("size") as? Long) ?: 0L
 
-                                if (size <= 1) {
+                                if (size <= 10) {
                                     Log.d("ProfileEditorScreen", "Group has size <= 1, updating stats.")
                                     // Upsert stats because the group only has them
                                     val members: List<StudentProfile> = listOf(currentStudent)
                                     val stats = generateGroupStats(members)
 
                                     val groupProfile = GroupProfile(
-                                        id = currentUser.uid,
+                                        id = groupId!!,
                                         name = data["name"] as String,
                                         members = members,
                                         stats = stats,
@@ -421,7 +421,7 @@ fun ProfileEditorScreen(
                                         .getHttpsCallable("upsertGroupProfile")
                                         .call(groupProfile.toMap())
                                         .addOnSuccessListener { result ->
-                                            Log.d("SaveProfile","Group upsert success: ${result.data}")
+                                            Log.d("SaveProfile","Group upsert success: ${result.data} with $groupProfile")
                                         }
                                         .addOnFailureListener { e ->
                                             Log.e("SaveProfile","Group upsert failure", e)

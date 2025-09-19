@@ -67,7 +67,11 @@ data class GroupStats(
 
     // --- Meta ---
     val universities: List<String>,     // mix of schools
-    val profilePictureRatio: Double    // % with profile pictures
+    val profilePictureRatio: Double,    // % with profile pictures
+    val status: Int
+    // 0 - normal
+    // 1 - merging
+    // 2 - finalised
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -109,6 +113,8 @@ data class GroupStats(
 
             "universities" to universities,
             "profilePictureRatio" to profilePictureRatio,
+
+            "status" to status,
         )
     }
 }

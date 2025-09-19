@@ -2,7 +2,6 @@ package com.example.roomie.components
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Transaction
 import kotlinx.coroutines.tasks.await
 
 fun computeStats(values: List<Int>): Quadruple<Double, Int, Int, Double> {
@@ -78,7 +77,9 @@ fun generateGroupStats(members: List<StudentProfile>): GroupStats {
         topPassions = topPassions,
         topPetPeeves = topPetPeeves,
         universities = universities,
-        profilePictureRatio = profilePictureRatio
+        profilePictureRatio = profilePictureRatio,
+
+        status = 0
     )
 }
 
@@ -86,6 +87,7 @@ suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
     return try {
+        // Step 1: set Firestore flags
         db.runTransaction { transaction ->
             val groupARef = db.collection("groups").document(groupAID)
             val groupBRef = db.collection("groups").document(groupBID)
@@ -105,8 +107,40 @@ suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
             transaction.update(groupARef, "mergingWith", groupBID)
             transaction.update(groupBRef, "mergingWith", groupAID)
 
-            true
-        }.await()
+            groupASnap to groupBSnap
+        }.await().let { (groupASnap, groupBSnap) ->
+            // Step 2: set binary blob flags
+            try {
+                val groupA = MatchingService.docToGroupProfileSafe(groupASnap)
+                val groupB = MatchingService.docToGroupProfileSafe(groupBSnap)
+
+                val groupANew = groupA!!.copy(stats = groupA.stats.copy(status = 1))
+                val groupBNew = groupB!!.copy(stats = groupB.stats.copy(status = 1))
+                Log.d("MergeGroups", "Setting 'do not show' flag in blob")
+                Log.d("MergeGroups", "Group A: $groupANew")
+                Log.d("MergeGroups", "Group B: $groupBNew")
+
+                val resA = FunctionsProvider.instance
+                    .getHttpsCallable("upsertGroupProfile")
+                    .call(groupANew.toMap())
+                    .await()
+
+                Log.d("SaveProfile", "Group upsert success: ${resA.data} with ${groupANew.id}")
+
+                val resB = FunctionsProvider.instance
+                    .getHttpsCallable("upsertGroupProfile")
+                    .call(groupBNew.toMap())
+                    .await()
+
+                Log.d("SaveProfile", "Group upsert success: ${resB.data} with ${groupBNew.id}")
+
+                Log.d("MergeGroups", "Successfully set 'do not show' flag in blob")
+                true
+            } catch (e: Exception) {
+                Log.e("MergeGroups", "Failed to set 'do not show' flag in blob", e)
+                false
+            }
+        }
     } catch (e: Exception) {
         false
     }
@@ -233,53 +267,60 @@ suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
             transaction.update(groupARef, "mergingWith", null)
             transaction.update(groupBRef, "mergingWith", null)
 
-            true
-        }.await()
+            groupASnap to groupBSnap
+        }.await().let { (aSnap, bSnap) ->
+            try {
+                val groupA = MatchingService.docToGroupProfileSafe(aSnap)
+                val groupB = MatchingService.docToGroupProfileSafe(bSnap)
+
+                val groupANew = groupA!!.copy(stats = groupA.stats.copy(status = 0))
+                val groupBNew = groupB!!.copy(stats = groupB.stats.copy(status = 0))
+                Log.d("MergeGroups", "Setting 'do not show' flag in blob")
+                Log.d("MergeGroups", "Group A: $groupANew")
+                Log.d("MergeGroups", "Group B: $groupBNew")
+
+                val resA = FunctionsProvider.instance
+                    .getHttpsCallable("upsertGroupProfile")
+                    .call(groupANew.toMap())
+                    .await()
+
+                Log.d("SaveProfile", "Group upsert success: ${resA.data} with ${groupANew.id}")
+
+                val resB = FunctionsProvider.instance
+                    .getHttpsCallable("upsertGroupProfile")
+                    .call(groupBNew.toMap())
+                    .await()
+
+                Log.d("SaveProfile", "Group upsert success: ${resB.data} with ${groupBNew.id}")
+
+                Log.d("MergeGroups", "Successfully unset 'do not show' flag in blob")
+                true
+            } catch (e: Exception) {
+                Log.e("MergeGroups", "Failed to unset 'do not show' flag in blob", e)
+                false
+            }
+        }
     } catch (e: Exception) {
         Log.e("MergeGroups", "Error cancelling merge", e)
         false
     }
 }
 
-fun cancelMergeTransaction(groupAID: String, groupBID: String, transaction: Transaction) {
+suspend fun finaliseGroups(groupID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
-    val groupARef = db.collection("groups").document(groupAID)
-    val groupBRef = db.collection("groups").document(groupBID)
+    return try {
+        val snap = db.collection("groups").document(groupID).get().await()
+        val group = MatchingService.docToGroupProfileSafe(snap)
 
-    val groupASnap = transaction.get(groupARef)
-    val groupBSnap = transaction.get(groupBRef)
+        FunctionsProvider.instance
+            .getHttpsCallable("upsertGroupProfileWithLock")
+            .call(group!!.copy(stats = group.stats.copy(status = 2)).toMap())
 
-    // Only proceed if both exist
-    if (!groupASnap.exists() && !groupBSnap.exists()) {
-        Log.d("MergeGroups", "Both groups missing, nothing to cancel")
-        return
-    }
+        true
+    } catch (e: Exception) {
+        Log.e("FinaliseGroups", "Failed to set 'do not show' flag in blob", e)
 
-    if (!groupASnap.exists()) {
-        Log.d("MergeGroups", "Group A missing, cancelling merge only for Group B")
-        if (groupBSnap.getString("mergingWith") == groupAID) {
-            transaction.update(groupBRef, "mergingWith", null)
-        }
-        return
-    }
-
-    if (!groupBSnap.exists()) {
-        Log.d("MergeGroups", "Group B missing, cancelling merge only for Group A")
-        if (groupASnap.getString("mergingWith") == groupBID) {
-            transaction.update(groupARef, "mergingWith", null)
-        }
-        return
-    }
-
-    // Both exist: normal cancel
-    val mergingA = groupASnap.getString("mergingWith")
-    val mergingB = groupBSnap.getString("mergingWith")
-
-    if (mergingA == groupBID && mergingB == groupAID) {
-        transaction.update(groupARef, "mergingWith", null)
-        transaction.update(groupBRef, "mergingWith", null)
-    } else {
-        Log.d("MergeGroups", "Groups are not mutually merging, nothing to cancel")
+        false
     }
 }

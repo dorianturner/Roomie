@@ -62,6 +62,7 @@ export const findMatchesForGroup = functions.https.onCall(
         groupMin: stats[FIELD_INDEX.groupMin],
         groupMax: stats[FIELD_INDEX.groupMax],
         profilePictureRatio: stats[FIELD_INDEX.profilePictureRatio],
+        status: stats[FIELD_INDEX.status],
       });
     }
 
@@ -71,6 +72,11 @@ export const findMatchesForGroup = functions.https.onCall(
         .https
         .HttpsError("not-found", "Group stats not found");
     }
+    if (currentStats[FIELD_INDEX.status] === 1 || currentStats[FIELD_INDEX.status] === 2) {
+      throw new functions
+        .https
+        .HttpsError("failed-precondition", "Discovery disabled for merging or finalised groups");
+    }
 
     const now = Date.now();
 
@@ -79,6 +85,9 @@ export const findMatchesForGroup = functions.https.onCall(
 
     for (const [otherId, otherStats] of blobMap.entries()) {
       if (otherId === groupId) continue; // skip self
+      if (otherStats[FIELD_INDEX.status] === 1 || otherStats[FIELD_INDEX.status] === 2) {
+        continue; // skip merging or finalised groups
+      }
 
       // Hard filters
       if (

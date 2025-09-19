@@ -52,6 +52,7 @@ export const upsertGroupProfileWithLock = onCall(async (req) => {
       statsArray[FIELD_INDEX.groupMax] = toNum(group.stats.groupMax);
 
       statsArray[FIELD_INDEX.profilePictureRatio] = toNum(group.stats.profilePictureRatio);
+      statsArray[FIELD_INDEX.status] = toNum(group.stats.status);
       map.set(group.id, statsArray);
 
       await saveBlob(map);

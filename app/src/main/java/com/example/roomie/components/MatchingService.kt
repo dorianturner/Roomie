@@ -71,7 +71,7 @@ object MatchingService {
     }
 
     // Convert Firestore doc -> GroupProfile
-    private suspend fun docToGroupProfileSafe(doc: DocumentSnapshot): GroupProfile? {
+    suspend fun docToGroupProfileSafe(doc: DocumentSnapshot): GroupProfile? {
         if (!doc.exists()) return null
 
         val id = doc.id

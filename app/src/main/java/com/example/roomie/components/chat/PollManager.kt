@@ -3,7 +3,6 @@ package com.example.roomie.components.chat
 import android.content.Context
 import android.util.Log
 import com.example.roomie.components.cancelMerge
-import com.example.roomie.components.cancelMergeTransaction
 import com.example.roomie.components.finaliseMergeGroups
 import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
@@ -86,22 +85,20 @@ class PollManager(private val chatManager: ChatManager) {
         "merge" to { context, uid, poll ->
             if (poll.votes[uid] == "no") {
                 try {
-                    chatManager.db.runTransaction { transaction ->
-                        Log.d("PollManager", "User $uid voted no, vetoing merge")
-                        val convoSnap = transaction.get(chatManager.convoRef)
-                        val participantUids =
-                            convoSnap.get("participants") as? List<String> ?: emptyList()
-                        val groupIds = participantUids.mapNotNull { uid ->
-                            val userSnap =
-                                transaction.get(chatManager.db.collection("users").document(uid))
-                            userSnap.getString("groupId")
-                        }.toSet()
-                        if (groupIds.size == 2) {
-                            cancelMergeTransaction(groupIds.first(), groupIds.last(), transaction)
-                        }
+                    Log.d("PollManager", "User $uid voted no, vetoing merge")
+                    val convoSnap = chatManager.convoRef.get().await()
+                    val participantUids =
+                        convoSnap.get("participants") as? List<String> ?: emptyList()
+                    val groupIds = participantUids.mapNotNull { uid ->
+                        val userSnap =
+                            chatManager.db.collection("users").document(uid).get().await()
+                        userSnap.getString("groupId")
+                    }.toSet()
+                    if (groupIds.size == 2) {
+                        cancelMerge(groupIds.first(), groupIds.last())
+                    }
 
-                        Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
-                    }.await()
+                    Log.d("PollManager", "Conversation ${chatManager.convoRef.id} deleted after failed merge")
                     true
                 } catch (e: Throwable) {
                     Log.e("PollManager", "Error cancelling merge", e)
