@@ -44,8 +44,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import com.example.roomie.components.GroupProfile
 import com.example.roomie.components.overlays.ProfileOnTap
 import com.example.roomie.components.soundManager.LocalSoundManager
@@ -76,10 +76,10 @@ fun UserDiscoveryScreen(
     var showOverlay by remember { mutableStateOf(false) }
     var matches by remember { mutableStateOf<List<GroupProfile>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     var weights by remember { mutableStateOf(PreferenceWeights()) }
     var showFilterDialog by remember { mutableStateOf(false) }
-    var reloadKey by remember { mutableStateOf(0) } // trigger a reload of the matches
+    var reloadKey by remember { mutableIntStateOf(0) } // trigger a reload of the matches
 
     val matchingService = MatchingService
     val coroutineScope = rememberCoroutineScope()
@@ -197,9 +197,14 @@ fun UserDiscoveryScreen(
                                             val currentGroupSnapshot =
                                                 db.collection("groups").document(currentUserGroupId)
                                                     .get().await()
-                                            val currentGroupMembers =
-                                                currentGroupSnapshot.get("members") as? List<Map<String, Any>>
-                                                    ?: emptyList()
+                                            val membersRaw = currentGroupSnapshot.get("members") as? List<*>
+                                            val currentGroupMembers = membersRaw
+                                                ?.mapNotNull { raw ->
+                                                    (raw as? Map<*, *>)?.mapNotNull { (k, v) ->
+                                                        if (k is String) k to v else null
+                                                    }?.toMap()
+                                                } ?: emptyList()
+
                                             val currentGroupMemberIds =
                                                 currentGroupMembers.mapNotNull { it["id"] as? String }
 
@@ -334,9 +339,9 @@ fun SwipeableMatchCard(
     onSwiped: (SwipeDirection) -> Unit,
     onClick: () -> Unit
 ) {
-    val configuration = LocalConfiguration.current
     val density = LocalDensity.current
-    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+
+    val screenWidthPx = with(density) { LocalWindowInfo.current.containerSize.width.dp.toPx() }
     val swipeDistancePx = screenWidthPx / 2f
 
     // Anchors for swipe directions
