@@ -39,6 +39,17 @@ import com.example.roomie.components.fetchUserNameFromFirestore
 import com.example.roomie.components.formatTimestamp
 import com.google.firebase.auth.FirebaseAuth
 
+/**
+ * A composable function that displays a single message in a chat.
+ *
+ * It handles different message types (text, image, video, audio, file, system) and
+ * adjusts its appearance based on whether the message is from the current user,
+ * another user, or a system message. It also fetches and displays the sender's name
+ * if it's not already cached.
+ *
+ * @param message The [Message] object to display.
+ * @param userNameCache A mutable map to cache and retrieve usernames, reducing Firestore lookups.
+ */
 @Composable
 fun MessageItem(
     message: Message,

@@ -29,6 +29,17 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
+/**
+ * A composable screen that displays a list of chats (conversations) for the currently authenticated user.
+ *
+ * This screen fetches conversations from Firestore where the current user is a participant.
+ * The conversations are displayed in a `LazyColumn`, ordered by the timestamp of the last message
+ * in descending order, with conversations of type [ChatType.MY_GROUP] appearing first.
+ * Each conversation item, when clicked, navigates to the [SingleChatScreen] for that specific chat.
+ *
+ * @param navController The [NavController] used for handling navigation actions,
+ *                      specifically to navigate to an individual chat screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatsScreen(

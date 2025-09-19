@@ -9,6 +9,23 @@ import com.google.firebase.firestore.firestore
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+/**
+ * Saves or updates a user's profile information to Firebase Firestore.
+ *
+ * This function handles both landlord and student profiles, performing necessary validations
+ * and structuring the data accordingly. For student profiles, it also creates or updates
+ * a corresponding group document in Firestore and calls a Firebase Cloud Function (`upsertGroupProfile`)
+ * to synchronize group data, likely for search or denormalized views.
+ *
+ * Assumes `OnboardingProfileState`, `StudentProfile`, and `GroupProfile` data classes are defined
+ * elsewhere and hold the structured profile data.
+ *
+ * @param state The [OnboardingProfileState] object containing the complete profile information to be saved.
+ *              This includes user details, profile type (landlord/student), and specific fields for each type.
+ * @return `true` if the profile data is successfully committed to Firestore and the Cloud Function call
+ *         (if applicable) is initiated. Returns `false` if there is no authenticated user,
+ *         if mandatory fields are missing or invalid, or if any Firestore operation fails.
+ */
 suspend fun saveProfile(state: OnboardingProfileState): Boolean {
     val auth: FirebaseAuth = Firebase.auth
     val db: FirebaseFirestore = Firebase.firestore
@@ -112,7 +129,6 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
                     name = data["name"] as String,
                     members = members,
                     stats = stats,
-                    // TODO
                     profilePicture = "",
                     bio = ""
                 )

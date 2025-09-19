@@ -23,6 +23,17 @@ import androidx.compose.ui.unit.dp
 import com.example.roomie.components.formatTimestamp
 import com.google.firebase.Timestamp
 
+/**
+ * A composable function that displays a single chat item.
+ *
+ * @param name The name of the chat or the other user.
+ * @param lastMessage The last message sent in the chat.
+ * @param time The timestamp of the last message.
+ * @param onClick The callback to be invoked when the chat item is clicked.
+ * @param isGroup Whether the chat is a group chat.
+ * @param groupParticipants A string listing the participants in the group chat (optional).
+ * @param chatType The type of chat (e.g., MERGE, INDIVIDUAL).
+ */
 @Composable
 fun ChatItem(
     name: String,

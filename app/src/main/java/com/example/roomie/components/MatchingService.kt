@@ -7,15 +7,29 @@ import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Handles the logic for finding and retrieving matches for users and groups.
+ * It interacts with Firebase Firestore and Firebase Functions to get matching data.
+ */
 object MatchingService {
+    /** Firebase Authentication instance. */
     private val auth = FirebaseAuth.getInstance()
+    /** Lazy-initialized Firebase Firestore instance. */
     private val db by lazy {
         FirebaseFirestore.getInstance()
     }
 
+    /**
+     * Safely converts a Firestore [DocumentSnapshot] to a [StudentProfile] object.
+     * This function handles potential null data and performs type conversions for each field.
+     *
+     * @param doc The Firestore [DocumentSnapshot] to convert.
+     * @return A [StudentProfile] object if the conversion is successful, or `null` otherwise.
+     */
     fun docToStudentProfileSafe(doc: DocumentSnapshot): StudentProfile? {
         val d = doc.data ?: return null
 
+        // Helper functions for safe type conversion from Firestore data.
         fun anyToString(any: Any?) = (any as? String) ?: ""
         fun anyToInt(any: Any?, default: Int = 0) = when (any) {
             is Number -> any.toInt()
@@ -30,7 +44,7 @@ object MatchingService {
         fun anyToIntList(any: Any?): List<Int> = when (any) {
             is List<*> -> any.mapNotNull { (it as? Number)?.toInt() }
             is String -> any.split(",").mapNotNull { it.trim().toIntOrNull() }
-            else -> listOf(0, 0)
+            else -> listOf(0, 0) // Default for studentDesiredGroupSize if not present or malformed
         }
         fun anyToMapStringLong(any: Any?): Map<String, Long> = when (any) {
             is Map<*, *> -> any.mapNotNull { (k, v) ->
@@ -72,7 +86,13 @@ object MatchingService {
         )
     }
 
-    // Convert Firestore doc -> GroupProfile
+    /**
+     * Safely converts a Firestore [DocumentSnapshot] representing a group into a [GroupProfile] object.
+     * This includes fetching and converting all member profiles associated with the group.
+     *
+     * @param doc The Firestore [DocumentSnapshot] of the group to convert.
+     * @return A [GroupProfile] object if the document exists and conversion is successful, or `null` otherwise.
+     */
     suspend fun docToGroupProfileSafe(doc: DocumentSnapshot): GroupProfile? {
         if (!doc.exists()) return null
 
@@ -95,15 +115,32 @@ object MatchingService {
         )
     }
 
+    /**
+     * Represents a raw match result from the matching algorithm.
+     *
+     * @property id The ID of the matched group or user.
+     * @property score The matching score.
+     */
     data class MatchResult(
         val id: String = "",
         val score: Double = 0.0
     )
-    // Public API
+
+    /**
+     * Finds potential group matches for the currently authenticated user.
+     * It fetches the user's profile, calls a Firebase Cloud Function ("getGroupMatches")
+     * with the user's data and preference weights, and then retrieves the full profiles
+     * of the matched groups.
+     *
+     * @param weights The [PreferenceWeights] to be used by the matching algorithm.
+     * @return A list of [GroupProfile] objects representing the matches, or an empty list if
+     *         no user is authenticated, the current user's profile cannot be fetched,
+     *         or no matches are found.
+     */
     suspend fun findMatchesForCurrentUser(
         weights: PreferenceWeights
     ): List<GroupProfile> {
-        val curUser =
+        val curUserDoc =
             auth.currentUser
                 ?.uid
                 ?.let {
@@ -113,7 +150,7 @@ object MatchingService {
                         .await()
                 }
                 ?: return emptyList()
-        val currentUser = docToStudentProfileSafe(curUser) ?: return emptyList()
+        val currentUserProfile = docToStudentProfileSafe(curUserDoc) ?: return emptyList()
 
         val user = FirebaseAuth.getInstance().currentUser
         if (user != null) {
@@ -129,9 +166,9 @@ object MatchingService {
             .getHttpsCallable("getGroupMatches")
             .call(
                 mapOf(
-                    "groupId" to curUser.getString("groupId"),
-                    "lastSeenTimestamps" to currentUser.seenUsersTimestamps,
-                    "n" to 10,
+                    "groupId" to curUserDoc.getString("groupId"),
+                    "lastSeenTimestamps" to currentUserProfile.seenUsersTimestamps,
+                    "n" to 10, // Number of matches to retrieve
                     "weights" to weights.toMap()
                 )
             )
@@ -150,14 +187,6 @@ object MatchingService {
         val matches = results.map { map ->
             val id = map["id"] as String
             val rawScore = (map["score"] as Number).toDouble()
-            /*val adjustedScore = if (currentUser.seenUsersTimestamps.containsKey(id)) {
-                val now = System.currentTimeMillis()
-                val lastSeen = currentUser.seenUsersTimestamps[id] ?: 0L
-                val daysSinceSeen = (now - lastSeen) / (1000 * 60 * 60 * 24)
-                val decayDays = 7.0
-                val factor = (0.7 + (daysSinceSeen / decayDays) * (1.0 - 0.7)).coerceIn(0.7, 1.0)
-                rawScore * factor
-            } else rawScore*/
             MatchResult(id = id, score = rawScore)
         }
 

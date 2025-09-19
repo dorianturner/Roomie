@@ -56,6 +56,12 @@ import com.example.roomie.ui.theme.Spacing
 import com.example.roomie.ui.theme.ZainFontFamily
 import kotlin.math.roundToInt
 
+/**
+ * A composable function that displays a profile card for a group or individual.
+ * The card shows the profile picture, name, relevant stats, and a bio.
+ *
+ * @param group The [GroupProfile] object containing the data to display.
+ */
 @Composable
 fun ProfileCard(group: GroupProfile) {
     val isIndividual: Boolean = group.stats.size == 1
@@ -133,6 +139,12 @@ fun ProfileCard(group: GroupProfile) {
 }
 
 
+/**
+ * A composable function that displays the content specific to an individual's profile card.
+ * This includes age, budget, school, and max commute time.
+ *
+ * @param group The [GroupProfile] object containing the individual's data.
+ */
 @Composable
 fun IndividualCardContent(group: GroupProfile) {
     Column(
@@ -168,6 +180,12 @@ fun IndividualCardContent(group: GroupProfile) {
     }
 }
 
+/**
+ * A composable function that displays the content specific to a group's profile card.
+ * This includes group size, average age, average budget, and max commute time.
+ *
+ * @param group The [GroupProfile] object containing the group's data.
+ */
 @Composable
 fun GroupCardContent(group: GroupProfile) {
     Column(
@@ -203,6 +221,16 @@ fun GroupCardContent(group: GroupProfile) {
     }
 }
 
+/**
+ * A composable function that displays a profile picture.
+ * It handles loading the image from a URL or showing a default image if the URL is null or empty.
+ * It also overlays an icon indicating whether the profile is for an individual or a group.
+ *
+ * @param url The URL of the profile picture. Can be null or empty.
+ * @param isIndividual A boolean indicating if the profile is for an individual (true) or a group (false).
+ * @param modifier Optional [Modifier] for this composable.
+ * @param size The desired size of the profile picture.
+ */
 @Composable
 fun ProfilePictureDisplay(
     url: String?,
@@ -256,6 +284,14 @@ fun ProfilePictureDisplay(
     }
 }
 
+/**
+ * A composable function that displays a segment of profile information,
+ * typically consisting of an icon, a category label, and a response value.
+ *
+ * @param icon The [ImageVector] to display for the segment.
+ * @param category The category label for the information (e.g., "Age", "Budget").
+ * @param response The actual value or response for the category.
+ */
 @Composable
 fun ProfileSegment(icon: ImageVector, category: String, response: String) {
     Surface(
@@ -269,7 +305,7 @@ fun ProfileSegment(icon: ImageVector, category: String, response: String) {
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = null, // Decorative icon
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(25.dp).padding(end = 6.dp)
             )
@@ -293,6 +329,14 @@ fun ProfileSegment(icon: ImageVector, category: String, response: String) {
     }
 }
 
+/**
+ * A composable function that displays the "About Me" or "About Us" section of a profile.
+ * It shows a title and the bio text in a scrollable box.
+ *
+ * @param bio The biography text to display.
+ * @param isIndividual A boolean indicating if the profile is for an individual (true) or a group (false).
+ * @param modifier Optional [Modifier] for this composable.
+ */
 @Composable
 fun AboutSection(
     bio: String,

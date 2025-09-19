@@ -69,6 +69,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/**
+ * A composable screen that displays an individual chat session.
+ *
+ * This screen handles the presentation of messages, text input, attachment handling (images/videos),
+ * and poll functionality within a specific chat. It uses a [ChatManager] to interact with the
+ * backend for sending and receiving messages and managing conversation state.
+ *
+ * Features include:
+ * - Displaying a list of messages in reverse chronological order.
+ * - A text input field for composing messages.
+ * - An attachment button that launches a media picker for selecting images and videos.
+ * - Previewing and removing selected attachments before sending.
+ * - Displaying an upload progress indicator when attachments are being sent.
+ * - Handling active polls: displaying the poll, allowing the current user to vote.
+ * - For `ChatType.MY_GROUP` chats without an active poll, it shows a button to propose finalising the group (which creates a poll).
+ * - For `ChatType.MERGE` chats, it automatically attempts to create a "Merge groups?" poll if one isn't active.
+ * - Listening for real-time updates to messages and conversation details (like active polls and chat type).
+ * - Navigating back if the conversation is deleted (e.g., due to a group merge).
+ *
+ * @param chatManager An instance of [ChatManager] specific to the current chat, used for all chat operations.
+ * @param chatName The display name of the chat, passed to avoid recomputing it.
+ * @param onBack A lambda function to be invoked when the user navigates back from this screen.
+ * @param modifier Optional [Modifier] for customizing the layout and appearance of the screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleChatScreen(
@@ -111,7 +135,7 @@ fun SingleChatScreen(
     }
 
 
-    // Listen for messages
+    // Listen for messages and conversation updates
     DisposableEffect(chatManager) {
         val msgRegistration = chatManager.listenMessages { messages ->
             messagesState.clear()
@@ -119,11 +143,8 @@ fun SingleChatScreen(
         }
 
         val convoRegistration = chatManager.listenConversation { convo ->
-            // keep full conversation so we can check chatType
             conversationState = convo.copy()
-            // keep activePoll in sync for UI
             activePoll = convo.activePoll?.copy()
-            // if there's already an active poll from another client, mark started guard
             if (convo.activePoll != null) mergePollStarted = true
         }
 
@@ -133,6 +154,7 @@ fun SingleChatScreen(
         }
     }
 
+    // Auto-start merge poll if applicable
     LaunchedEffect(conversationState?.chatType) {
         val chatType = conversationState?.chatType
         if (chatType == ChatType.MERGE && !mergePollStarted) {
@@ -145,6 +167,17 @@ fun SingleChatScreen(
         }
     }
 
+    /**
+     * Retrieves the display name of a file from its content URI.
+     *
+     * It first attempts to query the [ContentResolver] for the [OpenableColumns.DISPLAY_NAME].
+     * If that fails or returns "Unknown file", it tries to extract the last path segment from the URI.
+     * This function is executed on an IO dispatcher.
+     *
+     * @param context The application context.
+     * @param uri The content URI of the file.
+     * @return The file name as a [String], or "Unknown file" if it cannot be determined.
+     */
     suspend fun getFileName(context: Context, uri: Uri): String {
         return withContext(Dispatchers.IO) {
             var fileName = "Unknown file"
@@ -171,6 +204,17 @@ fun SingleChatScreen(
         }
     }
 
+    /**
+     * Retrieves the size of a file from its content URI.
+     *
+     * It first attempts to query the [ContentResolver] for the [OpenableColumns.SIZE].
+     * If that fails or returns a null/zero size, it falls back to using a [ParcelFileDescriptor]
+     * to get the `statSize`. This function is executed on an IO dispatcher.
+     *
+     * @param context The application context.
+     * @param uri The content URI of the file.
+     * @return The file size in bytes as a [Long]?, or `null` if the size cannot be determined or an error occurs.
+     */
     suspend fun getFileSize(context: Context, uri: Uri): Long? {
         return withContext(Dispatchers.IO) {
             try {
@@ -201,6 +245,19 @@ fun SingleChatScreen(
         }
     }
 
+    /**
+     * Gathers information about a file selected for attachment.
+     *
+     * This function retrieves the file's MIME type, name (using [getFileName]), and size (using [getFileSize]).
+     * It then determines a simplified `type` string (e.g., "image", "video", "pdf", "file") based on the MIME type.
+     * A unique ID for the attachment is generated using the URI string length and current nanoseconds to
+     * help differentiate if the same file is attached multiple times.
+     * This function is executed on an IO dispatcher.
+     *
+     * @param context The application context.
+     * @param uri The content URI of the file.
+     * @return An [AttachedFile] object containing the URI, unique ID, name, type string, and size.
+     */
     suspend fun getFileInfo(context: Context, uri: Uri): AttachedFile {
         return withContext(Dispatchers.IO) {
             val mimeType = context.contentResolver.getType(uri) ?: ""
@@ -242,7 +299,6 @@ fun SingleChatScreen(
                     modifier = Modifier.padding(4.dp)
                 ) },
                 navigationIcon = {
-                    // needs to be updated with correct route
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -270,7 +326,7 @@ fun SingleChatScreen(
                 }
             }
 
-            // Poll UI (show poll if present)
+            // Poll UI
             if (activePoll != null) {
                 PollSection(
                     poll = activePoll!!,
@@ -280,7 +336,7 @@ fun SingleChatScreen(
                     userId = userID!!
                 )
             } else {
-                // no active poll -> show finalise button only for MY_GROUP (not for MERGE chats)
+                // No active poll: show "Propose to Finalise Group" button for MY_GROUP chats
                 if (conversationState?.chatType == ChatType.MY_GROUP) {
                     Button(
                         onClick = { showConfirmDialog = true },
@@ -318,9 +374,10 @@ fun SingleChatScreen(
                         )
                     }
                 }
-                // If chatType == MERGE and activePoll == null -> nothing shown (auto-create should run)
+                // If chatType == MERGE and activePoll == null, auto-create should attempt to run (handled in LaunchedEffect)
             }
 
+            // Attachment Preview Section
             if (attachedFiles.isNotEmpty() && !isUploading) {
                 AttachmentPreviewSection(
                     attachedFiles = attachedFiles,
@@ -332,7 +389,7 @@ fun SingleChatScreen(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // progress bar for media upload
+            // Upload Progress Bar
             if (isUploading) {
                 Column(
                     modifier = Modifier
@@ -356,10 +413,8 @@ fun SingleChatScreen(
                 }
             }
 
-            // Input + send button + image picker
+            // Input Row: Attachment Picker, Text Field, Send Button
             Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-
-                // Image picker (launches system picker)
                 IconButton(onClick = {
                     pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
                 }) {
@@ -383,7 +438,6 @@ fun SingleChatScreen(
                                 var uploadSuccess = true
 
                                 try {
-                                    // Send each attached file
                                     attachedFiles.forEachIndexed { index, file ->
                                         try {
                                             chatManager.sendMessage(
@@ -391,7 +445,6 @@ fun SingleChatScreen(
                                                 mediaUri = file.uri,
                                                 type = file.type,
                                                 onProgress = { progress ->
-                                                    // Update overall progress (weighted average)
                                                     val weightedProgress = (index + progress) / attachedFiles.size
                                                     coroutineScope.launch {
                                                         withContext(Dispatchers.Main) {
@@ -403,26 +456,24 @@ fun SingleChatScreen(
                                         } catch (e: Exception) {
                                             Log.e("SingleChatScreen", "Failed to upload ${file.name}.", e)
                                             uploadSuccess = false
-                                            // Continue with other files instead of stopping
                                         }
                                     }
 
-                                    // Send text message if there's any text input
                                     if (inputText.isNotBlank()) {
                                         try {
                                             chatManager.sendMessage(userID!!, inputText)
                                         } catch (e: Exception) {
-                                            Log.e("SingleChatScreen", "Failed to send text", e)
+                                            Log.e("SingleChatScreen", "Failed to send text after attachments.", e)
                                             uploadSuccess = false
                                         }
                                     }
 
-                                } catch (e: Exception) {
-                                    Log.e("SingleChatScreen", "Upload failed.", e)
+                                } catch (e: Exception) { // General catch for upload process
+                                    Log.e("SingleChatScreen", "Upload process failed.", e)
                                     uploadSuccess = false
                                 } finally {
-                                    // Only clear if all uploads were successful
                                     if (uploadSuccess) {
+                                        inputText = "" // Clear text only if all uploads (and text) were successful
                                         attachedFiles = emptyList()
                                     }
                                     isUploading = false
@@ -435,7 +486,7 @@ fun SingleChatScreen(
                                     chatManager.sendMessage(userID!!, inputText)
                                     inputText = ""
                                 } catch (e: Exception) {
-                                    Log.e("SingleChatScreen", "Failed to send text", e)
+                                    Log.e("SingleChatScreen", "Failed to send text message.", e)
                                     // Don't clear input text on error so user can retry
                                 }
                             }

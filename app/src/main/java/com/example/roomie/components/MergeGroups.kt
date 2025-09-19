@@ -4,6 +4,13 @@ import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Computes basic statistics (average, minimum, maximum, and standard deviation) for a list of integers.
+ *
+ * @param values A list of [Int] for which to compute statistics.
+ * @return A [Quadruple] containing the average (Double), minimum (Int), maximum (Int), and standard deviation (Double).
+ *         Returns (0.0, 0, 0, 0.0) if the input list is empty.
+ */
 fun computeStats(values: List<Int>): Quadruple<Double, Int, Int, Double> {
     if (values.isEmpty()) return Quadruple(0.0, 0, 0, 0.0)
 
@@ -16,8 +23,26 @@ fun computeStats(values: List<Int>): Quadruple<Double, Int, Int, Double> {
     return Quadruple(avg, min, max, stdDev)
 }
 
+/**
+ * A generic data class to hold four values of potentially different types.
+ *
+ * @param A The type of the first value.
+ * @param B The type of the second value.
+ * @param C The type of the third value.
+ * @param D The type of the fourth value.
+ * @property first The first value.
+ * @property second The second value.
+ * @property third The third value.
+ * @property fourth The fourth value.
+ */
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
+/**
+ * Generates aggregated statistics for a group based on its members' profiles.
+ *
+ * @param members A list of [StudentProfile] objects representing the members of the group.
+ * @return A [GroupStats] object containing the calculated statistics.
+ */
 fun generateGroupStats(members: List<StudentProfile>): GroupStats {
     val ages = members.mapNotNull { it.studentAge }
     val budgets = members.mapNotNull { it.studentMaxBudget }
@@ -40,6 +65,13 @@ fun generateGroupStats(members: List<StudentProfile>): GroupStats {
     val pets = members.map { it.studentPet }.toSet()
     val commonPets = if (pets.size == 1) pets.first() else null
 
+    /**
+     * Extracts the top N most frequent keywords from a list of string lists.
+     *
+     * @param lists A list of lists of strings.
+     * @param topN The number of top keywords to return. Defaults to 3.
+     * @return A list of the top N keywords.
+     */
     fun topKeywords(lists: List<List<String>>, topN: Int = 3): List<String> {
         return lists.flatten()
             .groupingBy { it }
@@ -50,6 +82,12 @@ fun generateGroupStats(members: List<StudentProfile>): GroupStats {
             .map { it.key }
     }
 
+    /**
+     * Splits a text into a list of words, filtering out blank entries.
+     *
+     * @param text The input string.
+     * @return A list of words.
+     */
     fun getWords(text: String): List<String> {
         return text.split(Regex("\\s+"))  // split on one or more whitespace
             .filter { it.isNotBlank() }            // remove empty entries
@@ -83,6 +121,16 @@ fun generateGroupStats(members: List<StudentProfile>): GroupStats {
     )
 }
 
+/**
+ * Initiates the merging process for two groups.
+ * This involves a Firestore transaction to set `mergingWith` flags on both group documents
+ * and update their `stats.status` to 1 (merging). It then updates the corresponding
+ * group profiles in a binary blob storage (via Firebase Functions) to reflect this merging status.
+ *
+ * @param groupAID The ID of the first group.
+ * @param groupBID The ID of the second group.
+ * @return `true` if the merge initiation was successful (both Firestore and blob updates), `false` otherwise.
+ */
 suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
@@ -150,6 +198,24 @@ suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
     }
 }
 
+/**
+ * Finalises the merge of two groups that have already been marked for merging.
+ * This function performs the following steps in a Firestore transaction:
+ * 1. Identifies a "survivor" group (preferentially the one with more members) and a "killed" group.
+ * 2. Updates the survivor group's member count and clears its `mergingWith` flag.
+ * 3. Deletes the killed group's document.
+ * After the transaction, it:
+ * 4. Fetches all users from both original groups.
+ * 5. Updates the `groupId` of users from the killed group to point to the survivor group.
+ * 6. Regenerates [GroupStats] for the merged group.
+ * 7. Updates the survivor group's document with the new stats and name.
+ * 8. Updates the survivor group's profile and deletes the killed group's profile from blob storage
+ *    (via Firebase Functions `upsertGroupProfileWithLock` and `deleteGroupFromBlob`).
+ *
+ * @param groupAID The ID of the first group involved in the merge.
+ * @param groupBID The ID of the second group involved in the merge.
+ * @return `true` if the finalisation process is successful, `false` otherwise.
+ */
 suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
@@ -226,7 +292,6 @@ suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
             name = survivorName ?: "",
             members = mergedUsers,
             stats = groupStats,
-            // TODO
             profilePicture = "",
             bio = ""
         )
@@ -246,6 +311,16 @@ suspend fun finaliseMergeGroups(groupAID: String, groupBID: String): Boolean {
     }
 }
 
+/**
+ * Cancels an ongoing merge operation between two groups.
+ * This function performs a Firestore transaction to clear the `mergingWith` flags and reset
+ * `stats.status` to 0 (normal) for both groups. It then updates the corresponding
+ * group profiles in blob storage (via Firebase Functions) to reflect this cancellation.
+ *
+ * @param groupAID The ID of the first group.
+ * @param groupBID The ID of the second group.
+ * @return `true` if the cancellation was successful (both Firestore and blob updates), `false` otherwise.
+ */
 suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
@@ -281,7 +356,7 @@ suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
 
                 val groupANew = groupA!!.copy(stats = groupA.stats.copy(status = 0))
                 val groupBNew = groupB!!.copy(stats = groupB.stats.copy(status = 0))
-                Log.d("MergeGroups", "Setting 'do not show' flag in blob")
+                Log.d("MergeGroups", "Unsetting 'do not show' flag in blob")
                 Log.d("MergeGroups", "Group A: $groupANew")
                 Log.d("MergeGroups", "Group B: $groupBNew")
 
@@ -312,6 +387,14 @@ suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
     }
 }
 
+/**
+ * Finalises a group, setting its status to 2.
+ * This typically means the group is locked and no longer actively participating in matching.
+ * It updates the group's status in both Firestore and blob storage (via Firebase Functions).
+ *
+ * @param groupID The ID of the group to finalise.
+ * @return `true` if the finalisation was successful, `false` otherwise.
+ */
 suspend fun finaliseGroup(groupID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 

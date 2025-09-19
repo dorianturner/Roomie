@@ -62,14 +62,6 @@ fun ProfileCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     )
-//                    age?.let {
-//                        Text(
-//                            text = it.toString(),
-//                            style = MaterialTheme.typography.bodyLarge.copy(
-//                                color = MaterialTheme.colorScheme.onSurfaceVariant
-//                            )
-//                        )
-//                    }
                 }
             }
 

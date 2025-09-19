@@ -8,6 +8,14 @@ import com.example.roomie.components.finaliseMergeGroups
 import com.example.roomie.components.mergeGroups
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Manages polls within a chat conversation.
+ *
+ * This class handles the creation, voting, and resolution of polls,
+ * as well as triggering side effects based on poll outcomes.
+ *
+ * @property chatManager The [ChatManager] instance for interacting with the current conversation.
+ */
 class PollManager(private val chatManager: ChatManager) {
 
     private val endEffectsRegistry: MutableMap<String, suspend (Poll) -> Unit> = mutableMapOf(
@@ -218,6 +226,16 @@ class PollManager(private val chatManager: ChatManager) {
         }
     )
 
+    /**
+     * Creates a new poll in the current conversation.
+     *
+     * A new poll will only be created if there isn't an existing active poll.
+     *
+     * @param question The question for the poll.
+     * @param pollType The type of the poll (e.g., "merge", "finalise", "generic").
+     *                 This determines the side effects triggered by the poll's outcome.
+     * @return `true` if the poll was created successfully, `false` otherwise (e.g., if a poll is already active).
+     */
     suspend fun createPoll(question: String, pollType: String) : Boolean {
         return try {
             chatManager.db.runTransaction { transaction ->
@@ -248,6 +266,20 @@ class PollManager(private val chatManager: ChatManager) {
         }
     }
 
+    /**
+     * Casts a vote in the active poll for the current conversation.
+     *
+     * If the vote leads to the poll's closure (e.g., all participants have voted),
+     * the poll's resolution is calculated, a system message is sent, and any
+     * registered end effects for the poll type are triggered.
+     *
+     * If the poll remains open after the vote, any registered vote effects
+     * for the poll type are triggered.
+     *
+     * @param context The Android [Context].
+     * @param userId The ID of the user casting the vote.
+     * @param choice The user's choice (e.g., "yes", "no").
+     */
     suspend fun castVote(context: Context, userId: String, choice: String) {
         val pollResult: Poll? = chatManager.db.runTransaction { transaction ->
             val snap = transaction.get(chatManager.convoRef)
@@ -311,6 +343,12 @@ class PollManager(private val chatManager: ChatManager) {
         }
     }
 
+    /**
+     * Calculates the resolution of a poll based on the collected votes.
+     *
+     * @param votes A map where keys are user IDs and values are their respective votes.
+     * @return A string representing the poll's resolution (e.g., "Unanimous Yes", "Majority No", "Draw").
+     */
     private fun calculateResolution(votes: Map<String, String>): String {
         val yesCount = votes.values.count { it == "yes" }
         val noCount = votes.values.count { it == "no" }
