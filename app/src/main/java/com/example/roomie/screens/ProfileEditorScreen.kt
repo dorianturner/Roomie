@@ -69,7 +69,6 @@ fun ProfileEditorScreen(
     val groupSizeMaxField = remember { mutableStateOf(ProfileTextField("Max", "", KeyboardType.Number)) }
     val maxCommuteField = remember { mutableStateOf(ProfileTextField("Max Commute (mins)", "", KeyboardType.Number)) }
     val maxBudgetField = remember { mutableStateOf(ProfileTextField("Max Budget (£ / week)", "", KeyboardType.Number)) }
-    var isPartOfGroup by remember { mutableStateOf(false) }
 
     val smokingStatusState = remember { mutableStateOf("Neither") }
     val bedtimeState = remember { mutableIntStateOf(1) }
@@ -376,7 +375,6 @@ fun ProfileEditorScreen(
                                 name = data["name"] as String,
                                 members = members,
                                 stats = stats,
-                                // TODO
                                 profilePicture = "",
                                 bio = ""
                             )
@@ -398,20 +396,26 @@ fun ProfileEditorScreen(
 
                             groupRef.get().addOnSuccessListener { groupDoc ->
                                 val stats = groupDoc.get("stats") as? Map<*, *>
+                                val statusAny = stats?.get("status")
+                                val status: Int = when (statusAny) {
+                                    is Long -> statusAny.toInt()
+                                    is Double -> statusAny.toInt()
+                                    is Int -> statusAny
+                                    else -> 0
+                                }
                                 val size = (stats?.get("size") as? Long) ?: 0L
 
                                 if (size <= 10) {
                                     Log.d("ProfileEditorScreen", "Group has size <= 1, updating stats.")
                                     // Upsert stats because the group only has them
                                     val members: List<StudentProfile> = listOf(currentStudent)
-                                    val stats = generateGroupStats(members)
+                                    val stats = generateGroupStats(members).copy(status = status)
 
                                     val groupProfile = GroupProfile(
                                         id = groupId!!,
                                         name = data["name"] as String,
                                         members = members,
                                         stats = stats,
-                                        // TODO
                                         profilePicture = "",
                                         bio = ""
                                     )

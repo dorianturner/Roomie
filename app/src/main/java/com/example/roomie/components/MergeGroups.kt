@@ -106,6 +106,8 @@ suspend fun mergeGroups(groupAID: String, groupBID: String): Boolean {
 
             transaction.update(groupARef, "mergingWith", groupBID)
             transaction.update(groupBRef, "mergingWith", groupAID)
+            transaction.update(groupARef, "stats.status", 1)
+            transaction.update(groupBRef, "stats.status", 1)
 
             groupASnap to groupBSnap
         }.await().let { (groupASnap, groupBSnap) ->
@@ -266,6 +268,8 @@ suspend fun cancelMerge(groupAID: String, groupBID: String): Boolean {
 
             transaction.update(groupARef, "mergingWith", null)
             transaction.update(groupBRef, "mergingWith", null)
+            transaction.update(groupARef, "stats.status", 0)
+            transaction.update(groupBRef, "stats.status", 0)
 
             groupASnap to groupBSnap
         }.await().let { (aSnap, bSnap) ->
@@ -310,12 +314,15 @@ suspend fun finaliseGroups(groupID: String): Boolean {
     val db = FirebaseFirestore.getInstance()
 
     return try {
-        val snap = db.collection("groups").document(groupID).get().await()
+        val groupRef = db.collection("groups").document(groupID)
+        val snap = groupRef.get().await()
         val group = MatchingService.docToGroupProfileSafe(snap)
 
         FunctionsProvider.instance
             .getHttpsCallable("upsertGroupProfileWithLock")
             .call(group!!.copy(stats = group.stats.copy(status = 2)).toMap())
+
+        groupRef.update("stats.status", 2).await()
 
         true
     } catch (e: Exception) {
