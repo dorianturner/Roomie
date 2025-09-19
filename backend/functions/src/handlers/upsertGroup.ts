@@ -3,6 +3,12 @@ import {GroupProfile} from "../types/group";
 import {loadBlob, saveBlob, FIELDS_PER_GROUP, FIELD_INDEX} from "../utils/blob";
 import {releaseLock, tryAcquireLock} from "../utils/lock";
 
+/**
+ * Upserts a group profile with a lock to prevent concurrent updates.
+ * @param {Request} req - The request object containing the data to upsert.
+ * @returns {Object} An object indicating the success of the operation and a message.
+ * @throws {Error} If the payload is invalid or an internal server error occurs.
+ */
 export const upsertGroupProfileWithLock = onCall(async (req) => {
   try {
     const group = req.data as GroupProfile;

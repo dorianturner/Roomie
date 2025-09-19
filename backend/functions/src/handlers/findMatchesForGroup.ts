@@ -23,6 +23,11 @@ interface MyRequest {
   n?: number;
 }
 
+/**
+ * Finds matches for a specific group based on provided criteria.
+ * @param {functions.https.CallableRequest<MyRequest>} request - The request object containing group ID, last seen timestamps, weights, and optional parameter n.
+ * @returns An array of matched results sorted by score in descending order.
+ */
 export const findMatchesForGroup = functions.https.onCall(
   async (request: functions.https.CallableRequest<MyRequest>) => {
     const {groupId, lastSeenTimestamps, weights, n = 10} = request.data;
