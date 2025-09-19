@@ -18,14 +18,13 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.firestore
-import com.google.firebase.firestore.firestoreSettings
-import com.google.firebase.firestore.memoryCacheSettings
-import com.google.firebase.firestore.persistentCacheSettings
 
 class MainActivity : ComponentActivity() {
     private lateinit var auth: FirebaseAuth
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -34,10 +33,9 @@ class MainActivity : ComponentActivity() {
         // enable caching
         val db = FirebaseFirestore.getInstance()
 
-        val settings = firestoreSettings {
-            setLocalCacheSettings(memoryCacheSettings {}) // Optional: Enable memory cache
-            setLocalCacheSettings(persistentCacheSettings {})
-        }
+        val settings = FirebaseFirestoreSettings.Builder()
+            .setCacheSizeBytes(FirebaseFirestoreSettings.CACHE_SIZE_UNLIMITED)
+            .build()
         db.firestoreSettings = settings
 
         // Initialize Firebase Auth
@@ -77,18 +75,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    // Optional: Lifecycle methods to manage authentication state
-    // You can add onStart() if you want to re-check user status every time the activity starts,
-    // which might be useful if the app was in the background for a long time.
-    // For many apps, checking once in onCreate is sufficient for initial routing.
-
-    /*
-    public override fun onStart() {
-        super.onStart()
-        // Here you could re-evaluate auth.currentUser if you need dynamic redirection
-        // based on external auth changes (e.g., user signed out from another device).
-        // However, for typical app flow, the onCreate check and NavHost handles it well.
-    }
-    */
 }
