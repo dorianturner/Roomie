@@ -2,33 +2,8 @@ package com.example.roomie.screens
 
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Commute
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.School
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.example.roomie.components.StudentProfile
-import com.example.roomie.components.MatchingService
-import com.example.roomie.components.chat.ChatManager
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.launch
-import com.example.roomie.components.PreferenceWeights
-
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
@@ -36,23 +11,74 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Commute
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.MatchingService
+import com.example.roomie.components.PreferenceWeights
+import com.example.roomie.components.StudentProfile
+import com.example.roomie.components.chat.ChatManager
 import com.example.roomie.components.overlays.ProfileOnTap
 import com.example.roomie.components.soundManager.LocalSoundManager
 import com.example.roomie.components.userDiscovery.ProfileCard
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlin.math.abs
 
 // String descriptions for each of the weights
@@ -67,6 +93,15 @@ private val weightLabels = arrayOf(
 
 enum class SwipeDirection { LEFT, RIGHT, NONE }
 
+/**
+ * Composable function for the User Discovery Screen.
+ * This screen allows users to discover and match with other users or groups.
+ * It features a swipeable card interface for liking or disliking profiles,
+ * a filter dialog to set preference weights, and navigation to chat upon matching.
+ *
+ * @param navController NavController for navigating to other screens.
+ * @param modifier Modifier for this composable.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDiscoveryScreen(
@@ -75,13 +110,12 @@ fun UserDiscoveryScreen(
 ) {
 
     var showOverlay by remember { mutableStateOf(false) }
-    var selectedProfile by remember { mutableStateOf<GroupProfile?>(null) }
     var matches by remember { mutableStateOf<List<GroupProfile>?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentIndex by remember { mutableStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
     var weights by remember { mutableStateOf(PreferenceWeights()) }
     var showFilterDialog by remember { mutableStateOf(false) }
-    var reloadKey by remember { mutableStateOf(0) } // trigger a reload of the matches
+    var reloadKey by remember { mutableIntStateOf(0) } // trigger a reload of the matches
 
     val matchingService = MatchingService
     val coroutineScope = rememberCoroutineScope()
@@ -199,9 +233,14 @@ fun UserDiscoveryScreen(
                                             val currentGroupSnapshot =
                                                 db.collection("groups").document(currentUserGroupId)
                                                     .get().await()
-                                            val currentGroupMembers =
-                                                currentGroupSnapshot.get("members") as? List<Map<String, Any>>
-                                                    ?: emptyList()
+                                            val membersRaw = currentGroupSnapshot.get("members") as? List<*>
+                                            val currentGroupMembers = membersRaw
+                                                ?.mapNotNull { raw ->
+                                                    (raw as? Map<*, *>)?.mapNotNull { (k, v) ->
+                                                        if (k is String) k to v else null
+                                                    }?.toMap()
+                                                } ?: emptyList()
+
                                             val currentGroupMemberIds =
                                                 currentGroupMembers.mapNotNull { it["id"] as? String }
 
@@ -210,8 +249,9 @@ fun UserDiscoveryScreen(
                                                 currentProfile.members.map { it.id }
 
                                             // Combine all member IDs
-                                            var allParticipantIds =
+                                            val allParticipantIds =
                                                 (currentGroupMemberIds + otherGroupMembers).distinct()
+                                                    .toMutableList()
                                             if (!allParticipantIds.contains(currentUserId)) {
                                                 allParticipantIds += currentUserId
                                             }
@@ -245,7 +285,8 @@ fun UserDiscoveryScreen(
                                             val chatTitle = Uri.encode(currentProfile.name)
                                             navController.navigate("chat/$conversationId/$chatTitle")
 
-                                        } catch (e: Exception) {
+                                        } catch (
+                                            e: Exception) {
                                             Log.e(
                                                 "UserDiscovery",
                                                 "Failed to open/create chat: ${e.message}",
@@ -306,6 +347,13 @@ fun UserDiscoveryScreen(
     }
 }
 
+/**
+ * A composable function that displays a chip with an icon and text.
+ * Used to display small pieces of information in a visually appealing way.
+ *
+ * @param icon The icon to display in the chip.
+ * @param text The text to display in the chip.
+ */
 @Composable
 fun ProfileChip(icon: ImageVector, text: String) {
     Surface(
@@ -319,7 +367,7 @@ fun ProfileChip(icon: ImageVector, text: String) {
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = null, // Icon is decorative
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp).padding(end = 6.dp)
             )
@@ -330,15 +378,27 @@ fun ProfileChip(icon: ImageVector, text: String) {
         }
     }
 }
+
+/**
+ * A composable function that displays a match card which can be swiped left or right.
+ * Swiping right indicates a "like" and may initiate a chat.
+ * Swiping left indicates a "dislike" and moves to the next profile.
+ * Clicking the card shows more details.
+ *
+ * @param profile The [GroupProfile] to display on the card.
+ * @param onSwiped Callback function triggered when the card is swiped, providing the [SwipeDirection].
+ * @param onClick Callback function triggered when the card is clicked.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwipeableMatchCard(
     profile: GroupProfile,
     onSwiped: (SwipeDirection) -> Unit,
     onClick: () -> Unit
 ) {
-    val configuration = LocalConfiguration.current
     val density = LocalDensity.current
-    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
+
+    val screenWidthPx = with(density) { LocalWindowInfo.current.containerSize.width.dp.toPx() }
     val swipeDistancePx = screenWidthPx / 2f
 
     // Anchors for swipe directions
@@ -361,8 +421,7 @@ fun SwipeableMatchCard(
     LaunchedEffect(state.settledValue) {
         if (state.currentValue == SwipeDirection.LEFT || state.currentValue == SwipeDirection.RIGHT) {
             onSwiped(state.currentValue)
-            state.animateTo(SwipeDirection.NONE, tween(300, 20)) // doesnt work
-            // state.snapTo(SwipeDirection.NONE)
+            state.animateTo(SwipeDirection.NONE, tween(300, 20))
         }
     }
 
@@ -405,6 +464,12 @@ fun SwipeableMatchCard(
     }
 }
 
+/**
+ * A composable function that displays detailed information about a group,
+ * including its name, size, average stats, and a list of its members.
+ *
+ * @param group The [GroupProfile] to display.
+ */
 @Composable
 fun GroupMatchCard(group: GroupProfile) {
     Card(
@@ -458,6 +523,12 @@ fun GroupMatchCard(group: GroupProfile) {
     }
 }
 
+/**
+ * A composable function that displays a compact card for a single student member,
+ * showing their name, bio (if available), age, university, commute time, and budget.
+ *
+ * @param profile The [StudentProfile] of the member to display.
+ */
 @Composable
 fun MemberMiniCard(profile: StudentProfile) {
     Card(
@@ -483,7 +554,14 @@ fun MemberMiniCard(profile: StudentProfile) {
 }
 
 
-
+/**
+ * A composable function that displays a dialog for users to set their preference weights
+ * for various matching criteria.
+ *
+ * @param current The current [PreferenceWeights] to initialize the dialog with.
+ * @param onDismiss Callback function triggered when the dialog is dismissed without saving.
+ * @param onSave Callback function triggered when the "Save" button is clicked, providing the updated [PreferenceWeights].
+ */
 @Composable
 fun FilterDialog(
     current: PreferenceWeights,
@@ -530,6 +608,14 @@ fun FilterDialog(
     )
 }
 
+/**
+ * A composable function that displays a slider for adjusting a specific preference weight.
+ * It shows a label for the criteria and the current descriptive value of the weight (e.g., "Must-have").
+ *
+ * @param label The label for the preference criteria (e.g., "Age", "Budget").
+ * @param value The current integer value of the weight (0-5).
+ * @param onValueChange Callback function triggered when the slider value changes, providing the new integer value.
+ */
 @Composable
 fun WeightSlider(label: String, value: Int, onValueChange: (Int) -> Unit) {
     Column {

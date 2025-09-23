@@ -1,9 +1,21 @@
 package com.example.roomie.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -11,9 +23,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.example.roomie.R
 import com.example.roomie.screens.ProfilePhotoGallery
 import com.example.roomie.screens.ProfilePictureDisplay
-import com.example.roomie.R
 
 @Composable
 fun ProfileCard(
@@ -50,14 +62,6 @@ fun ProfileCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     )
-//                    age?.let {
-//                        Text(
-//                            text = it.toString(),
-//                            style = MaterialTheme.typography.bodyLarge.copy(
-//                                color = MaterialTheme.colorScheme.onSurfaceVariant
-//                            )
-//                        )
-//                    }
                 }
             }
 
@@ -86,12 +90,18 @@ fun ProfileCard(
                 ) {
                     // Row 1: birthday, pets, bedtime, smoking
                     val row1 = listOfNotNull(
-                        studentProfile.studentAge?.let { R.drawable.ic_birthday to it.toString() },
-                        studentProfile.studentPet?.takeIf { it.isNotBlank() }?.let { R.drawable.ic_pets to it },
-                        studentProfile.studentBedtime?.takeIf { it in 1..5 }?.let { R.drawable.ic_bedtime to it.toString() },
-                        studentProfile.studentSmokingStatus?.takeIf { it.isNotBlank() }?.let {
-                            R.drawable.ic_smoking to if (it == "Neither") "No" else it
-                        }
+                        studentProfile.studentAge
+                            ?.let { R.drawable.ic_birthday to it.toString() },
+                        studentProfile.studentPet
+                            ?.takeIf { it.isNotBlank() }?.let { R.drawable.ic_pets to it },
+                        studentProfile.studentBedtime
+                            ?.takeIf { it in 1..5 }
+                            ?.let { R.drawable.ic_bedtime to it.toString() },
+                        studentProfile.studentSmokingStatus
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let {
+                                R.drawable.ic_smoking to if (it == "Neither") "No" else it
+                            },
                     )
 
                     if (row1.isNotEmpty()) {
@@ -109,7 +119,8 @@ fun ProfileCard(
 
                     // Row 2: group size, commute, budget
                     val gText = when {
-                        studentProfile.groupMin != null && studentProfile.groupMax != null -> "${studentProfile.groupMin} - ${studentProfile.groupMax}"
+                        studentProfile.groupMin != null && studentProfile.groupMax != null ->
+                            "${studentProfile.groupMin} - ${studentProfile.groupMax}"
                         studentProfile.groupMin != null -> "Min ${studentProfile.groupMin}"
                         studentProfile.groupMax != null -> "Max ${studentProfile.groupMax}"
                         else -> null
@@ -118,7 +129,8 @@ fun ProfileCard(
                     val row2 = listOfNotNull(
                         gText?.let { R.drawable.ic_group_size to it },
                         studentProfile.studentMaxCommute?.let { R.drawable.ic_commute to "$it min" },
-                        studentProfile.studentMaxBudget?.let { R.drawable.ic_budget to "${it}/wk" } // preserved format
+                        studentProfile.studentMaxBudget?.let { R.drawable.ic_budget to "${it}/wk" }
+                    // preserved format
                     )
 
                     if (row2.isNotEmpty()) {
@@ -137,7 +149,11 @@ fun ProfileCard(
                     studentProfile.studentUniversity?.takeIf { it.isNotBlank() }?.let { uni ->
                         // single item; keep it left-aligned but allow it to use whole width
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            IconWithLabelUnit(R.drawable.ic_university, uni, takeFullWidth = true)
+                            IconWithLabelUnit(
+                                R.drawable.ic_university,
+                                uni,
+                                takeFullWidth = true
+                            )
                         }
                     }
                 }
@@ -154,11 +170,26 @@ fun ProfileCard(
             }
 
             // --- Lifestyle Q&A (kept below) ---
-            LifestyleSection("I am completely addicted to", studentProfile.studentAddicted)
-            LifestyleSection("My biggest pet peeve is", studentProfile.studentPetPeeve)
-            LifestyleSection("I am passionate about", studentProfile.passionate)
-            LifestyleSection("My ideal night looks like", studentProfile.studentIdeal)
-            LifestyleSection("You'll always catch me listening to", studentProfile.studentMusic)
+            LifestyleSection(
+                "I am completely addicted to",
+                studentProfile.studentAddicted
+            )
+            LifestyleSection(
+                "My biggest pet peeve is",
+                studentProfile.studentPetPeeve
+            )
+            LifestyleSection(
+                "I am passionate about",
+                studentProfile.passionate
+            )
+            LifestyleSection(
+                "My ideal night looks like",
+                studentProfile.studentIdeal
+            )
+            LifestyleSection(
+                "You'll always catch me listening to",
+                studentProfile.studentMusic
+            )
         }
     }
 }

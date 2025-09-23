@@ -21,11 +21,13 @@ android {
         }
     }
     namespace = "com.example.roomie"
+    //noinspection GradleDependency
     compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.roomie"
         minSdk = 24
+        //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -70,7 +72,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.text)
-    implementation("androidx.compose.ui:ui-text")
+    implementation(libs.ui.text)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
@@ -85,6 +87,8 @@ dependencies {
     implementation(libs.androidx.compose.foundation.foundation)
     implementation(libs.firebase.appcheck.playintegrity)
     implementation(libs.firebase.appcheck.debug)
+    implementation(libs.runtime)
+    implementation(libs.foundation.layout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -103,7 +107,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
-    implementation("com.google.firebase:firebase-functions:22.0.0")
+    implementation(libs.firebase.functions)
     implementation(libs.androidx.activity.compose.v1101)
     implementation(libs.material)
 

@@ -1,12 +1,13 @@
 package com.example.roomie.components.listings
 
+import android.util.Log
+import com.example.roomie.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
 import java.net.URLEncoder
-import com.example.roomie.BuildConfig
 
 val client = OkHttpClient()
 suspend fun getCommuteTime(from: String, to: String): Int? = withContext(Dispatchers.IO) {
@@ -42,8 +43,7 @@ suspend fun getCommuteTime(from: String, to: String): Int? = withContext(Dispatc
             return@withContext null
         }
     } catch (e: Exception) {
-        println("TFL API Exception: ${e.message}")
-        e.printStackTrace()
+        Log.e("getCommuteTime", "Error getting commute time.", e)
         return@withContext null
     }
 }

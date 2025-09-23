@@ -47,7 +47,7 @@ fun TellMoreScreen(
     val ideal = remember { mutableStateOf(profileState.ideal) }
     val passionate = remember { mutableStateOf(profileState.passionate) }
 
-    var isSaving = remember { mutableStateOf(false) }
+    val isSaving = remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { RoomieTopBar() },

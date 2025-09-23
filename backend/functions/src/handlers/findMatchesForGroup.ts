@@ -23,6 +23,11 @@ interface MyRequest {
   n?: number;
 }
 
+/**
+ * Finds matches for a specific group based on provided criteria.
+ * @param {functions.https.CallableRequest<MyRequest>} request - The request object containing group ID, last seen timestamps, weights, and optional parameter n.
+ * @returns An array of matched results sorted by score in descending order.
+ */
 export const findMatchesForGroup = functions.https.onCall(
   async (request: functions.https.CallableRequest<MyRequest>) => {
     const {groupId, lastSeenTimestamps, weights, n = 10} = request.data;
@@ -62,6 +67,7 @@ export const findMatchesForGroup = functions.https.onCall(
         groupMin: stats[FIELD_INDEX.groupMin],
         groupMax: stats[FIELD_INDEX.groupMax],
         profilePictureRatio: stats[FIELD_INDEX.profilePictureRatio],
+        status: stats[FIELD_INDEX.status],
       });
     }
 
@@ -71,6 +77,11 @@ export const findMatchesForGroup = functions.https.onCall(
         .https
         .HttpsError("not-found", "Group stats not found");
     }
+    if (currentStats[FIELD_INDEX.status] === 1 || currentStats[FIELD_INDEX.status] === 2) {
+      throw new functions
+        .https
+        .HttpsError("failed-precondition", "Discovery disabled for merging or finalised groups");
+    }
 
     const now = Date.now();
 
@@ -79,6 +90,9 @@ export const findMatchesForGroup = functions.https.onCall(
 
     for (const [otherId, otherStats] of blobMap.entries()) {
       if (otherId === groupId) continue; // skip self
+      if (otherStats[FIELD_INDEX.status] === 1 || otherStats[FIELD_INDEX.status] === 2) {
+        continue; // skip merging or finalised groups
+      }
 
       // Hard filters
       if (

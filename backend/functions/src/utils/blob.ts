@@ -4,7 +4,7 @@ const storage = new Storage();
 const BUCKET_NAME = "roomie-9f45c.firebasestorage.app";
 const BLOB_FILE = "groupStatsBlob.bin";
 
-export const FIELDS_PER_GROUP = 24;
+export const FIELDS_PER_GROUP = 25;
 
 export const FIELD_INDEX = {
   size: 0,
@@ -44,6 +44,7 @@ export const FIELD_INDEX = {
   groupMax: 22,
 
   profilePictureRatio: 23,
+  status: 24,
 };
 
 

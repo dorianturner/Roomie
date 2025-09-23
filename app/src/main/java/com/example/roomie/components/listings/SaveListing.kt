@@ -5,8 +5,6 @@ import com.example.roomie.components.PhotoItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import kotlin.coroutines.suspendCoroutine
-import kotlin.coroutines.resume
 
 data class ListingData(
     val title: String = "",
@@ -16,7 +14,7 @@ data class ListingData(
     val bedrooms: Int? = null,
     val bathrooms: Int? = null,
     val availableFromEpoch: Long? = null,
-    val isActive: Boolean = true,
+    private val isActive: Boolean = true,
     val photos: List<PhotoItem> = emptyList()
 ) {
     fun toMap(ownerId: String, ownerName: String?): Map<String, Any?> = mapOf(
@@ -55,7 +53,7 @@ suspend fun saveListing(listing: ListingData): Boolean {
 
     val ownerName = try {
         db.collection("users").document(currentUser.uid).get().await().getString("name")
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 
@@ -74,7 +72,7 @@ suspend fun saveListing(listing: ListingData): Boolean {
             "listingId" to listingRef.id,
             "title" to listing.title,
             "address" to listing.address,
-            "rent" to (listing.rent ?: 0),
+            "rent" to listing.rent,
             "lastUpdated" to System.currentTimeMillis()
         )
         batch.set(userListingRef, mirror)

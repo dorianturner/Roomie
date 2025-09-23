@@ -1,14 +1,31 @@
 package com.example.roomie.components
 
 import android.util.Log
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlin.coroutines.suspendCoroutine
 import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
+/**
+ * Saves or updates a user's profile information to Firebase Firestore.
+ *
+ * This function handles both landlord and student profiles, performing necessary validations
+ * and structuring the data accordingly. For student profiles, it also creates or updates
+ * a corresponding group document in Firestore and calls a Firebase Cloud Function (`upsertGroupProfile`)
+ * to synchronize group data, likely for search or denormalized views.
+ *
+ * Assumes `OnboardingProfileState`, `StudentProfile`, and `GroupProfile` data classes are defined
+ * elsewhere and hold the structured profile data.
+ *
+ * @param state The [OnboardingProfileState] object containing the complete profile information to be saved.
+ *              This includes user details, profile type (landlord/student), and specific fields for each type.
+ * @return `true` if the profile data is successfully committed to Firestore and the Cloud Function call
+ *         (if applicable) is initiated. Returns `false` if there is no authenticated user,
+ *         if mandatory fields are missing or invalid, or if any Firestore operation fails.
+ */
 suspend fun saveProfile(state: OnboardingProfileState): Boolean {
     val auth: FirebaseAuth = Firebase.auth
     val db: FirebaseFirestore = Firebase.firestore
@@ -80,6 +97,8 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
             if (!state.isLandlord) {
                 val groupRef = db.collection("groups").document(currentUser.uid)
 
+                val groupSizes = data["studentDesiredGroupSize"] as? List<*>
+
                 val members: List<StudentProfile> = listOf(StudentProfile(
                     id = currentUser.uid,
                     name = data["name"] as String,
@@ -90,8 +109,8 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
                     studentBedtime = data["studentBedtime"] as Int?,
                     studentAlcohol = data["studentAlcohol"] as Int?,
                     studentSmokingStatus = data["studentSmokingStatus"] as String?,
-                    groupMin = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(0),
-                    groupMax = (data["studentDesiredGroupSize"] as List<Int>?)?.getOrNull(1),
+                    groupMin = groupSizes?.getOrNull(0) as? Int,
+                    groupMax = groupSizes?.getOrNull(1) as? Int,
                     studentMaxCommute = data["studentMaxCommute"] as Int?,
                     studentMaxBudget = data["studentMaxBudget"] as Int?,
                     studentUniversity = data["studentUniversity"] as String?,
@@ -110,7 +129,6 @@ suspend fun saveProfile(state: OnboardingProfileState): Boolean {
                     name = data["name"] as String,
                     members = members,
                     stats = stats,
-                    // TODO
                     profilePicture = "",
                     bio = ""
                 )

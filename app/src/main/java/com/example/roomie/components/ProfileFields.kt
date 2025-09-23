@@ -1,34 +1,62 @@
 package com.example.roomie.components
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 
-// Simple reusable field model
+/**
+ * A reusable model for a profile text field, managing its state and validation.
+ *
+ * @property label The text label displayed for the field.
+ * @param value The initial value of the text field. Defaults to an empty string.
+ * @property keyboardType The type of keyboard to be shown for this field (e.g., Text, Number).
+ * @property required Indicates if the field must be filled. Defaults to true.
+ * @param validator An optional lambda function to perform custom validation on the field's value.
+ *                  It should return `true` if the value is valid, `false` otherwise.
+ */
 class ProfileTextField(
     val label: String,
     value: String = "",
     val keyboardType: KeyboardType = KeyboardType.Text,
     val required: Boolean = true,
-    val validator: ((String) -> Boolean)? = null
+    private val validator: ((String) -> Boolean)? = null
 ) {
+    /** The current value of the text field, observable by Compose. */
     var value by mutableStateOf(value)
+    /** Indicates if the current value of the field is invalid, observable by Compose. */
     var isError by mutableStateOf(false)
 
+    /**
+     * Validates the current value of the text field.
+     * If `required` is true, the field must not be blank and must pass the custom `validator` if provided.
+     * If `required` is false, the field is valid if it's blank or if it passes the custom `validator` if provided.
+     * Sets the [isError] state based on the validation result.
+     *
+     * @return `true` if the field's value is valid, `false` otherwise.
+     */
     fun validate(): Boolean {
         val isValid = if (required) {
             value.isNotBlank() && (validator?.invoke(value) ?: true)
         } else {
+            // Field is not required, so it's valid if blank OR if it passes the validator
             value.isBlank() || (validator?.invoke(value) ?: true)
         }
         isError = !isValid
@@ -36,7 +64,14 @@ class ProfileTextField(
     }
 }
 
-// --- Generic TextField Renderer ---
+/**
+ * A composable function that renders a generic TextField based on a [ProfileTextField] model.
+ * It displays the label, handles value changes, and shows error states.
+ *
+ * @param field The [ProfileTextField] model instance that provides the data and state for this view.
+ * @param onValueChange A callback function that is invoked when the text field's value changes.
+ * @param modifier Optional [Modifier] for customizing the layout and appearance of the TextField.
+ */
 @Composable
 fun ProfileTextFieldView(
     field: ProfileTextField,
@@ -65,7 +100,13 @@ fun ProfileTextFieldView(
     )
 }
 
-// --- Landlord Profile Section ---
+/**
+ * A composable function that displays the profile section specific to landlords.
+ * Currently, this includes a field for the company name.
+ *
+ * @param companyField The [ProfileTextField] model for the company name input.
+ * @param onCompanyChange A callback function invoked when the company name field's value changes.
+ */
 @Composable
 fun LandlordProfileSection(
     companyField: ProfileTextField,
@@ -79,7 +120,27 @@ fun LandlordProfileSection(
     )
 }
 
-// --- Student Profile Section ---
+/**
+ * A composable function that displays the profile section specific to students.
+ * It includes various fields for student details like age, university, group size preferences,
+ * commute time, budget, and lifestyle choices.
+ *
+ * @param ageField Mutable state holding the [ProfileTextField] for the student's age.
+ * @param universityField Mutable state holding the [ProfileTextField] for the student's university.
+ * @param groupSizeMinField Mutable state holding the [ProfileTextField] for the minimum desired group size.
+ * @param groupSizeMaxField Mutable state holding the [ProfileTextField] for the maximum desired group size.
+ * @param maxCommuteField Mutable state holding the [ProfileTextField] for the maximum commute time.
+ * @param maxBudgetField Mutable state holding the [ProfileTextField] for the maximum budget.
+ * @param smokingStatus Mutable state holding the student's smoking status string.
+ * @param bedtime Mutable state holding the student's preferred bedtime (represented as an Int, e.g., hours).
+ * @param alcoholLevel Mutable state holding the student's alcohol consumption preference (represented as an Int).
+ * @param pet Mutable state holding the student's pet preference string.
+ * @param musicField Mutable state holding the [ProfileTextField] for the student's music preferences.
+ * @param petPeeve Mutable state holding the [ProfileTextField] for the student's pet peeves.
+ * @param addicted Mutable state holding the [ProfileTextField] for things the student is "addicted" to or enjoys a lot.
+ * @param ideal Mutable state holding the [ProfileTextField] for the student's description of an ideal roommate/living situation.
+ * @param passionate Mutable state holding the [ProfileTextField] for things the student is passionate about.
+ */
 @Composable
 fun StudentProfileSection(
     ageField: MutableState<ProfileTextField>,
@@ -97,7 +158,6 @@ fun StudentProfileSection(
     addicted: MutableState<ProfileTextField>,
     ideal: MutableState<ProfileTextField>,
     passionate: MutableState<ProfileTextField>,
-
 ) {
     Column {
         Text("Student Profile", style = MaterialTheme.typography.titleLarge)

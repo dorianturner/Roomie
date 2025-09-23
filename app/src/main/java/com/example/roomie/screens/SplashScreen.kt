@@ -20,9 +20,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import com.example.roomie.ui.theme.Spacing
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -64,12 +65,12 @@ fun SplashScreen(
     var showCreateAccountFields by remember { mutableStateOf(false) }
     var showVerificationScreen by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
-    var lastCharTime by remember { mutableStateOf(0L) }
+    var lastCharTime by remember { mutableLongStateOf(0L) }
     val coroutineScope = rememberCoroutineScope()
 
     val visualTransformation = remember(password, passwordVisible) {
         if (passwordVisible) VisualTransformation.None
-        else LastCharVisibleTransformation(passwordLength = password.length, lastCharTime)
+        else LastCharVisibleTransformation(lastCharTime)
     }
 
     Column(
@@ -186,7 +187,6 @@ fun WaitForEmailVerificationScreen(
     onVerified: () -> Unit
 ) {
     val context = LocalContext.current
-    var isChecking by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -201,9 +201,7 @@ fun WaitForEmailVerificationScreen(
         Spacer(modifier = Modifier.height(Spacing.short))
 
         Button(onClick = {
-            isChecking = true
             auth.currentUser?.reload()?.addOnCompleteListener { task ->
-                isChecking = false
                 if (task.isSuccessful && auth.currentUser?.isEmailVerified == true) {
                     Toast.makeText(context, "Email verified!", Toast.LENGTH_SHORT).show()
                     onVerified()
@@ -286,7 +284,6 @@ fun performCreateAccount(auth: FirebaseAuth, context: Context, email: String, pa
 }
 
 class LastCharVisibleTransformation(
-    private val passwordLength: Int,
     private val lastCharTime: Long
 ) : VisualTransformation {
 

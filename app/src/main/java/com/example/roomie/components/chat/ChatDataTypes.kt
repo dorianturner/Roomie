@@ -8,6 +8,10 @@ const val ABOVE_NANOSECOND_DIGITS = 10000000000
 
 typealias Uid = Long
 
+enum class ChatType {
+    MERGE,    // discovered group, should trigger merge poll
+    MY_GROUP  // user’s own group, can propose finalise poll
+}
 data class Conversation(
     val id: String = "",
     @get:PropertyName("isGroup")
@@ -17,7 +21,8 @@ data class Conversation(
     val createdAt: Timestamp? = null,
     val lastMessage: String? = null,
     val lastMessageAt: Timestamp? = null,
-    val activePoll: Poll? = null
+    val activePoll: Poll? = null,
+    val chatType: ChatType = ChatType.MERGE
 )
 
 data class Message(

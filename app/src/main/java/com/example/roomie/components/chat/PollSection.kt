@@ -23,6 +23,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * A composable function that displays a poll, allowing users to vote.
+ * It shows the poll question and provides voting buttons if the poll is open.
+ * If the poll is closed, it displays the poll's resolution.
+ *
+ * @param poll The [Poll] object containing the details of the poll.
+ * @param userId The ID of the current user, used to determine their current vote.
+ * @param onVote A lambda function to be invoked when the user casts a vote. It takes the vote option (e.g., "yes", "no", "undecided") as a String.
+ */
 @Composable
 fun PollSection(
     poll: Poll,
@@ -106,6 +115,17 @@ fun PollSection(
     }
 }
 
+/**
+ * A composable function that represents a button for voting in a poll.
+ * It displays an icon and a label, and its appearance changes based on whether it's selected.
+ *
+ * @param label The text label for the button (e.g., "Yes", "No").
+ * @param isSelected A boolean indicating whether this vote option is currently selected by the user.
+ * @param onClick A lambda function to be invoked when the button is clicked.
+ * @param backgroundColor The background color of the button.
+ * @param icon A composable lambda that renders the icon for the button.
+ * @param modifier A [Modifier] for this composable. Defaults to [Modifier].
+ */
 @Composable
 fun VoteButton(
     label: String,
