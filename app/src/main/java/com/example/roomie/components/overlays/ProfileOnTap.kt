@@ -37,7 +37,7 @@ fun ProfileOnTap(
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp),
-        scrimColor = MaterialTheme.colorScheme.background,
+        scrimColor = MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
         dragHandle = {
             BottomSheetDefaults.DragHandle(
                 color = MaterialTheme.colorScheme.inverseSurface
