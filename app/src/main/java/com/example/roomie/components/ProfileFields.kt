@@ -28,6 +28,7 @@ import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.ZainFontFamily
 import androidx.compose.ui.text.TextStyle
 import com.example.roomie.ui.theme.MontserratFontFamily
+import com.example.roomie.ui.theme.Spacing
 
 
 /**
@@ -196,26 +197,28 @@ fun StudentProfileSection(
             color = MaterialTheme.colorScheme.inverseSurface,
 
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
         // ... existing fields (age/university/group size/commute/budget) - unchanged ...
         ProfileTextFieldView(field = ageField.value, onValueChange = { newValue ->
             if (newValue.all { it.isDigit() } || newValue.isEmpty()) ageField.value.value = newValue
         })
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
         ProfileTextFieldView(field = universityField.value, onValueChange = { universityField.value.value = it })
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(Spacing.medium))
 
         // group size row...
         Text(
             "Desired Group Size (Min-Max):",
-            style = MaterialTheme.typography.labelLarge
+            fontFamily = MontserratFontFamily,
+            fontSize = FontSize.subHeader,
+            color = MaterialTheme.colorScheme.inverseSurface
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(Spacing.short))
         Row(
             verticalAlignment = Alignment.CenterVertically, // ensures the dash is centered with text fields
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.extremelyShort),
             modifier = Modifier.fillMaxWidth()
         ) {
             ProfileTextFieldView(

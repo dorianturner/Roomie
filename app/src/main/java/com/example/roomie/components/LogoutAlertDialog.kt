@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
+import com.example.roomie.ui.theme.ZainFontFamily
 
 @Composable
 fun LogoutAlertDialog(
@@ -27,7 +28,6 @@ fun LogoutAlertDialog(
                 style = TextStyle(
                     fontFamily = MontserratFontFamily,
                     fontSize = FontSize.header,
-                    fontWeight = FontWeight.Bold,
                 ),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -37,7 +37,7 @@ fun LogoutAlertDialog(
                 text = "Are you sure you want to log out?",
                 style = TextStyle(
                     fontFamily = MontserratFontFamily,
-                    fontSize = FontSize.subHeader,
+                    fontSize = FontSize.body,
                 ),
                 color = MaterialTheme.colorScheme.primary
             )
@@ -46,7 +46,12 @@ fun LogoutAlertDialog(
             TextButton(onClick = {
                 onLogout()
             }) {
-                Text("Yes")
+                Text(
+                    "Yes",
+                    fontFamily = ZainFontFamily,
+                    color = MaterialTheme.colorScheme.inverseSurface,
+                    fontSize = FontSize.body
+                )
             }
         },
         dismissButton = {
@@ -54,7 +59,12 @@ fun LogoutAlertDialog(
                 onDismiss()
             })
             {
-                Text("No")
+                Text(
+                    "No",
+                    fontFamily = ZainFontFamily,
+                    color = MaterialTheme.colorScheme.inverseSurface,
+                    fontSize = FontSize.body
+                )
             }
         },
         containerColor = MaterialTheme.colorScheme.surface,

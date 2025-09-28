@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -56,6 +57,7 @@ import com.example.roomie.components.fetchUserPhotos
 import com.example.roomie.components.uploadProfileImage
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
+import com.example.roomie.ui.theme.ZainFontFamily
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -181,12 +183,39 @@ fun ProfilePhotosEdit(
                             onPhotosChanged(photos)
                         } finally { isLoading = false }
                     }
-                }) { Text("Delete") }
+                }) {
+                    Text(
+                        "Delete",
+                        fontFamily = ZainFontFamily,
+                        color = MaterialTheme.colorScheme.inverseSurface,
+                        fontSize = FontSize.body
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showConfirmDeleteForPath = null }) { Text("Cancel") }
+                TextButton(onClick = { showConfirmDeleteForPath = null }) {
+                        Text(
+                            "Cancel",
+                            fontFamily = ZainFontFamily,
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            fontSize = FontSize.body
+                        )
+                }
             },
-            text = { Text("Delete this photo?") }
+            text = {
+                Text(
+                    text = "Delete this photo?",
+                    style = TextStyle(
+                        fontFamily = MontserratFontFamily,
+                        fontSize = FontSize.body,
+                    ),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.surfaceBright,
+            textContentColor = MaterialTheme.colorScheme.surfaceBright,
+            shape = RoundedCornerShape(40.dp)
         )
     }
 }
