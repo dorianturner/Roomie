@@ -206,16 +206,25 @@ fun StudentProfileSection(
         Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
         ProfileTextFieldView(field = universityField.value, onValueChange = { universityField.value.value = it })
-        Spacer(modifier = Modifier.height(Spacing.medium))
+
+        Spacer(modifier = Modifier.height(Spacing.extremelyShort))
+        ProfileTextFieldView(field = maxCommuteField.value, onValueChange = { v ->
+            if (v.all { it.isDigit() } || v.isEmpty()) maxCommuteField.value.value = v
+        })
+        Spacer(modifier = Modifier.height(Spacing.extremelyShort))
+        ProfileTextFieldView(field = maxBudgetField.value, onValueChange = { v ->
+            if (v.all { it.isDigit() } || v.isEmpty()) maxBudgetField.value.value = v
+        })
+
+        Spacer(modifier = Modifier.height(Spacing.short))
 
         // group size row...
         Text(
             "Desired Group Size (Min-Max):",
             fontFamily = MontserratFontFamily,
-            fontSize = FontSize.subHeader,
+            fontSize = FontSize.body,
             color = MaterialTheme.colorScheme.inverseSurface
         )
-        Spacer(modifier = Modifier.height(Spacing.short))
         Row(
             verticalAlignment = Alignment.CenterVertically, // ensures the dash is centered with text fields
             horizontalArrangement = Arrangement.spacedBy(Spacing.extremelyShort),
@@ -239,15 +248,6 @@ fun StudentProfileSection(
                 modifier = Modifier.weight(1f)
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        ProfileTextFieldView(field = maxCommuteField.value, onValueChange = { v ->
-            if (v.all { it.isDigit() } || v.isEmpty()) maxCommuteField.value.value = v
-        })
-        Spacer(modifier = Modifier.height(16.dp))
-        ProfileTextFieldView(field = maxBudgetField.value, onValueChange = { v ->
-            if (v.all { it.isDigit() } || v.isEmpty()) maxBudgetField.value.value = v
-        })
 
         // Lifestyle section (smoking/bedtime/alcohol/music)
         LifestyleSection(
