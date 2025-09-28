@@ -31,6 +31,7 @@ firebaseAppcheckPlayintegrity = "19.0.0"
 firebaseAppcheckDebug = "19.0.0"
 runtimeVersion = "1.9.1"
 foundationLayoutVersion = "1.9.1"
+uiText = "1.9.2"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -77,6 +78,7 @@ firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appc
 runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtimeVersion" }
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 ui-text = { module = "androidx.compose.ui:ui-text" }
+androidx-compose-ui-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

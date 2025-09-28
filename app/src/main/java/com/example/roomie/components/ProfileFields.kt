@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -19,8 +21,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.ZainFontFamily
+import androidx.compose.ui.text.TextStyle
+import com.example.roomie.ui.theme.MontserratFontFamily
+
 
 /**
  * A reusable model for a profile text field, managing its state and validation.
@@ -78,18 +86,39 @@ fun ProfileTextFieldView(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    TextField(
+    OutlinedTextField(
         value = field.value,
         onValueChange = onValueChange,
         label = {
             Text(
-                if (!field.required) "${field.label} (optional)" else field.label
+                if (!field.required) "${field.label} (optional)" else field.label,
+                style = TextStyle(
+                    fontFamily = ZainFontFamily,
+                    fontSize = FontSize.body,
+                    color = MaterialTheme.colorScheme.primary
+                )
             )
         },
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
+
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.surfaceBright,
+            errorBorderColor = Color.Red,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        ),
+
         shape = RoundedCornerShape(12.dp),
+
+        textStyle = TextStyle(
+            fontFamily = ZainFontFamily,
+            fontSize = FontSize.subHeader,
+            color = MaterialTheme.colorScheme.inverseSurface,
+        ),
+
         keyboardOptions = KeyboardOptions(keyboardType = field.keyboardType),
         isError = field.isError,
         supportingText = {
@@ -160,7 +189,13 @@ fun StudentProfileSection(
     passionate: MutableState<ProfileTextField>,
 ) {
     Column {
-        Text("Student Profile", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Student Profile",
+            fontFamily = MontserratFontFamily,
+            fontSize = FontSize.header,
+            color = MaterialTheme.colorScheme.inverseSurface,
+
+        )
         Spacer(modifier = Modifier.height(16.dp))
 
         // ... existing fields (age/university/group size/commute/budget) - unchanged ...

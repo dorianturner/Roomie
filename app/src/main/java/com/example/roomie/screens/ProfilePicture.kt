@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.roomie.R
 import com.example.roomie.components.uploadProfileImage
+import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.ZainFontFamily
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
@@ -117,8 +119,9 @@ fun ProfilePictureEditor(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "Tap the picture to edit",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            fontFamily = ZainFontFamily,
+            fontSize = FontSize.body,
+            color = MaterialTheme.colorScheme.inverseSurface,
             textAlign = TextAlign.Center
         )
     }

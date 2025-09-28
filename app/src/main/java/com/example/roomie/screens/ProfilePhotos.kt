@@ -54,6 +54,8 @@ import com.example.roomie.components.addPhotoToUser
 import com.example.roomie.components.deletePhoto
 import com.example.roomie.components.fetchUserPhotos
 import com.example.roomie.components.uploadProfileImage
+import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.MontserratFontFamily
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -113,7 +115,12 @@ fun ProfilePhotosEdit(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text("Photos", style = MaterialTheme.typography.titleMedium)
+        Text(
+            "Photos",
+            fontFamily = MontserratFontFamily,
+            fontSize = FontSize.subHeader,
+            color = MaterialTheme.colorScheme.inverseSurface,
+        )
         Spacer(modifier = Modifier.height(8.dp))
 
         if (isLoading) {
