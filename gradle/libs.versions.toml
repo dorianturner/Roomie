@@ -32,6 +32,8 @@ firebaseAppcheckDebug = "19.0.0"
 runtimeVersion = "1.9.1"
 foundationLayoutVersion = "1.9.1"
 uiText = "1.9.2"
+material3Version = "1.4.0"
+datastoreCore = "1.1.7"
 
 [libraries]
 androidx-activity-compose-v1101 = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
@@ -79,6 +81,8 @@ runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = 
 foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayoutVersion" }
 ui-text = { module = "androidx.compose.ui:ui-text" }
 androidx-compose-ui-ui-text = { group = "androidx.compose.ui", name = "ui-text", version.ref = "uiText" }
+androidx-compose-material3-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3Version" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
