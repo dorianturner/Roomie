@@ -1,11 +1,11 @@
-# Roomie — Finding flatmates made easy
+# Roomie - Finding flatmates made easy
 
 This is a mobile Android app that helps students find compatible flatmates and suitable properties using Tinder-style swiping, group matching and relevance-ranked listings.
 
 ## Summary
 
 1. Prevents bad flatshare matches by matching users on preferences before property discovery.
-2. Supports group formation and merging between groups — merges are deliberate and block discovery of other groups while in progress to encourage careful decisions.
+2. Supports group formation and merging between groups - merges are deliberate and block discovery of other groups while in progress to encourage careful decisions.
 3. Once a group is finalised, the group sees property listings ranked by the group’s combined preference score.
 4. If a group opens a chat with a landlord, Roomie counts that as a generated lead for the landlord.
 
@@ -20,7 +20,7 @@ This is a mobile Android app that helps students find compatible flatmates and s
 ## How it works
 
 - Sign up and set preferences (budget, location, habits, non-negotiables).
-- Swipe on candidate profiles
+- Swipe on candidate  group profiles
 - Propose or accept merges with other groups; merges are atomic — while merging you cannot browse other groups.
 - When the group finalises members, property listings become available, ordered by the group’s preference score.
 - Group reviews listings; opening chat with a landlord creates a lead and starts landlord communication.
