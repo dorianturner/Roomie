@@ -1,5 +1,6 @@
 package com.example.roomie.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -24,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
@@ -63,12 +66,28 @@ fun LifestyleSection(
     )
     Spacer(modifier = Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        listOf("Smoke", "Vape", "Neither").forEach { option ->
+        listOf("Smoke", "Vape", "Both", "Neither").forEach { option ->
             SegmentedButton(
                 selected = smokingStatus.value == option,
                 onClick = { smokingStatus.value = option },
-                shape = SegmentedButtonDefaults.baseShape
-            ) { Text(option) }
+                shape = SegmentedButtonDefaults.baseShape,
+                icon = {},
+                colors = SegmentedButtonDefaults.colors(
+                    activeBorderColor = MaterialTheme.colorScheme.primary,
+                    inactiveBorderColor = MaterialTheme.colorScheme.surfaceBright,
+                    activeContainerColor = MaterialTheme.colorScheme.surface,
+                    inactiveContainerColor = MaterialTheme.colorScheme.background,
+                )
+            ) {
+                Text(
+                    option,
+                    style = TextStyle(
+                        fontFamily = ZainFontFamily,
+                        fontSize = FontSize.subHeader,
+                        color = MaterialTheme.colorScheme.inverseSurface
+                    )
+                )
+            }
         }
     }
 
@@ -113,24 +132,42 @@ fun LifestyleSection(
 
     // Alcohol slider 1..5
     Text(
-        "How often do you drink alcohol? (1: never, 5: very often)",
+        "How often do you drink alcohol?",
         fontFamily = ZainFontFamily,
         fontSize = FontSize.subHeader,
         color = MaterialTheme.colorScheme.inverseSurface,
     )
     Spacer(modifier = Modifier.height(8.dp))
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Text("1")
         Spacer(modifier = Modifier.width(8.dp))
         Slider(
             value = alcoholLevel.value.toFloat(),
             onValueChange = { alcoholLevel.value = it.roundToInt().coerceIn(1,5) },
             valueRange = 1f..5f,
             steps = 3, // 4 steps gives discrete 1..5
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .height(24.dp),
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(alcoholLevel.value.toString())
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            "Never",
+            fontFamily = ZainFontFamily,
+            color = MaterialTheme.colorScheme.inverseSurface,
+            fontSize = FontSize.body,
+        )
+        Text(
+            "Very often",
+            fontFamily = ZainFontFamily,
+            color = MaterialTheme.colorScheme.inverseSurface,
+            fontSize = FontSize.body,
+        )
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -148,8 +185,24 @@ fun LifestyleSection(
             SegmentedButton(
                 selected = pet.value == option,
                 onClick = { pet.value = option },
-                shape = SegmentedButtonDefaults.baseShape
-            ) { Text(option) }
+                shape = SegmentedButtonDefaults.baseShape,
+                icon = {},
+                colors = SegmentedButtonDefaults.colors(
+                    activeBorderColor = MaterialTheme.colorScheme.primary,
+                    inactiveBorderColor = MaterialTheme.colorScheme.surfaceBright,
+                    activeContainerColor = MaterialTheme.colorScheme.surface,
+                    inactiveContainerColor = MaterialTheme.colorScheme.background,
+                )
+            ) {
+                Text(
+                    option,
+                    style = TextStyle(
+                        fontFamily = ZainFontFamily,
+                        fontSize = FontSize.subHeader,
+                        color = MaterialTheme.colorScheme.inverseSurface
+                    )
+                )
+            }
         }
     }
 
