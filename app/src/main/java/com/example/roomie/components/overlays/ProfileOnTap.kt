@@ -1,5 +1,6 @@
 package com.example.roomie.components.overlays
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.roomie.components.GroupProfile
+import com.example.roomie.components.ProfileCard
+import com.example.roomie.components.StudentProfile
 import com.example.roomie.ui.theme.Spacing
 
 const val POPUP_HEIGHT_RATIO = 0.9f
@@ -51,20 +54,38 @@ fun ProfileOnTap(
                 .padding(Spacing.short)
         ) {
             if (isIndividual) {
-                IndividualProfilePopUp()
+                val student = groupProfile.members.firstOrNull()
+                if (student != null) {
+                    IndividualProfilePopUp(student)
+                }
             } else {
-                GroupProfilePopUp()
+                GroupProfilePopUp(groupProfile)
             }
         }
     }
 }
 
 @Composable
-fun IndividualProfilePopUp() {
-    Text("This is an individual profile")
+fun IndividualProfilePopUp(studentProfile: StudentProfile) {
+    ProfileCard(
+        studentProfile = studentProfile,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
-fun GroupProfilePopUp() {
-    Text("This is a group profile")
+fun GroupProfilePopUp(groupProfile: GroupProfile) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = groupProfile.name,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        groupProfile.members.forEach { member ->
+            ProfileCard(
+                studentProfile = member,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }
