@@ -162,9 +162,9 @@ fun IndividualCardContent(group: GroupProfile) {
                 "${group.stats.avgAge?.roundToInt() ?: 0}"
             )
             ProfileSegment(
-                Icons.Default.AttachMoney,
+                R.drawable.ic_budget,
                 "Budget",
-                "$${group.stats.avgBudget?.roundToInt() ?: 0}"
+                "£${group.stats.avgBudget?.roundToInt() ?: 0}"
             )
         }
         ProfileSegment(
@@ -209,9 +209,9 @@ fun GroupCardContent(group: GroupProfile) {
             )
         }
         ProfileSegment(
-            Icons.Default.AttachMoney,
+            R.drawable.ic_budget,
             "Avg. Budget",
-            "$${group.stats.avgBudget?.roundToInt() ?: 0}"
+            "£${group.stats.avgBudget?.roundToInt() ?: 0}"
         )
         ProfileSegment(
             Icons.Default.DirectionsCar,
@@ -319,6 +319,42 @@ fun ProfileSegment(icon: ImageVector, category: String, response: String) {
                     withStyle(
                         style = SpanStyle(color = MaterialTheme.colorScheme.surfaceTint)
                     ) {
+                        append(response)
+                    }
+                },
+                fontFamily = ZainFontFamily,
+                fontSize = FontSize.subHeader
+            )
+        }
+    }
+}
+
+// overload to handle R.drawable
+@Composable
+fun ProfileSegment(iconRes: Int, category: String, response: String) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .size(25.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.inverseSurface)) {
+                        append("$category: ")
+                    }
+                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.surfaceTint)) {
                         append(response)
                     }
                 },
