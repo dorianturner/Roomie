@@ -21,7 +21,7 @@ This is a mobile Android app that helps students find compatible flatmates and s
 
 - Sign up and set preferences (budget, location, habits, non-negotiables).
 - Swipe on candidate  group profiles
-- Propose or accept merges with other groups; merges are atomic — while merging you cannot browse other groups.
+- Propose or accept merges with other groups; merges are atomic - while merging you cannot browse other groups.
 - When the group finalises members, property listings become available, ordered by the group’s preference score.
 - Group reviews listings; opening chat with a landlord creates a lead and starts landlord communication.
 
