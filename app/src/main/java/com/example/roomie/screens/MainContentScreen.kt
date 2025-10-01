@@ -75,7 +75,6 @@ fun MainContentScreen(
 
     val navBarItemList = listOf(
         NavigationBarItem("Chats", Icons.AutoMirrored.Filled.Chat),
-        NavigationBarItem("Bookmarks", Icons.Default.Favorite),
         NavigationBarItem("Discover", Icons.Default.People),
         NavigationBarItem("Search", Icons.Default.Search),
         NavigationBarItem("Profile", Icons.Default.Person),
@@ -83,23 +82,21 @@ fun MainContentScreen(
 
     val navigationMap: Map<Int, () -> Unit> = mapOf(
         0 to { childNavController.navigate("chats") },
-        1 to { childNavController.navigate("bookmarks") },
-        2 to { childNavController.navigate("discover") },
-        3 to { childNavController.navigate("search") },
-        4 to { childNavController.navigate("profile") },
+        1 to { childNavController.navigate("discover") },
+        2 to { childNavController.navigate("search") },
+        3 to { childNavController.navigate("profile") },
     )
 
     // To indicate which icon to highlight at the navBar
     val selectedPage = when (currentRoute) {
         "chats" -> 0
-        "bookmarks" -> 1
-        "discover" -> 2
-        "search" -> 3
-        "single_listing/{listingId}" -> 3
-        "profile" -> 4
-        "profile_editor" -> 4
-        Routes.ADD_LISTING -> 4
-        "edit_listing/{listingId}" -> 4
+        "discover" -> 1
+        "search" -> 2
+        "single_listing/{listingId}" -> 2
+        "profile" -> 3
+        "profile_editor" -> 3
+        Routes.ADD_LISTING -> 3
+        "edit_listing/{listingId}" -> 3
         else -> 0
     }
 

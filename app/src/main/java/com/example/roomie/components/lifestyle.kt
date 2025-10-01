@@ -25,6 +25,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.MontserratFontFamily
+import com.example.roomie.ui.theme.Spacing
+import com.example.roomie.ui.theme.ZainFontFamily
 import kotlin.math.roundToInt
 
 
@@ -42,11 +46,21 @@ fun LifestyleSection(
     passionate: MutableState<ProfileTextField>,
 ) {
     Spacer(modifier = Modifier.height(16.dp))
-    Text("Lifestyle", style = MaterialTheme.typography.titleLarge)
+    Text(
+        "Lifestyle",
+        fontFamily = MontserratFontFamily,
+        fontSize = FontSize.subHeader,
+        color = MaterialTheme.colorScheme.inverseSurface
+    )
     Spacer(modifier = Modifier.height(12.dp))
 
     // Smoking / vaping segmented control
-    Text("Do you smoke or vape?", style = MaterialTheme.typography.titleMedium)
+    Text(
+        "Do you smoke or vape?",
+        fontFamily = ZainFontFamily,
+        fontSize = FontSize.subHeader,
+        color = MaterialTheme.colorScheme.inverseSurface,
+    )
     Spacer(modifier = Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         listOf("Smoke", "Vape", "Neither").forEach { option ->
@@ -61,7 +75,12 @@ fun LifestyleSection(
     Spacer(modifier = Modifier.height(16.dp))
 
     // Bedtime dropdown
-    Text("Typical bedtime", style = MaterialTheme.typography.titleMedium)
+    Text(
+        "What is your typical bedtime?",
+        fontFamily = ZainFontFamily,
+        fontSize = FontSize.subHeader,
+        color = MaterialTheme.colorScheme.inverseSurface,
+    )
     Spacer(modifier = Modifier.height(8.dp))
     var expanded by remember { mutableStateOf(false) }
     val bedtimeOptions = listOf("<10pm", "10–11pm", "11pm–12am", "12–1am", ">1am")
@@ -93,7 +112,12 @@ fun LifestyleSection(
     Spacer(modifier = Modifier.height(16.dp))
 
     // Alcohol slider 1..5
-    Text("How often do you drink alcohol? (1 = never, 5 = daily)", style = MaterialTheme.typography.titleMedium)
+    Text(
+        "How often do you drink alcohol? (1: never, 5: very often)",
+        fontFamily = ZainFontFamily,
+        fontSize = FontSize.subHeader,
+        color = MaterialTheme.colorScheme.inverseSurface,
+    )
     Spacer(modifier = Modifier.height(8.dp))
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Text("1")
@@ -112,7 +136,12 @@ fun LifestyleSection(
     Spacer(modifier = Modifier.height(16.dp))
 
     // pets
-    Text("Do you own a pet?", style = MaterialTheme.typography.titleMedium)
+    Text(
+        "Do you own a pet?",
+        fontFamily = ZainFontFamily,
+        fontSize = FontSize.subHeader,
+        color = MaterialTheme.colorScheme.inverseSurface,
+    )
     Spacer(modifier = Modifier.height(8.dp))
     SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
         listOf("Yes", "No").forEach { option ->
@@ -124,7 +153,16 @@ fun LifestyleSection(
         }
     }
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Spacing.medium))
+
+    Text(
+        "Beyond the Basics",
+        fontFamily = MontserratFontFamily,
+        fontSize = FontSize.subHeader,
+        color = MaterialTheme.colorScheme.inverseSurface
+    )
+
+    Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
     // Music preference text
     ProfileTextFieldView(
@@ -134,7 +172,7 @@ fun LifestyleSection(
         }
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
     // pet peeve preference text
     ProfileTextFieldView(
@@ -144,7 +182,7 @@ fun LifestyleSection(
         }
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
     // addicted preference text
     ProfileTextFieldView(
@@ -154,7 +192,7 @@ fun LifestyleSection(
         }
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
     // ideal preference text
     ProfileTextFieldView(
@@ -164,7 +202,7 @@ fun LifestyleSection(
         }
     )
 
-    Spacer(modifier = Modifier.height(16.dp))
+    Spacer(modifier = Modifier.height(Spacing.extremelyShort))
 
     // passionate preference text
     ProfileTextFieldView(

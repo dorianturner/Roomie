@@ -36,6 +36,8 @@ import com.example.roomie.components.fetchUserPhotos
 import com.example.roomie.components.listings.Listing
 import com.example.roomie.components.listings.ListingItem
 import com.example.roomie.navigation.Routes
+import com.example.roomie.ui.theme.FontSize
+import com.example.roomie.ui.theme.MontserratFontFamily
 import com.example.roomie.ui.theme.Spacing
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -129,8 +131,9 @@ fun ProfileScreen(
                         Text(
                             text = "Profile",
                             color = MaterialTheme.colorScheme.primary,
+                            fontFamily = MontserratFontFamily,
                             textAlign = TextAlign.Left,
-                            fontSize = 40.sp,
+                            fontSize = FontSize.header,
                         )
 
                         Spacer(Modifier.weight(1f))
