@@ -1,5 +1,6 @@
 package com.example.roomie.screens
 
+import android.R
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.core.tween
@@ -63,6 +64,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.roomie.components.GroupProfile
@@ -639,8 +643,20 @@ fun WeightSlider(
     LaunchedEffect(value) { if (raw != value.toFloat()) raw = value.toFloat() }
 
     Column {
+        val labelText = buildAnnotatedString {
+            withStyle(
+                style = SpanStyle(color = MaterialTheme.colorScheme.surfaceTint)
+            ) {
+                append("$label: ")
+            }
+            withStyle(
+                style = SpanStyle(color = MaterialTheme.colorScheme.inverseSurface)
+            ) {
+                append(display)
+            }
+        }
         Text(
-            "$label: $display",
+            text = labelText,
             fontFamily = ZainFontFamily,
             color = MaterialTheme.colorScheme.inverseSurface,
             fontSize = FontSize.body,
