@@ -49,6 +49,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,12 +75,14 @@ import com.example.roomie.components.soundManager.LocalSoundManager
 import com.example.roomie.components.userDiscovery.ProfileCard
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.MontserratFontFamily
+import com.example.roomie.ui.theme.ZainFontFamily
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 // String descriptions for each of the weights
 private val weightLabels = arrayOf(
@@ -582,7 +585,12 @@ fun FilterDialog(
                 Text("Cancel")
             }
         },
-        title = { Text("Set Match Importance") },
+        title = { Text(
+                "Match Priorities",
+            fontFamily = MontserratFontFamily,
+            fontSize = FontSize.header,
+            color = MaterialTheme.colorScheme.inverseSurface,
+            ) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 WeightSlider("Age", localWeights.age) {
@@ -604,7 +612,10 @@ fun FilterDialog(
                     localWeights = localWeights.copy(profilePicture = it)
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.surfaceBright,
+        textContentColor = MaterialTheme.colorScheme.surfaceBright,
     )
 }
 
@@ -617,14 +628,50 @@ fun FilterDialog(
  * @param onValueChange Callback function triggered when the slider value changes, providing the new integer value.
  */
 @Composable
-fun WeightSlider(label: String, value: Int, onValueChange: (Int) -> Unit) {
+fun WeightSlider(
+    label: String,
+    value: Int,
+    onValueChange: (Int) -> Unit
+) {
+    val display = weightLabels.getOrElse(value) { value.toString() }
+
+    var raw by remember(value) { mutableFloatStateOf(value.toFloat()) }
+    LaunchedEffect(value) { if (raw != value.toFloat()) raw = value.toFloat() }
+
     Column {
-        Text("$label: ${weightLabels[value]}")
-        Slider(
-            value = value.toFloat(),
-            onValueChange = { onValueChange(it.toInt()) },
-            valueRange = 0f..5f,
-            steps = 4 // gives 0..5 discrete
+        Text(
+            "$label: $display",
+            fontFamily = ZainFontFamily,
+            color = MaterialTheme.colorScheme.inverseSurface,
+            fontSize = FontSize.body,
         )
+        Slider(
+            value = raw,
+            onValueChange = { newValue ->
+                raw = newValue
+                onValueChange(newValue.roundToInt().coerceIn(0, 5))
+            },
+            valueRange = 0f..5f,
+            steps = 4, // gives 0..5 discrete
+            modifier = Modifier
+                .height(24.dp),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                "Indifferent",
+                fontFamily = ZainFontFamily,
+                color = MaterialTheme.colorScheme.inverseSurface,
+                fontSize = FontSize.body,
+            )
+            Text(
+                "Must have",
+                fontFamily = ZainFontFamily,
+                color = MaterialTheme.colorScheme.inverseSurface,
+                fontSize = FontSize.body,
+            )
+        }
     }
 }
