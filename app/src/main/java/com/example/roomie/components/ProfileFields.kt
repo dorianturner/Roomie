@@ -96,7 +96,7 @@ fun ProfileTextFieldView(
                 style = TextStyle(
                     fontFamily = ZainFontFamily,
                     fontSize = FontSize.body,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.surfaceTint
                 )
             )
         },
