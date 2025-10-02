@@ -23,6 +23,7 @@ private val DarkColorScheme = darkColorScheme(
     scrim = DarkScrim,
     inverseSurface = DarkContrast,
     surfaceTint = DarkAccent,
+    onTertiary = DarkUnfocused
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -38,6 +39,7 @@ private val LightColorScheme = lightColorScheme(
     scrim = LightScrim,
     inverseSurface = LightContrast,
     surfaceTint = LightAccent,
+    onTertiary = DarkUnfocused
 
 
     /* Other default colors to override

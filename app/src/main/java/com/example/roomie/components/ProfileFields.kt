@@ -22,11 +22,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.roomie.ui.theme.FontSize
 import com.example.roomie.ui.theme.ZainFontFamily
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import com.example.roomie.ui.theme.MontserratFontFamily
 import com.example.roomie.ui.theme.Spacing
 
@@ -87,12 +91,26 @@ fun ProfileTextFieldView(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val labelText = buildAnnotatedString {
+        withStyle(
+            style = SpanStyle(color = MaterialTheme.colorScheme.surfaceTint)
+        ) {
+            append(field.label)
+        }
+        if (!field.required) {
+            withStyle(
+                style = SpanStyle(color = MaterialTheme.colorScheme.onTertiary)
+            ) {
+                append(" (optional)")
+            }
+        }
+    }
     OutlinedTextField(
         value = field.value,
         onValueChange = onValueChange,
         label = {
             Text(
-                if (!field.required) "${field.label} (optional)" else field.label,
+                text = labelText,
                 style = TextStyle(
                     fontFamily = ZainFontFamily,
                     fontSize = FontSize.body,

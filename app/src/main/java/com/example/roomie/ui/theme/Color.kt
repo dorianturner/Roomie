@@ -34,3 +34,5 @@ val DarkScrim = Color(0xFF0E1110)
 val DarkContrast = Color.White
 
 val DarkAccent = Color(0xFFFB923C)
+
+val DarkUnfocused = Color(0xFF928E85)
